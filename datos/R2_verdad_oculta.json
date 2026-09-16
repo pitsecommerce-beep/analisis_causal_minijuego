@@ -1,0 +1,256 @@
+{
+  "semilla": 20260825,
+  "n": 1500,
+  "meses": 18,
+  "inicio": "2014-05-01",
+  "sucursales_foco": [
+    110,
+    676,
+    728
+  ],
+  "capacitacion_base": {
+    "110": 0.34,
+    "676": 0.36,
+    "728": 0.38,
+    "692": 0.72,
+    "214": 0.78,
+    "243": 0.75,
+    "631": 0.8,
+    "413": 0.74,
+    "275": 0.7,
+    "126": 0.76,
+    "453": 0.79,
+    "455": 0.73,
+    "256": 0.68,
+    "416": 0.71,
+    "446": 0.77,
+    "440": 0.8,
+    "477": 0.75,
+    "352": 0.78
+  },
+  "ejecutivos": {
+    "110": 3,
+    "676": 3,
+    "728": 2,
+    "692": 3,
+    "214": 2,
+    "243": 2,
+    "631": 4,
+    "413": 3,
+    "275": 2,
+    "126": 2,
+    "453": 2,
+    "455": 2,
+    "256": 2,
+    "416": 2,
+    "446": 2,
+    "440": 2,
+    "477": 2,
+    "352": 2
+  },
+  "claridad_checklist": {
+    "antes": 0.55,
+    "despues": 0.12,
+    "mes_quiebre": 10,
+    "evento": "Entrada del modulo de captacion digital"
+  },
+  "umbral_buro": 70,
+  "umbral_score_interno": 20,
+  "trampas": [
+    "Age",
+    "Years as customer",
+    "Credit Bureau Score",
+    "ETFBank Score",
+    "Credit Line Granted",
+    "Marital Status",
+    "Gender"
+  ],
+  "linea_base": {
+    "n": 1500,
+    "intentos_media": 1.96,
+    "intentos_sd": 0.895,
+    "ventana_captura_media": 18.95,
+    "ventana_captura_mediana": 11.0,
+    "corr_intentos_captura": 0.786,
+    "tasa_reproceso": 0.598,
+    "errores_por_100": 87.9,
+    "mix_error": {
+      "captura": 659,
+      "incompletos": 472,
+      "ilegibles": 187
+    },
+    "embudo": {
+      "total": 1500,
+      "buro_corrido": 1397,
+      "buro_aceptado": 1022,
+      "score_aceptado": 873,
+      "plastico_enviado": 731
+    },
+    "atorados": 142,
+    "dias_perdidos_en_rechazados_por_buro": 6758
+  },
+  "ranking_sucursales_por_error": [
+    {
+      "sucursal": 110,
+      "n": 171,
+      "errores": 203,
+      "errores_captura": 120,
+      "intentos_medio": 2.28,
+      "captura_media": 26.5,
+      "es_foco": true
+    },
+    {
+      "sucursal": 676,
+      "n": 151,
+      "errores": 193,
+      "errores_captura": 114,
+      "intentos_medio": 2.43,
+      "captura_media": 28.3,
+      "es_foco": true
+    },
+    {
+      "sucursal": 728,
+      "n": 117,
+      "errores": 134,
+      "errores_captura": 83,
+      "intentos_medio": 2.26,
+      "captura_media": 24.1,
+      "es_foco": true
+    },
+    {
+      "sucursal": 631,
+      "n": 149,
+      "errores": 109,
+      "errores_captura": 46,
+      "intentos_medio": 1.78,
+      "captura_media": 16.8,
+      "es_foco": false
+    },
+    {
+      "sucursal": 692,
+      "n": 120,
+      "errores": 91,
+      "errores_captura": 44,
+      "intentos_medio": 1.82,
+      "captura_media": 15.9,
+      "es_foco": false
+    },
+    {
+      "sucursal": 413,
+      "n": 88,
+      "errores": 66,
+      "errores_captura": 35,
+      "intentos_medio": 1.9,
+      "captura_media": 17.5,
+      "es_foco": false
+    },
+    {
+      "sucursal": 214,
+      "n": 77,
+      "errores": 59,
+      "errores_captura": 21,
+      "intentos_medio": 1.81,
+      "captura_media": 14.5,
+      "es_foco": false
+    },
+    {
+      "sucursal": 416,
+      "n": 63,
+      "errores": 54,
+      "errores_captura": 21,
+      "intentos_medio": 1.92,
+      "captura_media": 16.5,
+      "es_foco": false
+    },
+    {
+      "sucursal": 455,
+      "n": 71,
+      "errores": 53,
+      "errores_captura": 21,
+      "intentos_medio": 1.82,
+      "captura_media": 12.0,
+      "es_foco": false
+    },
+    {
+      "sucursal": 243,
+      "n": 67,
+      "errores": 51,
+      "errores_captura": 25,
+      "intentos_medio": 1.81,
+      "captura_media": 17.9,
+      "es_foco": false
+    },
+    {
+      "sucursal": 453,
+      "n": 61,
+      "errores": 50,
+      "errores_captura": 18,
+      "intentos_medio": 1.87,
+      "captura_media": 17.6,
+      "es_foco": false
+    },
+    {
+      "sucursal": 275,
+      "n": 76,
+      "errores": 47,
+      "errores_captura": 23,
+      "intentos_medio": 1.71,
+      "captura_media": 13.9,
+      "es_foco": false
+    },
+    {
+      "sucursal": 126,
+      "n": 67,
+      "errores": 45,
+      "errores_captura": 21,
+      "intentos_medio": 1.75,
+      "captura_media": 14.1,
+      "es_foco": false
+    },
+    {
+      "sucursal": 446,
+      "n": 43,
+      "errores": 39,
+      "errores_captura": 10,
+      "intentos_medio": 2.0,
+      "captura_media": 19.6,
+      "es_foco": false
+    },
+    {
+      "sucursal": 256,
+      "n": 56,
+      "errores": 38,
+      "errores_captura": 17,
+      "intentos_medio": 1.79,
+      "captura_media": 13.6,
+      "es_foco": false
+    },
+    {
+      "sucursal": 440,
+      "n": 47,
+      "errores": 33,
+      "errores_captura": 17,
+      "intentos_medio": 1.72,
+      "captura_media": 17.1,
+      "es_foco": false
+    },
+    {
+      "sucursal": 352,
+      "n": 36,
+      "errores": 27,
+      "errores_captura": 8,
+      "intentos_medio": 1.75,
+      "captura_media": 17.8,
+      "es_foco": false
+    },
+    {
+      "sucursal": 477,
+      "n": 40,
+      "errores": 26,
+      "errores_captura": 15,
+      "intentos_medio": 1.7,
+      "captura_media": 12.7,
+      "es_foco": false
+    }
+  ]
+}

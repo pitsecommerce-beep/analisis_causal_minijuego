@@ -1,0 +1,30 @@
+{
+  "name": "analisis_causal_minijuego",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "datos:verificar": "tsx src/servidor/consola/verificar-datos.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pitsecommerce-beep/analisis_causal_minijuego.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pitsecommerce-beep/analisis_causal_minijuego/issues"
+  },
+  "homepage": "https://github.com/pitsecommerce-beep/analisis_causal_minijuego#readme",
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.3",
+    "express": "^5.2.1",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2",
+    "xlsx": "^0.18.5"
+  }
+}
