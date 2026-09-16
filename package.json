@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "datos:verificar": "tsx src/servidor/consola/verificar-datos.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "motor:consola": "tsx src/servidor/consola/arnes.ts",
+    "test": "vitest run"
   },
   "repository": {
     "type": "git",
@@ -26,5 +27,8 @@
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.1"
   }
 }

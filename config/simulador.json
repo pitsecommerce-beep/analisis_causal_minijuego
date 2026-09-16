@@ -1,0 +1,222 @@
+{
+  "duracionPartidaMinutos": 40,
+  "ciclos": 4,
+  "duracionCicloMinutos": 8,
+  "presupuestoTotal": 100,
+  "credibilidadInicial": 60,
+  "credibilidadMaxima": 100,
+  "credibilidadReinicio": 30,
+  "umbralCredibilidadBaja": 30,
+  "vidasIniciales": 3,
+  "puntuacion": {
+    "total": 1000,
+    "diagnostico": {
+      "total": 300,
+      "ventanaCapturaCuello": 110,
+      "reprocesoDocumental": 90,
+      "fugaAprobadosSinPlastico": 60,
+      "secuenciaTardiaBuro": 40,
+      "penalizacionCausaEspuria": -40
+    },
+    "criterio": {
+      "total": 250,
+      "afirmacionVerificada": 30,
+      "refutacionConDatos": 50,
+      "accionSinVerificar": -40
+    },
+    "impacto": {
+      "total": 250,
+      "reduccionCiclo": 100,
+      "reduccionQuejas": 60,
+      "conversionPreservada": 50,
+      "presupuestoSobrante": 40
+    },
+    "metodo": {
+      "total": 150,
+      "herramientaBohn": 25,
+      "maxHerramientas": 100,
+      "consultaGuia": 20,
+      "pasosEnOrden": 30
+    },
+    "compromisos": {
+      "total": 50
+    },
+    "penalizaciones": {
+      "vidaPerdida": -60,
+      "destitucion": -100,
+      "presupuestoAgotadoSinEfecto": -80
+    }
+  },
+  "desenlaces": [
+    { "id": "reconversion", "nombre": "Reconversión", "minPuntos": 850, "maxPuntos": 1000 },
+    { "id": "buen_trabajo", "nombre": "Buen trabajo incompleto", "minPuntos": 650, "maxPuntos": 849 },
+    { "id": "sobreviviste", "nombre": "Sobreviviste", "minPuntos": 450, "maxPuntos": 649 },
+    { "id": "en_la_mira", "nombre": "En la mira", "minPuntos": 250, "maxPuntos": 449 },
+    { "id": "destituido", "nombre": "Destituido", "minPuntos": 0, "maxPuntos": 249 }
+  ],
+  "acciones": [
+    {
+      "id": 1,
+      "nombre": "Checklist documental obligatorio en C.R.A.S.S.",
+      "costo": 15,
+      "demora": 1,
+      "efectos": {
+        "incompletos": -0.70,
+        "ilegibles": -0.50
+      },
+      "descripcion": "Formulario guiado que valida documentos antes de enviar"
+    },
+    {
+      "id": 2,
+      "nombre": "Capacitación focalizada en sucursales que tú nombres",
+      "costo": 25,
+      "demora": 1,
+      "efectos": {
+        "errorCaptura": -0.60
+      },
+      "requiereSucursales": true,
+      "descripcion": "Entrenamiento intensivo para las sucursales seleccionadas"
+    },
+    {
+      "id": 3,
+      "nombre": "Capacitación a las 18 sucursales",
+      "costo": 100,
+      "demora": 2,
+      "efectos": {
+        "errorCaptura": -0.60
+      },
+      "descripcion": "Programa de capacitación general para todas las sucursales"
+    },
+    {
+      "id": 4,
+      "nombre": "Correr el buró antes de la captura completa",
+      "costo": 10,
+      "demora": 1,
+      "efectos": {
+        "trabajoPerdido": -0.27,
+        "costoOperativo": -0.22
+      },
+      "descripcion": "Consultar buró de crédito al inicio del proceso"
+    },
+    {
+      "id": 5,
+      "nombre": "Automatizar el envío del plástico",
+      "costo": 10,
+      "demora": 1,
+      "efectos": {
+        "atorados": -0.875,
+        "quejas": -0.25
+      },
+      "descripcion": "Sistema automático de despacho de tarjetas aprobadas"
+    },
+    {
+      "id": 6,
+      "nombre": "Dos revisores más en CrOP",
+      "costo": 35,
+      "demora": 0,
+      "efectos": {
+        "backOffice": -0.35
+      },
+      "descripcion": "Refuerzo de personal en el centro de procesamiento"
+    },
+    {
+      "id": 7,
+      "nombre": "Segmentar el proceso por perfil de cliente",
+      "costo": 20,
+      "demora": 1,
+      "efectos": {},
+      "descripcion": "Crear carriles diferenciados según tipo de cliente"
+    },
+    {
+      "id": 8,
+      "nombre": "Endurecer el umbral del score interno",
+      "costo": 5,
+      "demora": 0,
+      "efectos": {
+        "cicloAparente": -5,
+        "conversion": -0.35
+      },
+      "descripcion": "Subir el corte del score ETFBank para filtrar antes"
+    },
+    {
+      "id": 9,
+      "nombre": "Bono por velocidad a ejecutivos",
+      "costo": 15,
+      "demora": 0,
+      "efectos": {
+        "captura": -0.12,
+        "errores": 0.25
+      },
+      "descripcion": "Incentivo económico por rapidez en captura"
+    },
+    {
+      "id": 10,
+      "nombre": "Reemplazar el C.R.A.S.S.",
+      "costo": 100,
+      "demora": 4,
+      "efectos": {},
+      "descripcion": "Sustitución completa del sistema legacy"
+    }
+  ],
+  "eventos": [
+    {
+      "id": "auditoria",
+      "nombre": "Auditoría regulatoria",
+      "efecto": { "backOffice": 2 },
+      "duracion": 1,
+      "mensaje": "Memo interno: la CNBV programó revisión de expedientes. El back office se retrasa dos días este periodo."
+    },
+    {
+      "id": "renuncia",
+      "nombre": "Renuncia un gerente de sucursal capacitada",
+      "efecto": { "revertirCapacitacion": 0.40 },
+      "duracion": 1,
+      "mensaje": "Recursos Humanos informa: renunció el gerente de una sucursal que recibió capacitación. Se pierde parte del avance."
+    },
+    {
+      "id": "competencia",
+      "nombre": "Campaña de la competencia",
+      "efecto": { "conversionCondicional": -0.15, "umbralCiclo": 20 },
+      "duracion": 1,
+      "mensaje": "Inteligencia comercial: Banorte lanzó una campaña agresiva de tarjetas. Si nuestro ciclo pasa de 20 días, perdemos clientes."
+    },
+    {
+      "id": "pico",
+      "nombre": "Pico estacional",
+      "efecto": { "volumen": 0.30, "erroresExtra": 0.15 },
+      "duracion": 1,
+      "mensaje": "Operaciones reporta: el volumen de solicitudes subió 30% por temporada. Los errores aumentan proporcionalmente."
+    },
+    {
+      "id": "prensa",
+      "nombre": "Nota en prensa sobre las quejas",
+      "efecto": { "credibilidad": -10 },
+      "duracion": 0,
+      "mensaje": "Comunicación corporativa: El Financiero publicó una nota sobre quejas de clientes con tarjetas de ETF Bank."
+    },
+    {
+      "id": "rotacion_crop",
+      "nombre": "Rotación en CrOP",
+      "efecto": { "capacidadCrop": -2 },
+      "duracion": 1,
+      "mensaje": "CrOP informa: dos analistas se fueron este mes. La capacidad de revisión baja temporalmente."
+    }
+  ],
+  "kpisIniciales": {
+    "ventanaCapturaMedia": 18.9,
+    "ventanaCapturaMediana": 11,
+    "backOfficeDias": 15,
+    "cicloTotalMediana": 26,
+    "tasaReproceso": 59.8,
+    "erroresPor100": 87.9,
+    "erroresCaptura": 659,
+    "erroresIncompletos": 472,
+    "erroresIlegibles": 187,
+    "atorados": 142,
+    "atoradosPct": 16.3,
+    "conversionPct": 48.7,
+    "quejasPct": 100,
+    "diasPerdidosBuro": 6758,
+    "presupuestoGastado": 0
+  }
+}
