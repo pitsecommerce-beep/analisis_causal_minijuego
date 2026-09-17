@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api.js';
 
-const NOMBRES: Record<string, string> = {
-  bernardo: 'Bernardo (Gte. Regional)',
-  oscar: 'Oscar (Dir. Sistemas)',
-  paulina: 'Paulina (Contralora)',
-  silvia: 'Silvia (Gte. Capacitacion)',
-  diego: 'Diego (Analista CrOP)',
-  ramon: 'Ramon Betancourt (Consejo)',
+const NOMBRES: Record<string, { nombre: string; rol: string }> = {
+  bernardo: { nombre: 'Bernardo', rol: 'Gte. Regional' },
+  oscar: { nombre: 'Oscar', rol: 'Dir. Sistemas' },
+  paulina: { nombre: 'Paulina', rol: 'Contralora' },
+  silvia: { nombre: 'Silvia', rol: 'Gte. Capacitacion' },
+  diego: { nombre: 'Diego', rol: 'Analista CrOP' },
+  ramon: { nombre: 'Ramon Betancourt', rol: 'Consejo' },
 };
 
 const EXPRESIONES: Record<string, string> = {
@@ -62,8 +62,42 @@ export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
     } catch { /* ignore */ }
   }
 
-  if (cargando) return <p style={{ padding: 20 }}>Cargando dialogos...</p>;
-  if (dialogos.length === 0) return <p style={{ padding: 20, color: 'var(--color-texto-secundario)' }}>No hay dialogos en este momento. Avanza al siguiente ciclo.</p>;
+  if (cargando) {
+    return (
+      <div style={{ padding: 40, textAlign: 'center' }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: '50%',
+          border: '3px solid var(--color-borde)',
+          borderTopColor: 'var(--color-primario)',
+          animation: 'spin 0.8s linear infinite',
+          margin: '0 auto 12px',
+        }} />
+        <p style={{ color: 'var(--color-texto-secundario)', fontSize: 14 }}>Cargando dialogos...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (dialogos.length === 0) {
+    return (
+      <div className="tarjeta" style={{ textAlign: 'center', padding: '40px 24px' }}>
+        <div style={{
+          width: 52, height: 52, borderRadius: 14,
+          background: 'var(--color-superficie-alt)',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          marginBottom: 14,
+        }}>
+          <span style={{ fontSize: 26 }}>👥</span>
+        </div>
+        <p style={{ color: 'var(--color-texto-secundario)', fontSize: 15 }}>
+          No hay dialogos en este momento.
+        </p>
+        <p style={{ color: 'var(--color-texto-terciario)', fontSize: 13, marginTop: 4 }}>
+          Avanza al siguiente ciclo para interactuar con tu equipo.
+        </p>
+      </div>
+    );
+  }
 
   const porPersonaje: Record<string, any[]> = {};
   for (const d of dialogos) {
@@ -73,55 +107,99 @@ export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
 
   return (
     <div>
-      <h3 style={{ marginBottom: 16, color: 'var(--color-primario)' }}>Sala de Juntas</h3>
+      <h3 style={{
+        marginBottom: 20,
+        color: 'var(--color-primario)',
+        fontSize: 18,
+        fontWeight: 700,
+      }}>
+        Sala de Juntas
+      </h3>
 
-      {Object.entries(porPersonaje).map(([personaje, nodos]) => (
-        <div key={personaje} style={{ marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span style={{ fontSize: 24 }}>{EXPRESIONES[nodos[0]?.expresion] ?? '😐'}</span>
-            <strong style={{ color: 'var(--color-primario)' }}>{NOMBRES[personaje] ?? personaje}</strong>
-          </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {Object.entries(porPersonaje).map(([personaje, nodos]) => {
+          const info = NOMBRES[personaje];
+          return (
+            <div key={personaje} className="tarjeta" style={{ padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 12,
+                  background: 'var(--color-primario-suave)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 22, flexShrink: 0,
+                }}>
+                  {EXPRESIONES[nodos[0]?.expresion] ?? '😐'}
+                </div>
+                <div>
+                  <strong style={{ color: 'var(--color-primario)', fontSize: 15 }}>
+                    {info?.nombre ?? personaje}
+                  </strong>
+                  <div style={{ fontSize: 12, color: 'var(--color-texto-terciario)' }}>
+                    {info?.rol ?? ''}
+                  </div>
+                </div>
+              </div>
 
-          {nodos.map((nodo: any) => (
-            <div key={nodo.nodoId}>
-              <div className="dialogo-burbuja">
-                {nodo.lineas.map((l: string, i: number) => (
-                  <p key={i} style={{ marginBottom: i < nodo.lineas.length - 1 ? 6 : 0 }}>{l}</p>
+              {nodos.map((nodo: any) => (
+                <div key={nodo.nodoId}>
+                  <div className="dialogo-burbuja">
+                    {nodo.lineas.map((l: string, i: number) => (
+                      <p key={i} style={{ marginBottom: i < nodo.lineas.length - 1 ? 8 : 0 }}>{l}</p>
+                    ))}
+                  </div>
+
+                  {nodo.afirmacion && (
+                    <div style={{
+                      fontSize: 12,
+                      padding: '5px 10px',
+                      background: nodo.afirmacion.veredicto === 'verdadero'
+                        ? 'var(--color-exito-suave)'
+                        : nodo.afirmacion.veredicto === 'parcial'
+                          ? 'var(--color-advertencia-suave)'
+                          : 'var(--color-peligro-suave)',
+                      borderRadius: 'var(--radio-sm)',
+                      marginBottom: 10,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}>
+                      {nodo.afirmacion.veredicto === 'verdadero' ? '✅' : nodo.afirmacion.veredicto === 'parcial' ? '⚠️' : '❌'}
+                      <span>{nodo.afirmacion.id}</span>
+                    </div>
+                  )}
+
+                  {!respondidos.has(nodo.nodoId) && nodo.respuestas?.length > 0 && (
+                    <div className="respuestas-lista">
+                      {nodo.respuestas.map((r: any, i: number) => (
+                        <button key={i} className="respuesta-opcion"
+                          onClick={() => responder(nodo.nodoId, r.efecto, personaje, r.texto)}>
+                          <span>{r.texto}</span>
+                          <span style={{
+                            fontSize: 11,
+                            color: r.credibilidad > 0 ? 'var(--color-exito)' : r.credibilidad < 0 ? 'var(--color-peligro)' : 'var(--color-texto-terciario)',
+                            marginLeft: 8,
+                            fontWeight: 600,
+                          }}>
+                            {r.credibilidad > 0 ? `+${r.credibilidad}` : r.credibilidad}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {conversacion
+                .filter(c => c.personaje === personaje)
+                .map((c, i) => (
+                  <div key={`conv-${i}`} className={`dialogo-burbuja ${c.tipo === 'jugador' ? 'jugador' : ''}`}>
+                    {c.lineas.map((l, j) => <p key={j}>{l}</p>)}
+                  </div>
                 ))}
-              </div>
-
-              {nodo.afirmacion && (
-                <div style={{ fontSize: 12, padding: '4px 8px', background: '#fefcbf', borderRadius: 4, marginBottom: 8, display: 'inline-block' }}>
-                  Afirmacion: {nodo.afirmacion.veredicto === 'verdadero' ? '✅' : nodo.afirmacion.veredicto === 'parcial' ? '⚠️' : '❌'}
-                  {' '}{nodo.afirmacion.id}
-                </div>
-              )}
-
-              {!respondidos.has(nodo.nodoId) && nodo.respuestas?.length > 0 && (
-                <div className="respuestas-lista">
-                  {nodo.respuestas.map((r: any, i: number) => (
-                    <button key={i} className="respuesta-opcion"
-                      onClick={() => responder(nodo.nodoId, r.efecto, personaje, r.texto)}>
-                      {r.texto}
-                      <span style={{ fontSize: 11, color: 'var(--color-texto-secundario)', marginLeft: 8 }}>
-                        ({r.credibilidad > 0 ? `+${r.credibilidad}` : r.credibilidad} cred)
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
-          ))}
-
-          {conversacion
-            .filter(c => c.personaje === personaje)
-            .map((c, i) => (
-              <div key={`conv-${i}`} className={`dialogo-burbuja ${c.tipo === 'jugador' ? 'jugador' : ''}`}>
-                {c.lineas.map((l, j) => <p key={j}>{l}</p>)}
-              </div>
-            ))}
-        </div>
-      ))}
+          );
+        })}
+      </div>
     </div>
   );
 }

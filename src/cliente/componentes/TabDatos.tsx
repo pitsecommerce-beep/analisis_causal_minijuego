@@ -5,12 +5,12 @@ const HERRAMIENTAS = [
   { id: 'histograma', nombre: 'Histograma', icono: '📊' },
   { id: 'pareto', nombre: 'Pareto', icono: '📉' },
   { id: 'diagrama_corrida', nombre: 'Corrida', icono: '📈' },
-  { id: 'dispersion', nombre: 'Dispersión', icono: '⚡' },
+  { id: 'dispersion', nombre: 'Dispersion', icono: '⚡' },
   { id: 'tabla_dinamica', nombre: 'Pivote', icono: '🔄' },
   { id: 'filtro', nombre: 'Filtrar', icono: '🔍' },
   { id: 'contar', nombre: 'Contar', icono: '🔢' },
   { id: 'sumar', nombre: 'Sumar', icono: '➕' },
-  { id: 'estadisticas', nombre: 'Estadísticas', icono: '📐' },
+  { id: 'estadisticas', nombre: 'Stats', icono: '📐' },
 ];
 
 const MAPA_VERIFICACIONES: Record<string, { columnas: string[]; herramientas: string[] }> = {
@@ -86,7 +86,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
 
   async function aplicarHerramienta(herramientaId: string) {
     if (!colSeleccionada) {
-      setResultado('Selecciona una columna primero (haz clic en el encabezado)');
+      setResultado('Selecciona una columna primero (haz doble clic en el encabezado)');
       return;
     }
 
@@ -151,11 +151,25 @@ export function TabDatos({ onHerramientaUsada }: Props) {
     { campo: 'comentarioCliente' },
   ];
 
-  if (cargando) return <p style={{ padding: 20 }}>Cargando datos...</p>;
+  if (cargando) {
+    return (
+      <div style={{ padding: 40, textAlign: 'center' }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: '50%',
+          border: '3px solid var(--color-borde)',
+          borderTopColor: 'var(--color-primario)',
+          animation: 'spin 0.8s linear infinite',
+          margin: '0 auto 12px',
+        }} />
+        <p style={{ color: 'var(--color-texto-secundario)', fontSize: 14 }}>Cargando datos...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14, alignItems: 'center', flexWrap: 'wrap' }}>
         <button className={`tab ${tab === 'solicitudes' ? 'activo' : ''}`}
           onClick={() => setTab('solicitudes')}>
           Solicitudes ({solicitudes.length})
@@ -165,13 +179,13 @@ export function TabDatos({ onHerramientaUsada }: Props) {
           Comentarios ({comentarios.length})
         </button>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, alignItems: 'center' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
           {filtroCol && (
             <>
               <input value={filtroVal} onChange={e => setFiltroVal(e.target.value)}
                 placeholder={`Filtrar ${filtroCol}...`}
-                style={{ width: 160 }} />
-              <button className="btn-fantasma" style={{ padding: '4px 8px', fontSize: 12 }}
+                style={{ width: 180, fontSize: 13 }} />
+              <button className="btn-fantasma" style={{ padding: '6px 10px', fontSize: 12 }}
                 onClick={() => { setFiltroCol(''); setFiltroVal(''); }}>
                 Limpiar
               </button>
@@ -181,15 +195,36 @@ export function TabDatos({ onHerramientaUsada }: Props) {
       </div>
 
       {colSeleccionada && (
-        <div style={{ marginBottom: 12, padding: '8px 12px', background: '#ebf8ff', borderRadius: 'var(--radio)', fontSize: 13 }}>
-          Columna seleccionada: <strong>{colSeleccionada}</strong>
+        <div style={{
+          marginBottom: 12,
+          padding: '8px 14px',
+          background: 'var(--color-primario-suave)',
+          borderRadius: 'var(--radio)',
+          fontSize: 13,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <span>
+            Columna seleccionada: <strong style={{ color: 'var(--color-primario)' }}>{colSeleccionada}</strong>
+          </span>
+          <button
+            onClick={() => setColSeleccionada('')}
+            style={{ background: 'none', border: 'none', fontSize: 16, color: 'var(--color-texto-terciario)', padding: '0 4px', cursor: 'pointer' }}
+          >
+            ×
+          </button>
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
         {HERRAMIENTAS.map(h => (
           <button key={h.id} className="herramienta-btn" onClick={() => aplicarHerramienta(h.id)}
-            style={{ background: herramientasUsadas.has(h.id) ? '#fffff0' : undefined }}>
+            style={{
+              background: herramientasUsadas.has(h.id) ? 'var(--color-acento-suave)' : undefined,
+              borderColor: herramientasUsadas.has(h.id) ? 'var(--color-acento)' : undefined,
+              color: herramientasUsadas.has(h.id) ? 'var(--color-acento)' : undefined,
+            }}>
             <span style={{ fontSize: 18 }}>{h.icono}</span>
             {h.nombre}
           </button>
@@ -197,48 +232,77 @@ export function TabDatos({ onHerramientaUsada }: Props) {
       </div>
 
       {resultado && (
-        <pre style={{ background: '#1a202c', color: '#e2e8f0', padding: 16, borderRadius: 'var(--radio)',
-          marginBottom: 12, fontSize: 13, whiteSpace: 'pre-wrap', maxHeight: 200, overflow: 'auto' }}>
+        <pre style={{
+          background: 'var(--color-primario)',
+          color: '#e2e8f0',
+          padding: 18,
+          borderRadius: 'var(--radio)',
+          marginBottom: 14,
+          fontSize: 13,
+          whiteSpace: 'pre-wrap',
+          maxHeight: 200,
+          overflow: 'auto',
+          lineHeight: 1.6,
+          fontFamily: '"SF Mono", "Fira Code", "Cascadia Code", monospace',
+        }}>
           {resultado}
         </pre>
       )}
 
       {verificaciones.length > 0 && (
-        <div style={{ marginBottom: 12, fontSize: 13 }}>
-          Verificaciones desbloqueadas: {verificaciones.map(v => (
-            <span key={v} className="badge badge-exito" style={{ marginRight: 4 }}>{v}</span>
+        <div style={{
+          marginBottom: 14,
+          fontSize: 13,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          flexWrap: 'wrap',
+        }}>
+          <span style={{ color: 'var(--color-texto-secundario)' }}>Verificaciones:</span>
+          {verificaciones.map(v => (
+            <span key={v} className="badge badge-exito">{v}</span>
           ))}
         </div>
       )}
 
-      <div style={{ overflow: 'auto', maxHeight: 'calc(100vh - 380px)' }}>
-        <table className="datos">
-          <thead>
-            <tr>
-              {cols.map((c: any) => (
-                <th key={c.campo}
-                  onClick={() => ordenar(c.campo)}
-                  onDoubleClick={() => setColSeleccionada(c.campo)}
-                  style={{ background: colSeleccionada === c.campo ? 'var(--color-acento)' : undefined,
-                    color: colSeleccionada === c.campo ? 'var(--color-primario)' : undefined }}>
-                  {c.nombre ?? c.campo}
-                  {ordenCol === c.campo ? (ordenAsc ? ' ▲' : ' ▼') : ''}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {datosFiltrados.slice(0, 200).map((r, i) => (
-              <tr key={i}>
+      <div className="tarjeta" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ overflow: 'auto', maxHeight: 'calc(100vh - 400px)' }}>
+          <table className="datos">
+            <thead>
+              <tr>
                 {cols.map((c: any) => (
-                  <td key={c.campo}>{formatVal(r[c.campo])}</td>
+                  <th key={c.campo}
+                    onClick={() => ordenar(c.campo)}
+                    onDoubleClick={() => setColSeleccionada(c.campo)}
+                    style={{
+                      background: colSeleccionada === c.campo ? 'var(--color-acento)' : undefined,
+                      color: colSeleccionada === c.campo ? '#fff' : undefined,
+                    }}>
+                    {c.nombre ?? c.campo}
+                    {ordenCol === c.campo ? (ordenAsc ? ' ▲' : ' ▼') : ''}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {datosFiltrados.slice(0, 200).map((r, i) => (
+                <tr key={i}>
+                  {cols.map((c: any) => (
+                    <td key={c.campo}>{formatVal(r[c.campo])}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {datosFiltrados.length > 200 && (
-          <p style={{ padding: 8, fontSize: 13, color: 'var(--color-texto-secundario)' }}>
+          <p style={{
+            padding: '10px 14px',
+            fontSize: 13,
+            color: 'var(--color-texto-terciario)',
+            borderTop: '1px solid var(--color-borde-sutil)',
+            background: 'var(--color-superficie-alt)',
+          }}>
             Mostrando 200 de {datosFiltrados.length} filas
           </p>
         )}
