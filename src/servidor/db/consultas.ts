@@ -196,3 +196,88 @@ export async function listarVerificaciones(partidaId: string): Promise<string[]>
   if (error) throw error;
   return (data ?? []).map((r) => r.verificacion_id);
 }
+
+// --- Experimento ---
+
+export async function actualizarSesionExperimento(
+  id: string,
+  modoExperimento: boolean,
+  pctTratamiento: number
+) {
+  const { error } = await sb()
+    .from('sesiones_juego')
+    .update({ modo_experimento: modoExperimento, pct_tratamiento: pctTratamiento })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export async function asignarGrupoJugador(jugadorId: string, grupo: 'control' | 'tratamiento') {
+  const { error } = await sb()
+    .from('jugadores')
+    .update({ grupo })
+    .eq('id', jugadorId);
+  if (error) throw error;
+}
+
+export async function registrarConsentimiento(jugadorId: string, acepta: boolean) {
+  const update: Record<string, unknown> = {
+    consentimiento: acepta,
+    consentimiento_at: new Date().toISOString(),
+  };
+  const { error } = await sb()
+    .from('jugadores')
+    .update(update)
+    .eq('id', jugadorId);
+  if (error) throw error;
+}
+
+// --- Telemetria ---
+
+export async function registrarEvento(
+  partidaId: string,
+  jugadorId: string,
+  sesionId: string,
+  tipo: string,
+  datos: Record<string, unknown> = {}
+) {
+  const { error } = await sb()
+    .from('telemetria')
+    .insert({ partida_id: partidaId, jugador_id: jugadorId, sesion_id: sesionId, tipo, datos });
+  if (error) throw error;
+}
+
+export async function obtenerTelemetriaSesion(sesionId: string) {
+  const { data, error } = await sb()
+    .from('telemetria')
+    .select('*, jugadores(nombre, grupo)')
+    .eq('sesion_id', sesionId)
+    .order('created_at');
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function obtenerResumenExperimento(sesionId: string) {
+  const { data: jugadores, error: errJ } = await sb()
+    .from('jugadores')
+    .select('id, nombre, grupo, consentimiento')
+    .eq('sesion_id', sesionId);
+  if (errJ) throw errJ;
+
+  const { data: partidas, error: errP } = await sb()
+    .from('partidas')
+    .select('jugador_id, fase, puntuacion, desenlace_id')
+    .eq('sesion_id', sesionId);
+  if (errP) throw errP;
+
+  const { count: totalEventos, error: errT } = await sb()
+    .from('telemetria')
+    .select('*', { count: 'exact', head: true })
+    .eq('sesion_id', sesionId);
+  if (errT) throw errT;
+
+  return {
+    jugadores: jugadores ?? [],
+    partidas: partidas ?? [],
+    totalEventos: totalEventos ?? 0,
+  };
+}

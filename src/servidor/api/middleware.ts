@@ -12,6 +12,8 @@ export interface RequestJugador extends Request {
     nombre: string;
     sesionId: string;
     sesionEstado: string;
+    grupo: string | null;
+    consentimiento: boolean;
   };
 }
 
@@ -65,6 +67,8 @@ export async function autenticarJugador(
       nombre: jugador.nombre,
       sesionId: sesion.id as string,
       sesionEstado: sesion.estado as string,
+      grupo: jugador.grupo ?? null,
+      consentimiento: jugador.consentimiento ?? false,
     };
     next();
   } catch {

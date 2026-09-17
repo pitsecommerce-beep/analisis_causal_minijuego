@@ -12,7 +12,11 @@ import {
   registrarJugador, contarJugadores, listarJugadoresSesion,
   crearPartidaDB, obtenerPartida, actualizarPartida,
   listarPartidasSesion, registrarVerificacion, listarVerificaciones,
+  actualizarSesionExperimento, asignarGrupoJugador,
+  registrarConsentimiento, registrarEvento,
+  obtenerTelemetriaSesion, obtenerResumenExperimento,
 } from '../db/consultas.js';
+import { generarRecomendacion } from '../experimento/asesor-algoritmico.js';
 import { serializarDialogo, deserializarDialogo } from '../db/serializar.js';
 import { autenticarProfesor, autenticarJugador } from './middleware.js';
 import type { RequestProfesor, RequestJugador } from './middleware.js';
@@ -214,10 +218,18 @@ app.post('/api/sesion/:codigo/unirse', async (req, res) => {
     }
 
     const jugador = await registrarJugador(sesion.id, nombre, email);
+
+    if (sesion.modo_experimento) {
+      const pct = sesion.pct_tratamiento ?? 50;
+      const grupo = Math.random() * 100 < pct ? 'tratamiento' : 'control';
+      await asignarGrupoJugador(jugador.id, grupo);
+    }
+
     res.json({
       jugadorId: jugador.id,
       token: jugador.token,
       sesion: { id: sesion.id, nombre: sesion.nombre, estado: sesion.estado },
+      modoExperimento: sesion.modo_experimento ?? false,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : '';
@@ -800,6 +812,154 @@ app.get('/api/config/acciones', autenticarJugador, (_req, res) => {
 app.get('/api/config/metricas', autenticarJugador, async (_req, res) => {
   const { METRICAS_DISPONIBLES } = await import('../motor/ciclos.js');
   res.json(METRICAS_DISPONIBLES);
+});
+
+// ╔══════════════════════════════════════╗
+// ║     RUTAS DE EXPERIMENTO (ADENDA)   ║
+// ╚══════════════════════════════════════╝
+
+app.post('/api/profesor/sesion/:id/experimento', autenticarProfesor, async (req, res) => {
+  const { modoExperimento, pctTratamiento } = req.body;
+  try {
+    await actualizarSesionExperimento(
+      req.params.id!,
+      modoExperimento ?? false,
+      pctTratamiento ?? 50
+    );
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: 'Error al configurar experimento' });
+  }
+});
+
+app.post('/api/consentimiento', autenticarJugador, async (req, res) => {
+  const { acepta } = req.body;
+  try {
+    const jugador = (req as RequestJugador).jugador;
+    await registrarConsentimiento(jugador.id, acepta ?? false);
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: 'Error al registrar consentimiento' });
+  }
+});
+
+app.get('/api/experimento/info', autenticarJugador, async (req, res) => {
+  try {
+    const jugador = (req as RequestJugador).jugador;
+    const sesion = await obtenerSesionPorId(jugador.sesionId);
+    res.json({
+      modoExperimento: sesion.modo_experimento ?? false,
+      grupo: jugador.grupo ?? null,
+      consentimiento: jugador.consentimiento ?? false,
+    });
+  } catch {
+    res.status(500).json({ error: 'Error al obtener info del experimento' });
+  }
+});
+
+app.get('/api/experimento/recomendacion', autenticarJugador, async (req, res) => {
+  try {
+    const jugador = (req as RequestJugador).jugador;
+    if (jugador.grupo !== 'tratamiento') {
+      res.status(403).json({ error: 'No disponible para tu grupo' });
+      return;
+    }
+
+    const partida = await obtenerPartida(jugador.id);
+    if (!partida || partida.fase !== 'jugando') {
+      res.status(400).json({ error: 'Partida no activa' });
+      return;
+    }
+
+    const estado = partida.estado as any;
+    const rec = generarRecomendacion(estado, config.acciones as any);
+
+    await registrarEvento(partida.id, jugador.id, jugador.sesionId, 'consulta_asesor_algoritmico', {
+      recomendacion: rec,
+      ciclo: estado.cicloActual,
+    });
+
+    res.json(rec);
+  } catch {
+    res.status(500).json({ error: 'Error al generar recomendacion' });
+  }
+});
+
+app.post('/api/telemetria', autenticarJugador, async (req, res) => {
+  const { tipo, datos } = req.body;
+  if (!tipo) {
+    res.status(400).json({ error: 'tipo requerido' });
+    return;
+  }
+
+  try {
+    const jugador = (req as RequestJugador).jugador;
+    const partida = await obtenerPartida(jugador.id);
+    if (!partida) {
+      res.status(404).json({ error: 'Partida no encontrada' });
+      return;
+    }
+
+    await registrarEvento(partida.id, jugador.id, jugador.sesionId, tipo, datos ?? {});
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: 'Error al registrar evento' });
+  }
+});
+
+app.get('/api/profesor/sesion/:id/telemetria', autenticarProfesor, async (req, res) => {
+  try {
+    const data = await obtenerTelemetriaSesion(req.params.id!);
+    res.json(data);
+  } catch {
+    res.status(500).json({ error: 'Error al obtener telemetria' });
+  }
+});
+
+app.get('/api/profesor/sesion/:id/resumen-experimento', autenticarProfesor, async (req, res) => {
+  try {
+    const resumen = await obtenerResumenExperimento(req.params.id!);
+    res.json(resumen);
+  } catch {
+    res.status(500).json({ error: 'Error al obtener resumen' });
+  }
+});
+
+app.get('/api/profesor/sesion/:id/exportar', async (req, res) => {
+  const tokenQuery = req.query['token'] as string | undefined;
+  if (tokenQuery && !req.headers.authorization) {
+    req.headers.authorization = `Bearer ${tokenQuery}`;
+  }
+  await new Promise<void>((resolve, reject) => {
+    autenticarProfesor(req, res, ((err?: any) => err ? reject(err) : resolve()) as any);
+  }).catch(() => { return; });
+  if (res.headersSent) return;
+
+  const formato = (req.query['formato'] as string) ?? 'json';
+
+  try {
+    const [telemetria, resumen] = await Promise.all([
+      obtenerTelemetriaSesion(req.params.id!),
+      obtenerResumenExperimento(req.params.id!),
+    ]);
+
+    if (formato === 'csv') {
+      const lineas = ['timestamp,jugador,grupo,tipo,datos'];
+      for (const e of telemetria) {
+        const nombre = (e.jugadores as any)?.nombre ?? '';
+        const grupo = (e.jugadores as any)?.grupo ?? '';
+        const datosStr = JSON.stringify(e.datos).replace(/"/g, '""');
+        lineas.push(`${e.created_at},"${nombre}","${grupo}","${e.tipo}","${datosStr}"`);
+      }
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=telemetria_${req.params.id}.csv`);
+      res.send(lineas.join('\n'));
+    } else {
+      res.json({ resumen, telemetria });
+    }
+  } catch {
+    res.status(500).json({ error: 'Error al exportar' });
+  }
 });
 
 // ╔══════════════════════════════════════╗

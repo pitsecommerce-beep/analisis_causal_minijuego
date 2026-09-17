@@ -1,9 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { TabDatos } from '../componentes/TabDatos.js';
 import { TabAsesores } from '../componentes/TabAsesores.js';
 import { TabDecisiones } from '../componentes/TabDecisiones.js';
+import { Consentimiento } from '../componentes/Consentimiento.js';
+import { AsesorAlgoritmico } from '../componentes/AsesorAlgoritmico.js';
 
 type Vista = 'datos' | 'asesores' | 'decisiones';
 
@@ -14,6 +16,9 @@ export function Juego() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [herramientasUsadas, setHerramientasUsadas] = useState<string[]>([]);
+  const [infoExp, setInfoExp] = useState<{ modoExperimento: boolean; grupo: string | null; consentimiento: boolean } | null>(null);
+  const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false);
+  const inicioRef = useRef(Date.now());
 
   const nombreJugador = localStorage.getItem('nombreJugador') ?? 'Jugador';
   const sesionNombre = localStorage.getItem('sesionNombre') ?? '';
@@ -23,14 +28,33 @@ export function Juego() {
       nav('/unirse');
       return;
     }
-    iniciar();
+    cargarExperimentoYPartida();
   }, []);
+
+  async function cargarExperimentoYPartida() {
+    setCargando(true);
+    try {
+      const info = await api.experimento.info();
+      setInfoExp(info);
+
+      if (info.modoExperimento && !info.consentimiento) {
+        setMostrarConsentimiento(true);
+        setCargando(false);
+        return;
+      }
+
+      await iniciar();
+    } catch {
+      await iniciar();
+    }
+  }
 
   async function iniciar() {
     setCargando(true);
     try {
       const res = await api.partida.iniciar();
       setEstado(res);
+      telemetria('partida_iniciada', { ciclo: res.cicloActual });
     } catch (err: any) {
       if (err.message.includes('aun no ha iniciado')) {
         setError('La sesion aun no ha sido iniciada por el profesor. Espera un momento y recarga.');
@@ -39,6 +63,11 @@ export function Juego() {
       }
     }
     setCargando(false);
+  }
+
+  function telemetria(tipo: string, datos?: Record<string, unknown>) {
+    if (!infoExp?.modoExperimento) return;
+    api.telemetria.registrar(tipo, datos).catch(() => {});
   }
 
   const recargarEstado = useCallback(async () => {
@@ -50,17 +79,44 @@ export function Juego() {
 
   function onEstadoCambio(nuevoEstado: any) {
     setEstado(nuevoEstado);
+    telemetria('estado_cambio', { ciclo: nuevoEstado?.cicloActual, vidas: nuevoEstado?.vidas });
     if (nuevoEstado?.terminada || nuevoEstado?.fase === 'finalizada') {
+      telemetria('partida_finalizada', {
+        duracionSegundos: Math.round((Date.now() - inicioRef.current) / 1000),
+        herramientasUsadas,
+      });
+      localStorage.setItem('herramientasUsadas', JSON.stringify(herramientasUsadas));
       nav('/resultados');
     }
   }
 
   function onCredibilidadCambio(cred: number) {
     setEstado((prev: any) => prev ? { ...prev, credibilidad: cred } : prev);
+    telemetria('credibilidad_cambio', { credibilidad: cred });
   }
 
   function onHerramientaUsada(h: string) {
-    setHerramientasUsadas(prev => prev.includes(h) ? prev : [...prev, h]);
+    setHerramientasUsadas(prev => {
+      const next = prev.includes(h) ? prev : [...prev, h];
+      localStorage.setItem('herramientasUsadas', JSON.stringify(next));
+      return next;
+    });
+    telemetria('herramienta_usada', { herramienta: h });
+  }
+
+  function onCambioVista(v: Vista) {
+    setVista(v);
+    telemetria('cambio_vista', { vista: v });
+  }
+
+  function onConsentimientoCompletado() {
+    setMostrarConsentimiento(false);
+    api.experimento.info().then(info => setInfoExp(info)).catch(() => {});
+    iniciar();
+  }
+
+  if (mostrarConsentimiento) {
+    return <Consentimiento onAceptado={onConsentimientoCompletado} />;
   }
 
   if (cargando) {
@@ -93,6 +149,7 @@ export function Juego() {
   const vidas = estado.vidas ?? 3;
   const credibilidad = estado.credibilidad ?? 50;
   const presupuesto = estado.presupuestoDisponible ?? 0;
+  const esTratamiento = infoExp?.grupo === 'tratamiento';
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -130,18 +187,20 @@ export function Juego() {
       <div className="contenedor" style={{ flex: 1, paddingTop: 16, paddingBottom: 32 }}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           <button className={`tab ${vista === 'datos' ? 'activo' : ''}`}
-            onClick={() => setVista('datos')}>
+            onClick={() => onCambioVista('datos')}>
             Datos
           </button>
           <button className={`tab ${vista === 'asesores' ? 'activo' : ''}`}
-            onClick={() => setVista('asesores')}>
+            onClick={() => onCambioVista('asesores')}>
             Sala de Juntas
           </button>
           <button className={`tab ${vista === 'decisiones' ? 'activo' : ''}`}
-            onClick={() => setVista('decisiones')}>
+            onClick={() => onCambioVista('decisiones')}>
             Decisiones
           </button>
         </div>
+
+        {esTratamiento && vista === 'decisiones' && <AsesorAlgoritmico />}
 
         {vista === 'datos' && <TabDatos onHerramientaUsada={onHerramientaUsada} />}
         {vista === 'asesores' && (

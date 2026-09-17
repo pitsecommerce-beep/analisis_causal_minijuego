@@ -62,4 +62,18 @@ export const api = {
     acciones: () => request<any[]>('GET', '/config/acciones'),
     metricas: () => request<any[]>('GET', '/config/metricas'),
   },
+  experimento: {
+    info: () => request<{ modoExperimento: boolean; grupo: string | null; consentimiento: boolean }>('GET', '/experimento/info'),
+    consentimiento: (acepta: boolean) => request<any>('POST', '/consentimiento', { acepta }),
+    recomendacion: () => request<any>('GET', '/experimento/recomendacion'),
+    configurar: (sesionId: string, modoExperimento: boolean, pctTratamiento: number) =>
+      request<any>('POST', `/profesor/sesion/${sesionId}/experimento`, { modoExperimento, pctTratamiento }),
+    telemetria: (sesionId: string) => request<any[]>('GET', `/profesor/sesion/${sesionId}/telemetria`),
+    resumen: (sesionId: string) => request<any>('GET', `/profesor/sesion/${sesionId}/resumen-experimento`),
+    exportarUrl: (sesionId: string, formato: string) => `${BASE}/profesor/sesion/${sesionId}/exportar?formato=${formato}`,
+  },
+  telemetria: {
+    registrar: (tipo: string, datos?: Record<string, unknown>) =>
+      request<any>('POST', '/telemetria', { tipo, datos }),
+  },
 };

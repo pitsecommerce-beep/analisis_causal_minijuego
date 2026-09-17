@@ -65,6 +65,9 @@ function Panel() {
   const [nombre, setNombre] = useState('');
   const [detalle, setDetalle] = useState<any>(null);
   const [error, setError] = useState('');
+  const [modoExp, setModoExp] = useState(false);
+  const [pctTrat, setPctTrat] = useState(50);
+  const [resumenExp, setResumenExp] = useState<any>(null);
 
   useEffect(() => {
     if (!localStorage.getItem('token') || localStorage.getItem('tipoAuth') !== 'profesor') {
@@ -97,7 +100,29 @@ function Panel() {
     try {
       const data = await api.profesor.sesion(id);
       setDetalle(data);
+      setModoExp(data.sesion.modo_experimento ?? false);
+      setPctTrat(data.sesion.pct_tratamiento ?? 50);
+      if (data.sesion.modo_experimento) {
+        api.experimento.resumen(id).then(r => setResumenExp(r)).catch(() => {});
+      } else {
+        setResumenExp(null);
+      }
     } catch { /* ignore */ }
+  }
+
+  async function guardarExperimento() {
+    if (!detalle) return;
+    try {
+      await api.experimento.configurar(detalle.sesion.id, modoExp, pctTrat);
+      await verDetalle(detalle.sesion.id);
+    } catch { /* ignore */ }
+  }
+
+  function exportarDatos(formato: string) {
+    if (!detalle) return;
+    const token = localStorage.getItem('token');
+    const url = api.experimento.exportarUrl(detalle.sesion.id, formato);
+    window.open(`${url}&token=${token}`, '_blank');
   }
 
   async function iniciarSesion(id: string) {
@@ -204,6 +229,55 @@ function Panel() {
                   </table>
                 )
               }
+
+              <div style={{ marginTop: 20, borderTop: '1px solid var(--color-borde)', paddingTop: 16 }}>
+                <h4 style={{ marginBottom: 8 }}>Modo Experimento (ADENDA)</h4>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={modoExp} onChange={e => setModoExp(e.target.checked)} />
+                  <span style={{ fontSize: 14 }}>Activar modo experimento</span>
+                </label>
+                {modoExp && (
+                  <div style={{ marginBottom: 8 }}>
+                    <label style={{ fontSize: 13, display: 'block', marginBottom: 4 }}>
+                      % grupo tratamiento: {pctTrat}%
+                    </label>
+                    <input type="range" min={0} max={100} value={pctTrat}
+                      onChange={e => setPctTrat(Number(e.target.value))}
+                      style={{ width: '100%' }} />
+                  </div>
+                )}
+                <button className="btn-primario" onClick={guardarExperimento}
+                  style={{ padding: '6px 16px', fontSize: 13 }}>
+                  Guardar config
+                </button>
+              </div>
+
+              {modoExp && resumenExp && (
+                <div style={{ marginTop: 16, borderTop: '1px solid var(--color-borde)', paddingTop: 16 }}>
+                  <h4 style={{ marginBottom: 8 }}>Resumen del Experimento</h4>
+                  <div style={{ fontSize: 13, marginBottom: 12 }}>
+                    <p>Total eventos de telemetria: <strong>{resumenExp.totalEventos}</strong></p>
+                    <p>
+                      Control: <strong>{resumenExp.jugadores.filter((j: any) => j.grupo === 'control').length}</strong>
+                      {' / '}
+                      Tratamiento: <strong>{resumenExp.jugadores.filter((j: any) => j.grupo === 'tratamiento').length}</strong>
+                    </p>
+                    <p>
+                      Con consentimiento: <strong>{resumenExp.jugadores.filter((j: any) => j.consentimiento).length}</strong>
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="btn-acento" onClick={() => exportarDatos('json')}
+                      style={{ padding: '6px 12px', fontSize: 13 }}>
+                      Exportar JSON
+                    </button>
+                    <button className="btn-acento" onClick={() => exportarDatos('csv')}
+                      style={{ padding: '6px 12px', fontSize: 13 }}>
+                      Exportar CSV
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
