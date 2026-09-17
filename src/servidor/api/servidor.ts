@@ -32,6 +32,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const clientePath = path.resolve(__dirname, '../../../dist/cliente');
+if (fs.existsSync(clientePath)) {
+  app.use(express.static(clientePath));
+}
+
 // --- Datos cargados al inicio ---
 
 let datosJuego: DatosCargados;
@@ -800,6 +805,12 @@ app.get('/api/config/metricas', autenticarJugador, async (_req, res) => {
 // ╔══════════════════════════════════════╗
 // ║     INICIO                          ║
 // ╚══════════════════════════════════════╝
+
+if (fs.existsSync(clientePath)) {
+  app.get(/^\/(?!api\/).*/, (_req, res) => {
+    res.sendFile(path.join(clientePath, 'index.html'));
+  });
+}
 
 const PORT = parseInt(process.env['PORT'] ?? '3000', 10);
 

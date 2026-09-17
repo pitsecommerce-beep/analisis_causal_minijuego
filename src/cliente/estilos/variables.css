@@ -1,0 +1,20 @@
+:root {
+  --color-fondo: #f0f4f8;
+  --color-superficie: #ffffff;
+  --color-borde: #e2e8f0;
+  --color-texto: #1a202c;
+  --color-texto-secundario: #718096;
+  --color-primario: #1a365d;
+  --color-primario-claro: #2b6cb0;
+  --color-acento: #d69e2e;
+  --color-acento-claro: #ecc94b;
+  --color-exito: #38a169;
+  --color-peligro: #e53e3e;
+  --color-advertencia: #dd6b20;
+  --color-info: #3182ce;
+  --radio: 8px;
+  --sombra: 0 1px 3px rgba(0,0,0,0.1);
+  --sombra-lg: 0 4px 12px rgba(0,0,0,0.1);
+  --fuente: 'Inter', system-ui, sans-serif;
+  --ancho-max: 1280px;
+}
