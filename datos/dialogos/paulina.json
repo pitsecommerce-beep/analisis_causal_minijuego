@@ -1,0 +1,193 @@
+[
+  {
+    "id": "paulina_c1_apertura",
+    "personaje": "paulina",
+    "ciclo": 1,
+    "fase": "apertura",
+    "expresion": "precisa",
+    "lineas": [
+      "Hay un detalle. Los expedientes que el buró rechaza ya traían semanas de trabajo encima.",
+      "Estamos armando expedientes de gente que no califica."
+    ],
+    "afirmacion": { "id": "trabajo_perdido_buro", "verificable": true, "veredicto": "cierta" },
+    "respuestas": [
+      { "texto": "Déjame ver cuántos días se pierden.", "efecto": "abrir_laptop", "credibilidad": 0 },
+      { "texto": "Subamos el umbral del score.", "efecto": "aceptar:8", "credibilidad": 1 },
+      { "texto": "Paulina, el dato es correcto. Pero la solución no es rechazar más gente.", "requiere": "verifico:trabajo_perdido_buro", "efecto": "refutar", "credibilidad": 2 },
+      { "texto": "Lo reviso después.", "efecto": "postergar", "credibilidad": -1 }
+    ]
+  },
+  {
+    "id": "paulina_c1_refutada",
+    "personaje": "paulina",
+    "ciclo": 1,
+    "fase": "refutado",
+    "expresion": "fria",
+    "condicion": { "tipo": "refutado", "afirmacion": "trabajo_perdido_buro" },
+    "lineas": [
+      "¿Y entonces qué propones? ¿Seguir gastando recursos en expedientes que van a rebotar?"
+    ],
+    "respuestas": [
+      { "texto": "Correr el buró antes de la captura, no después.", "efecto": "contraargumentar", "credibilidad": 2 },
+      { "texto": "Ya veré cómo resolverlo.", "efecto": "postergar", "credibilidad": 0 }
+    ]
+  },
+  {
+    "id": "paulina_c1_aceptado",
+    "personaje": "paulina",
+    "ciclo": 1,
+    "fase": "aceptado",
+    "expresion": "satisfecha",
+    "condicion": { "tipo": "aceptaron_su_accion" },
+    "lineas": [
+      "Con el umbral más alto filtramos antes. Van a bajar los tiempos.",
+      "Y la cartera sale más limpia."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_c2_apertura",
+    "personaje": "paulina",
+    "ciclo": 2,
+    "fase": "apertura",
+    "expresion": "seca",
+    "lineas": [
+      "¿Ya revisaste lo del buró? Son casi siete mil días-solicitud desperdiciados."
+    ],
+    "respuestas": [
+      { "texto": "Sí, tengo los números.", "efecto": "abrir_laptop", "credibilidad": 0 },
+      { "texto": "Vamos con tu propuesta del score.", "efecto": "aceptar:8", "credibilidad": 1 },
+      { "texto": "Paulina, hay otra forma de atacarlo sin perder conversión.", "requiere": "verifico:trabajo_perdido_buro", "efecto": "refutar", "credibilidad": 2 }
+    ]
+  },
+  {
+    "id": "paulina_c2_conversion_cayendo",
+    "personaje": "paulina",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "alarmada",
+    "condicion": { "tipo": "kpi", "metrica": "conversionPct", "operador": "<", "valor": 40 },
+    "lineas": [
+      "Director, la conversión se desplomó. Estamos abajo del cuarenta por ciento.",
+      "Si endurecimos el score, esto es lo que pasa."
+    ],
+    "respuestas": [
+      { "texto": "Tenemos que revertir eso.", "efecto": "postergar", "credibilidad": 0 }
+    ]
+  },
+  {
+    "id": "paulina_c2_conversion_bien",
+    "personaje": "paulina",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "neutral",
+    "condicion": { "tipo": "kpi", "metrica": "conversionPct", "operador": ">=", "valor": 40 },
+    "lineas": [
+      "La conversión se mantiene. Bien."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_c3_apertura",
+    "personaje": "paulina",
+    "ciclo": 3,
+    "fase": "apertura",
+    "expresion": "analitica",
+    "lineas": [
+      "Tercer ciclo. ¿Cómo va el trabajo perdido en rechazados?"
+    ],
+    "respuestas": [
+      { "texto": "Está bajando.", "efecto": "mostrar_resultados", "credibilidad": 1 },
+      { "texto": "No lo he medido.", "efecto": "postergar", "credibilidad": -1 }
+    ]
+  },
+  {
+    "id": "paulina_c3_buro_reordenado",
+    "personaje": "paulina",
+    "ciclo": 3,
+    "fase": "reaccion",
+    "expresion": "intrigada",
+    "condicion": { "tipo": "accion_elegida", "accionId": 4 },
+    "lineas": [
+      "Ah, moviste el buró al principio. Eso sí reduce el desperdicio sin tirar la conversión.",
+      "No es lo que yo había propuesto, pero funciona."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_c4_apertura",
+    "personaje": "paulina",
+    "ciclo": 4,
+    "fase": "apertura",
+    "expresion": "evaluando",
+    "lineas": [
+      "Última junta. Veamos qué pasó con los números de riesgo."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_c4_resultado_bueno",
+    "personaje": "paulina",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "reconociendo",
+    "condicion": { "tipo": "kpi", "metrica": "conversionPct", "operador": ">=", "valor": 45 },
+    "lineas": [
+      "La conversión se mantuvo y bajamos el desperdicio. Correcto."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_c4_resultado_malo",
+    "personaje": "paulina",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "critica",
+    "condicion": { "tipo": "kpi", "metrica": "conversionPct", "operador": "<", "valor": 45 },
+    "lineas": [
+      "La conversión está por los suelos. Esto no se lo vamos a poder explicar al consejo."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_consejo",
+    "personaje": "paulina",
+    "ciclo": 0,
+    "fase": "consejo",
+    "expresion": "seca",
+    "condicion": { "tipo": "pide_consejo" },
+    "lineas": [
+      "Sube el umbral del score interno. Cinco unidades. Filtramos antes y el ciclo baja.",
+      "Sí se pierde conversión, pero la cartera queda limpia."
+    ],
+    "respuestas": [
+      { "texto": "No quiero perder conversión.", "efecto": "rechazar", "credibilidad": 0 },
+      { "texto": "Hazlo.", "efecto": "aceptar:8", "credibilidad": 1 }
+    ]
+  },
+  {
+    "id": "paulina_vida_perdida",
+    "personaje": "paulina",
+    "ciclo": 0,
+    "fase": "vida_perdida",
+    "expresion": "seria",
+    "condicion": { "tipo": "vida_perdida" },
+    "lineas": [
+      "El consejo mide resultados, no intenciones."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_credibilidad_baja",
+    "personaje": "paulina",
+    "ciclo": 0,
+    "fase": "credibilidad_baja",
+    "expresion": "cortante",
+    "condicion": { "tipo": "credibilidad_baja" },
+    "lineas": [
+      "Director, con todo respeto. Ya van varias juntas sin un plan claro.",
+      "El consejo va a empezar a preguntar."
+    ],
+    "respuestas": []
+  }
+]

@@ -1,0 +1,197 @@
+[
+  {
+    "id": "silvia_c1_apertura",
+    "personaje": "silvia",
+    "ciclo": 1,
+    "fase": "apertura",
+    "expresion": "entusiasta",
+    "lineas": [
+      "A mí lo que me preocupa es la gente. El error de captura es el más frecuente de todos, con diferencia.",
+      "Déjame armar un programa para las dieciocho sucursales, yo lo coordino."
+    ],
+    "afirmacion": { "id": "error_captura_frecuente", "verificable": true, "veredicto": "cierta" },
+    "respuestas": [
+      { "texto": "Déjame revisar dónde se concentran.", "efecto": "abrir_laptop", "credibilidad": 0 },
+      { "texto": "Sí, capacita a todas.", "efecto": "aceptar:3", "credibilidad": 1 },
+      { "texto": "Silvia, tres sucursales concentran el cuarenta por ciento de los errores. No necesitamos las dieciocho.", "requiere": "verifico:error_captura_frecuente", "efecto": "refutar", "credibilidad": 2 },
+      { "texto": "Déjame pensarlo.", "efecto": "postergar", "credibilidad": -1 }
+    ]
+  },
+  {
+    "id": "silvia_c1_refutada",
+    "personaje": "silvia",
+    "ciclo": 1,
+    "fase": "refutado",
+    "expresion": "dudosa",
+    "condicion": { "tipo": "refutado", "afirmacion": "error_captura_frecuente" },
+    "lineas": [
+      "Pero es que si nomás capacitas a tres, las demás quince siguen igual.",
+      "¿No sería mejor cubrir a todos?"
+    ],
+    "respuestas": [
+      { "texto": "El presupuesto no da para todas. Y el impacto está en esas tres.", "efecto": "contraargumentar", "credibilidad": 1 },
+      { "texto": "Tienes un punto. Lo pienso.", "efecto": "postergar", "credibilidad": 0 }
+    ]
+  },
+  {
+    "id": "silvia_c1_aceptado",
+    "personaje": "silvia",
+    "ciclo": 1,
+    "fase": "aceptado",
+    "expresion": "emocionada",
+    "condicion": { "tipo": "aceptaron_su_accion" },
+    "lineas": [
+      "Perfecto, yo me encargo de la logística. En un ciclo tenemos a todo mundo entrenado.",
+      "Bueno, en dos. Dieciocho sucursales toman su tiempo."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_c1_focalizada",
+    "personaje": "silvia",
+    "ciclo": 1,
+    "fase": "reaccion",
+    "expresion": "confundida",
+    "condicion": { "tipo": "accion_elegida", "accionId": 2 },
+    "lineas": [
+      "Entonces nomás vas a capacitar a unas cuantas. Bueno, algo es algo.",
+      "Espero que hayas escogido bien las sucursales."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_c2_apertura",
+    "personaje": "silvia",
+    "ciclo": 2,
+    "fase": "apertura",
+    "expresion": "animada",
+    "lineas": [
+      "¿Cómo van los errores? ¿Ya bajaron con la capacitación?"
+    ],
+    "respuestas": [
+      { "texto": "Sí, se nota el cambio.", "efecto": "mostrar_resultados", "credibilidad": 1 },
+      { "texto": "Todavía no arranca.", "efecto": "postergar", "credibilidad": 0 }
+    ]
+  },
+  {
+    "id": "silvia_c2_sin_capacitacion",
+    "personaje": "silvia",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "decepcionada",
+    "condicion": { "tipo": "ninguna_accion_de", "acciones": [2, 3] },
+    "lineas": [
+      "No capacitamos a nadie. Los errores siguen igual, director.",
+      "¿Me dejas al menos armar algo para el siguiente ciclo?"
+    ],
+    "respuestas": [
+      { "texto": "El checklist ya está cubriendo eso.", "efecto": "rechazar", "credibilidad": 0 },
+      { "texto": "Sale, arma la capacitación focalizada.", "efecto": "aceptar:2", "credibilidad": 1 }
+    ]
+  },
+  {
+    "id": "silvia_c3_apertura",
+    "personaje": "silvia",
+    "ciclo": 3,
+    "fase": "apertura",
+    "expresion": "reflexiva",
+    "lineas": [
+      "Ya llevamos tres ciclos. ¿Qué tanto movimos los errores?"
+    ],
+    "respuestas": [
+      { "texto": "Han bajado bastante.", "efecto": "mostrar_resultados", "credibilidad": 1 },
+      { "texto": "No tanto como quisiéramos.", "efecto": "postergar", "credibilidad": 0 }
+    ]
+  },
+  {
+    "id": "silvia_c3_errores_altos",
+    "personaje": "silvia",
+    "ciclo": 3,
+    "fase": "reaccion",
+    "expresion": "preocupada",
+    "condicion": { "tipo": "kpi", "metrica": "erroresPor100", "operador": ">", "valor": 60 },
+    "lineas": [
+      "Más de sesenta errores por cada cien solicitudes. Es mucho todavía.",
+      "Sin capacitación esto no baja, director."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_c4_apertura",
+    "personaje": "silvia",
+    "ciclo": 4,
+    "fase": "apertura",
+    "expresion": "esperanzada",
+    "lineas": [
+      "Última oportunidad. ¿Cómo cerramos?"
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_c4_resultado_bueno",
+    "personaje": "silvia",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "orgullosa",
+    "condicion": { "tipo": "kpi", "metrica": "erroresPor100", "operador": "<", "valor": 50 },
+    "lineas": [
+      "Bajamos los errores a menos de cincuenta. Eso es un logro real.",
+      "La gente aprende si le das las herramientas."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_c4_resultado_malo",
+    "personaje": "silvia",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "frustrada",
+    "condicion": { "tipo": "kpi", "metrica": "erroresPor100", "operador": ">=", "valor": 50 },
+    "lineas": [
+      "Los errores siguen altos. Necesitábamos la capacitación completa."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_consejo",
+    "personaje": "silvia",
+    "ciclo": 0,
+    "fase": "consejo",
+    "expresion": "entusiasta",
+    "condicion": { "tipo": "pide_consejo" },
+    "lineas": [
+      "Capacitación general. Cien unidades, sí, pero le llegas a todas las sucursales.",
+      "El error de captura es el que más duele y es el más fácil de corregir con entrenamiento."
+    ],
+    "respuestas": [
+      { "texto": "Es demasiado caro.", "efecto": "rechazar", "credibilidad": 0 },
+      { "texto": "Adelante.", "efecto": "aceptar:3", "credibilidad": 1 }
+    ]
+  },
+  {
+    "id": "silvia_vida_perdida",
+    "personaje": "silvia",
+    "ciclo": 0,
+    "fase": "vida_perdida",
+    "expresion": "triste",
+    "condicion": { "tipo": "vida_perdida" },
+    "lineas": [
+      "Ay, director. Esto no se siente bien.",
+      "Necesitamos hacer algo pronto."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_credibilidad_baja",
+    "personaje": "silvia",
+    "ciclo": 0,
+    "fase": "credibilidad_baja",
+    "expresion": "preocupada",
+    "condicion": { "tipo": "credibilidad_baja" },
+    "lineas": [
+      "Director, la gente está perdiendo la confianza.",
+      "Necesitamos un resultado pronto, lo que sea."
+    ],
+    "respuestas": []
+  }
+]

@@ -1,0 +1,215 @@
+[
+  {
+    "id": "diego_c1_apertura",
+    "personaje": "diego",
+    "ciclo": 1,
+    "fase": "apertura",
+    "expresion": "timido",
+    "lineas": [
+      "Perdón. Yo... nomás una cosa.",
+      "Hay ciento cuarenta y dos expedientes aprobados que nunca salieron. La tarjeta no se mandó.",
+      "Nadie los está viendo."
+    ],
+    "afirmacion": { "id": "atorados_sin_plastico", "verificable": true, "veredicto": "cierta" },
+    "respuestas": [
+      { "texto": "¿Ciento cuarenta y dos? Déjame verificar.", "efecto": "abrir_laptop", "credibilidad": 0 },
+      { "texto": "Automaticemos eso.", "efecto": "aceptar:5", "credibilidad": 2 },
+      { "texto": "Ya lo revisé. Tienes razón, son ciento cuarenta y dos.", "requiere": "verifico:atorados_sin_plastico", "efecto": "refutar", "credibilidad": 2 },
+      { "texto": "Ahorita hay temas más urgentes.", "efecto": "postergar", "credibilidad": -1 }
+    ]
+  },
+  {
+    "id": "diego_c1_segundo",
+    "personaje": "diego",
+    "ciclo": 1,
+    "fase": "segundo",
+    "expresion": "atreviendose",
+    "lineas": [
+      "Y otra cosa. Yo reviso expedientes todos los días.",
+      "Tres sucursales mandan el cuarenta por ciento de los errores. La 110, la 676 y la 728.",
+      "Si les pones un checklist, se acaba la mitad del retrabajo."
+    ],
+    "afirmacion": { "id": "concentracion_sucursales", "verificable": true, "veredicto": "cierta" },
+    "respuestas": [
+      { "texto": "¿Cuáles dijiste? Déjame anotarlo.", "efecto": "abrir_laptop", "credibilidad": 1 },
+      { "texto": "Ponemos el checklist.", "efecto": "aceptar:1", "credibilidad": 2 },
+      { "texto": "Ya lo verifiqué en los datos.", "requiere": "verifico:concentracion_sucursales", "efecto": "confirmar", "credibilidad": 2 },
+      { "texto": "Silvia quiere capacitar a las dieciocho.", "efecto": "postergar", "credibilidad": 0 }
+    ]
+  },
+  {
+    "id": "diego_c1_tercero",
+    "personaje": "diego",
+    "ciclo": 1,
+    "fase": "tercero",
+    "expresion": "decidido",
+    "lineas": [
+      "Y lo del buró. Ahorita lo consultan al final, cuando ya hiciste toda la captura.",
+      "Si lo corres primero, dejas de trabajar expedientes que van a rebotar."
+    ],
+    "afirmacion": { "id": "secuencia_buro", "verificable": true, "veredicto": "cierta" },
+    "respuestas": [
+      { "texto": "Paulina dijo algo parecido.", "efecto": "postergar", "credibilidad": 0 },
+      { "texto": "Tiene sentido. Cambiemos la secuencia.", "efecto": "aceptar:4", "credibilidad": 2 },
+      { "texto": "Déjame ver cuánto trabajo se pierde.", "efecto": "abrir_laptop", "credibilidad": 1 }
+    ]
+  },
+  {
+    "id": "diego_c2_apertura",
+    "personaje": "diego",
+    "ciclo": 2,
+    "fase": "apertura",
+    "expresion": "callado",
+    "lineas": [
+      "Director... ¿puedo decir algo?"
+    ],
+    "respuestas": [
+      { "texto": "Adelante, Diego.", "efecto": "escuchar", "credibilidad": 1 },
+      { "texto": "Rápido, que tenemos poco tiempo.", "efecto": "escuchar", "credibilidad": 0 }
+    ]
+  },
+  {
+    "id": "diego_c2_seguimiento",
+    "personaje": "diego",
+    "ciclo": 2,
+    "fase": "segundo",
+    "expresion": "informando",
+    "condicion": { "tipo": "escuchado" },
+    "lineas": [
+      "Los atorados siguen ahí. Cada día que pasa es un cliente que ya nos aprobó y no tiene su tarjeta."
+    ],
+    "respuestas": [
+      { "texto": "Vamos a automatizar el envío.", "efecto": "aceptar:5", "credibilidad": 1 },
+      { "texto": "Ya lo tengo contemplado.", "efecto": "postergar", "credibilidad": 0 }
+    ]
+  },
+  {
+    "id": "diego_c2_atorados_resueltos",
+    "personaje": "diego",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "aliviado",
+    "condicion": { "tipo": "accion_elegida", "accionId": 5 },
+    "lineas": [
+      "Ya se están mandando las tarjetas automático. Bien.",
+      "Eso lo sentimos todos los días en CrOP."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_c3_apertura",
+    "personaje": "diego",
+    "ciclo": 3,
+    "fase": "apertura",
+    "expresion": "tranquilo",
+    "lineas": [
+      "Yo nomás reporto. Los expedientes que rehago cada día bajaron."
+    ],
+    "respuestas": [
+      { "texto": "¿Cuánto bajaron?", "efecto": "abrir_laptop", "credibilidad": 0 },
+      { "texto": "Bien, Diego. Gracias.", "efecto": "postergar", "credibilidad": 1 }
+    ]
+  },
+  {
+    "id": "diego_c3_checklist_efecto",
+    "personaje": "diego",
+    "ciclo": 3,
+    "fase": "reaccion",
+    "expresion": "satisfecho",
+    "condicion": { "tipo": "accion_elegida", "accionId": 1 },
+    "lineas": [
+      "El checklist está funcionando. Los incompletos bajaron un montón.",
+      "Ya casi no me regresan expedientes por documentos faltantes."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_c3_nada_hecho",
+    "personaje": "diego",
+    "ciclo": 3,
+    "fase": "reaccion",
+    "expresion": "preocupado",
+    "condicion": { "tipo": "ninguna_accion_de", "acciones": [1, 4, 5] },
+    "lineas": [
+      "Director... los atorados siguen ahí. Y los errores también.",
+      "Nomás digo."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_c4_apertura",
+    "personaje": "diego",
+    "ciclo": 4,
+    "fase": "apertura",
+    "expresion": "serio",
+    "lineas": [
+      "Última junta. Yo veo los expedientes todos los días."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_c4_resultado_bueno",
+    "personaje": "diego",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "contento",
+    "condicion": { "tipo": "multiples_acciones", "acciones": [1, 4, 5], "minimo": 2 },
+    "lineas": [
+      "Se nota. En CrOP estamos procesando diferente.",
+      "Gracias por escuchar, director."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_c4_resultado_malo",
+    "personaje": "diego",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "resignado",
+    "condicion": { "tipo": "multiples_acciones", "acciones": [1, 4, 5], "minimo": 0, "maximo": 1 },
+    "lineas": [
+      "Pues ahí seguimos con lo mismo."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_consejo",
+    "personaje": "diego",
+    "ciclo": 0,
+    "fase": "consejo",
+    "expresion": "timido",
+    "condicion": { "tipo": "pide_consejo" },
+    "lineas": [
+      "Yo... el checklist, cambiar el buró al principio, y mandar las tarjetas automático.",
+      "Son treinta y cinco unidades. Perdón si estoy hablando de más."
+    ],
+    "respuestas": [
+      { "texto": "No, está bien. Lo considero.", "efecto": "postergar", "credibilidad": 1 },
+      { "texto": "Hazlo todo.", "efecto": "aceptar_multiple:1,4,5", "credibilidad": 2 }
+    ]
+  },
+  {
+    "id": "diego_vida_perdida",
+    "personaje": "diego",
+    "ciclo": 0,
+    "fase": "vida_perdida",
+    "expresion": "callado",
+    "condicion": { "tipo": "vida_perdida" },
+    "lineas": [
+      "..."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_ignorado",
+    "personaje": "diego",
+    "ciclo": 0,
+    "fase": "ignorado",
+    "expresion": "resignado",
+    "condicion": { "tipo": "postergado" },
+    "lineas": [
+      "Bueno. Si necesitan algo de CrOP, ahí estoy."
+    ],
+    "respuestas": []
+  }
+]

@@ -1,0 +1,66 @@
+{
+  "medianas_iguales": {
+    "descripcion": "Las medianas de captura y back office son iguales (11 dias), pero la variabilidad es muy distinta",
+    "condiciones": [
+      { "tipo": "calculo", "funcion": "DESVEST", "columna": "ventanaCaptura" },
+      { "tipo": "calculo", "funcion": "PERCENTIL", "columna": "ventanaCaptura", "args": [0.9] },
+      { "tipo": "grafica", "tipo_grafica": "histograma", "columna": "ventanaCaptura" }
+    ],
+    "minCondiciones": 1,
+    "refutacion": "La mediana esconde la variabilidad. La desviacion de captura es 22.8 dias vs 4.0 del back office, y el percentil 90 es 52 vs 17."
+  },
+  "errores_captura_interfaz": {
+    "descripcion": "659 de 1318 errores son de captura, pero no hay evidencia de que sea culpa de la interfaz",
+    "condiciones": [
+      { "tipo": "calculo", "funcion": "CONTAR.SI", "columna": "tipoError", "valor": "input error" },
+      { "tipo": "filtro", "columna": "Comments", "patron": "input error" }
+    ],
+    "minCondiciones": 1,
+    "refutacion": "Los datos registran el tipo de error, no la causa. Podria ser interfaz, capacitacion o carga de trabajo."
+  },
+  "trabajo_perdido_buro": {
+    "descripcion": "Los expedientes rechazados por buro consumen 6758 dias-solicitud de trabajo previo",
+    "condiciones": [
+      { "tipo": "calculo", "funcion": "SUMAR.SI", "columna": "diasPerdidosBuro" },
+      { "tipo": "filtro", "columna": "CreditBureauResult", "valor": "Rejected" }
+    ],
+    "minCondiciones": 1,
+    "refutacion": "El dato es correcto. Pero la solucion es correr el buro antes, no rechazar mas gente. Endurecer el score mata la conversion."
+  },
+  "error_captura_frecuente": {
+    "descripcion": "El error de captura es el tipo mas frecuente (659 de 1318)",
+    "condiciones": [
+      { "tipo": "calculo", "funcion": "CONTAR.SI", "columna": "tipoError" },
+      { "tipo": "grafica", "tipo_grafica": "pareto", "columna": "tipoError" }
+    ],
+    "minCondiciones": 1,
+    "refutacion": "El error de captura es el mas frecuente, pero tres sucursales (110, 676, 728) concentran el 40%. Capacitar a las 18 es ineficiente."
+  },
+  "atorados_sin_plastico": {
+    "descripcion": "142 expedientes aprobados nunca recibieron tarjeta",
+    "condiciones": [
+      { "tipo": "calculo", "funcion": "CONTAR.SI.CONJUNTO", "columnas": ["ETFBankScoreResult", "CardSent"], "valores": ["Accepted", "No"] },
+      { "tipo": "formula", "expresion": "scoreAceptado - plasticoEnviado" }
+    ],
+    "minCondiciones": 1,
+    "refutacion": "Son 873 aprobados menos 731 con plastico enviado. Ciento cuarenta y dos clientes esperando."
+  },
+  "concentracion_sucursales": {
+    "descripcion": "Tres sucursales (110, 676, 728) concentran el 40.2% de los errores de captura",
+    "condiciones": [
+      { "tipo": "grafica", "tipo_grafica": "pareto", "columna": "sucursal_errores" },
+      { "tipo": "tabla_dinamica", "fila": "BranchID", "valor": "errores", "funcion": "CONTAR" }
+    ],
+    "minCondiciones": 1,
+    "refutacion": "Tres sucursales concentran casi la mitad. Capacitar solo a esas tres cuesta la cuarta parte."
+  },
+  "secuencia_buro": {
+    "descripcion": "El buro se consulta al final del proceso, despues de toda la captura",
+    "condiciones": [
+      { "tipo": "documento", "documento": "expediente_proceso" },
+      { "tipo": "calculo", "funcion": "SUMAR.SI", "columna": "diasPerdidosBuro" }
+    ],
+    "minCondiciones": 1,
+    "refutacion": "Si el buro se corriera antes, se evitarian 6758 dias de trabajo en expedientes que van a rebotar."
+  }
+}

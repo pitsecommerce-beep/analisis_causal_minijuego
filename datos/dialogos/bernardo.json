@@ -1,0 +1,212 @@
+[
+  {
+    "id": "bernardo_c1_apertura",
+    "personaje": "bernardo",
+    "ciclo": 1,
+    "fase": "apertura",
+    "expresion": "insistiendo",
+    "lineas": [
+      "Director, antes de que se nos vaya la junta en esto. Ya medí las dos etapas. Once días la captura, once el back office. Es lo mismo.",
+      "El cuello está en CrOP, no en mis sucursales."
+    ],
+    "afirmacion": { "id": "medianas_iguales", "verificable": true, "veredicto": "cierta_pero_enganosa" },
+    "respuestas": [
+      { "texto": "Déjame verlo yo.", "efecto": "abrir_laptop", "credibilidad": 0 },
+      { "texto": "Está bien, refuerza CrOP.", "efecto": "aceptar:6", "credibilidad": 1 },
+      { "texto": "No me cuadra, ya lo revisé.", "requiere": "verifico:medianas_iguales", "efecto": "refutar", "credibilidad": 2 },
+      { "texto": "Lo dejo para después.", "efecto": "postergar", "credibilidad": -1 }
+    ]
+  },
+  {
+    "id": "bernardo_c1_refutado",
+    "personaje": "bernardo",
+    "ciclo": 1,
+    "fase": "refutado",
+    "expresion": "sorprendido",
+    "condicion": { "tipo": "refutado", "afirmacion": "medianas_iguales" },
+    "lineas": [
+      "A ver, espérate. La mediana dice once y once.",
+      "Si tú sacaste otra cosa, enséñamelo."
+    ],
+    "respuestas": [
+      { "texto": "El percentil 90 de captura es 52 días. El de back office es 17.", "requiere": "verifico:medianas_iguales", "efecto": "convencer:bernardo", "credibilidad": 3 },
+      { "texto": "Confía en mí.", "efecto": "insistir_sin_datos", "credibilidad": -1 }
+    ]
+  },
+  {
+    "id": "bernardo_c1_convencido",
+    "personaje": "bernardo",
+    "ciclo": 1,
+    "fase": "convencido",
+    "expresion": "pensativo",
+    "condicion": { "tipo": "convencido" },
+    "lineas": [
+      "Híjole. No había visto el histograma así.",
+      "Bueno, si la cola está en captura, ahí hay que meterle."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_c1_aceptado",
+    "personaje": "bernardo",
+    "ciclo": 1,
+    "fase": "aceptado",
+    "expresion": "satisfecho",
+    "condicion": { "tipo": "aceptaron_su_accion" },
+    "lineas": [
+      "Con dos revisores más en CrOP salimos del hoyo en un ciclo."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_c2_apertura",
+    "personaje": "bernardo",
+    "ciclo": 2,
+    "fase": "apertura",
+    "expresion": "defensivo",
+    "lineas": [
+      "¿Cómo vamos? Yo sigo pensando que el problema gordo es el back office."
+    ],
+    "respuestas": [
+      { "texto": "Ya tengo datos que dicen otra cosa.", "efecto": "abrir_laptop", "credibilidad": 0 },
+      { "texto": "Tienes razón, meto más gente en CrOP.", "efecto": "aceptar:6", "credibilidad": 1 },
+      { "texto": "Bernardo, la variabilidad está en captura. Ya lo medimos.", "requiere": "verifico:medianas_iguales", "efecto": "refutar", "credibilidad": 2 }
+    ]
+  },
+  {
+    "id": "bernardo_c2_kpi_bajo",
+    "personaje": "bernardo",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "preocupado",
+    "condicion": { "tipo": "kpi", "metrica": "ventanaCapturaMedia", "operador": ">", "valor": 15 },
+    "lineas": [
+      "Director, la ventana de captura sigue arriba de quince días.",
+      "Las sucursales no van a aguantar mucho así."
+    ],
+    "respuestas": [
+      { "texto": "Lo sé, estoy trabajando en eso.", "efecto": "postergar", "credibilidad": 0 },
+      { "texto": "¿Qué propones tú?", "efecto": "pedir_consejo:bernardo", "credibilidad": 0 }
+    ]
+  },
+  {
+    "id": "bernardo_c2_kpi_bueno",
+    "personaje": "bernardo",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "aliviado",
+    "condicion": { "tipo": "kpi", "metrica": "ventanaCapturaMedia", "operador": "<=", "valor": 15 },
+    "lineas": [
+      "Oye, ya bajó la ventana de captura. Eso se siente en las sucursales.",
+      "Van por buen camino."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_c3_apertura",
+    "personaje": "bernardo",
+    "ciclo": 3,
+    "fase": "apertura",
+    "expresion": "campechano",
+    "lineas": [
+      "Tercera junta. ¿Ya vamos viendo resultados o seguimos nomás midiendo?"
+    ],
+    "respuestas": [
+      { "texto": "Los KPI ya se movieron.", "efecto": "mostrar_resultados", "credibilidad": 1 },
+      { "texto": "Todavía falta.", "efecto": "postergar", "credibilidad": 0 }
+    ]
+  },
+  {
+    "id": "bernardo_c3_sin_acciones",
+    "personaje": "bernardo",
+    "ciclo": 3,
+    "fase": "reaccion",
+    "expresion": "molesto",
+    "condicion": { "tipo": "sin_acciones_nuevas" },
+    "lineas": [
+      "Llevamos tres juntas y no hemos hecho nada nuevo.",
+      "El consejo se va a impacientar, te lo digo de buena fe."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_c4_apertura",
+    "personaje": "bernardo",
+    "ciclo": 4,
+    "fase": "apertura",
+    "expresion": "serio",
+    "lineas": [
+      "Última junta. Aquí se decide si esto sirvió o no."
+    ],
+    "respuestas": [
+      { "texto": "Vamos a ver los números.", "efecto": "abrir_laptop", "credibilidad": 0 }
+    ]
+  },
+  {
+    "id": "bernardo_c4_resultado_bueno",
+    "personaje": "bernardo",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "contento",
+    "condicion": { "tipo": "kpi", "metrica": "ventanaCapturaMedia", "operador": "<", "valor": 12 },
+    "lineas": [
+      "Mira, yo al principio no lo veía. Pero los números hablan.",
+      "Buen trabajo, director."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_c4_resultado_malo",
+    "personaje": "bernardo",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "decepcionado",
+    "condicion": { "tipo": "kpi", "metrica": "ventanaCapturaMedia", "operador": ">=", "valor": 12 },
+    "lineas": [
+      "Pues no se movió mucho la aguja.",
+      "Yo sigo diciendo que CrOP es el tema."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_consejo",
+    "personaje": "bernardo",
+    "ciclo": 0,
+    "fase": "consejo",
+    "expresion": "campechano",
+    "condicion": { "tipo": "pide_consejo" },
+    "lineas": [
+      "Yo te diría que le metas dos revisores más a CrOP. Eso baja el back office de volada.",
+      "Y no es caro, director. Treinta y cinco unidades."
+    ],
+    "respuestas": [
+      { "texto": "Lo considero.", "efecto": "postergar", "credibilidad": 0 },
+      { "texto": "Sale, hazlo.", "efecto": "aceptar:6", "credibilidad": 1 }
+    ]
+  },
+  {
+    "id": "bernardo_vida_perdida",
+    "personaje": "bernardo",
+    "ciclo": 0,
+    "fase": "vida_perdida",
+    "expresion": "nervioso",
+    "condicion": { "tipo": "vida_perdida" },
+    "lineas": [
+      "Esto no pinta bien.",
+      "El consejo no va a aceptar otra junta sin resultados."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_postergar",
+    "personaje": "bernardo",
+    "ciclo": 0,
+    "fase": "postergado",
+    "expresion": "resignado",
+    "condicion": { "tipo": "postergado" },
+    "lineas": [
+      "Bueno, cuando quieras lo vemos."
+    ],
+    "respuestas": []
+  }
+]

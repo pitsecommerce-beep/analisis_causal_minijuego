@@ -7,6 +7,7 @@
   "scripts": {
     "datos:verificar": "tsx src/servidor/consola/verificar-datos.ts",
     "motor:consola": "tsx src/servidor/consola/arnes.ts",
+    "dialogos:recorrer": "tsx src/servidor/consola/recorrer-dialogos.ts",
     "test": "vitest run"
   },
   "repository": {

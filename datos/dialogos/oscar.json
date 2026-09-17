@@ -1,0 +1,171 @@
+[
+  {
+    "id": "oscar_c1_apertura",
+    "personaje": "oscar",
+    "ciclo": 1,
+    "fase": "apertura",
+    "expresion": "impaciente",
+    "lineas": [
+      "Es la interfaz. Mitad de los errores son de captura, eso lo sacas del sistema en dos minutos.",
+      "El C.R.A.S.S. tiene catorce años. Ya se lo había dicho a tu antecesor."
+    ],
+    "afirmacion": { "id": "errores_captura_interfaz", "verificable": true, "veredicto": "parcialmente_cierta" },
+    "respuestas": [
+      { "texto": "Déjame revisar los datos.", "efecto": "abrir_laptop", "credibilidad": 0 },
+      { "texto": "Tienes razón, cambiemos el sistema.", "efecto": "aceptar:10", "credibilidad": 1 },
+      { "texto": "Los errores de captura son 659, sí. Pero no hay evidencia de que sea la interfaz.", "requiere": "verifico:errores_captura_interfaz", "efecto": "refutar", "credibilidad": 2 },
+      { "texto": "Luego lo vemos.", "efecto": "postergar", "credibilidad": -1 }
+    ]
+  },
+  {
+    "id": "oscar_c1_refutado",
+    "personaje": "oscar",
+    "ciclo": 1,
+    "fase": "refutado",
+    "expresion": "irritado",
+    "condicion": { "tipo": "refutado", "afirmacion": "errores_captura_interfaz" },
+    "lineas": [
+      "¿Y entonces qué es? ¿Los ejecutivos? Yo te digo que con esta interfaz cualquiera se equivoca.",
+      "Llevo dos años pidiendo el cambio."
+    ],
+    "respuestas": [
+      { "texto": "Puede ser. Pero reemplazar el sistema tarda cuatro ciclos y cuesta todo el presupuesto.", "efecto": "contraargumentar", "credibilidad": 1 },
+      { "texto": "Voy a revisar dónde se concentran los errores.", "efecto": "abrir_laptop", "credibilidad": 1 }
+    ]
+  },
+  {
+    "id": "oscar_c1_aceptado",
+    "personaje": "oscar",
+    "ciclo": 1,
+    "fase": "aceptado",
+    "expresion": "entusiasmado",
+    "condicion": { "tipo": "aceptaron_su_accion" },
+    "lineas": [
+      "Por fin. Le digo a mi equipo que arranque la migración.",
+      "En cuatro ciclos esto va a ser otro proceso."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "oscar_c2_apertura",
+    "personaje": "oscar",
+    "ciclo": 2,
+    "fase": "apertura",
+    "expresion": "insistente",
+    "lineas": [
+      "¿Cuándo le entramos al C.R.A.S.S.? Ya tengo el proveedor listo."
+    ],
+    "respuestas": [
+      { "texto": "No vamos a cambiar el sistema completo.", "efecto": "rechazar", "credibilidad": 0 },
+      { "texto": "Óscar, no hay presupuesto para eso.", "efecto": "rechazar", "credibilidad": 0 },
+      { "texto": "Sale, métele.", "efecto": "aceptar:10", "credibilidad": 1 }
+    ]
+  },
+  {
+    "id": "oscar_c2_checklist_puesto",
+    "personaje": "oscar",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "esceptico",
+    "condicion": { "tipo": "accion_elegida", "accionId": 1 },
+    "lineas": [
+      "El checklist ese es un parche. Te va a bajar los incompletos, sí.",
+      "Pero el sistema de fondo sigue igual de roto."
+    ],
+    "respuestas": [
+      { "texto": "Mientras tanto funciona.", "efecto": "postergar", "credibilidad": 0 },
+      { "texto": "Si baja los errores, para mí sirve.", "efecto": "rechazar", "credibilidad": 1 }
+    ]
+  },
+  {
+    "id": "oscar_c3_apertura",
+    "personaje": "oscar",
+    "ciclo": 3,
+    "fase": "apertura",
+    "expresion": "resignado",
+    "lineas": [
+      "Bueno, veo que no vamos a tocar el C.R.A.S.S. Ni modo.",
+      "Nomás te digo que cualquier mejora que hagas se va a topar con la interfaz."
+    ],
+    "respuestas": [
+      { "texto": "Lo tengo en cuenta.", "efecto": "postergar", "credibilidad": 0 }
+    ]
+  },
+  {
+    "id": "oscar_c3_sin_sistema",
+    "personaje": "oscar",
+    "ciclo": 3,
+    "fase": "reaccion",
+    "expresion": "frustrado",
+    "condicion": { "tipo": "accion_no_elegida", "accionId": 10 },
+    "lineas": [
+      "Tercer ciclo sin tocar el sistema. Los parches no escalan, director."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "oscar_c4_apertura",
+    "personaje": "oscar",
+    "ciclo": 4,
+    "fase": "apertura",
+    "expresion": "cinico",
+    "lineas": [
+      "Última junta. Ya ni insisto con lo del sistema."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "oscar_c4_resultado_bueno",
+    "personaje": "oscar",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "sorprendido",
+    "condicion": { "tipo": "kpi", "metrica": "tasaReproceso", "operador": "<", "valor": 40 },
+    "lineas": [
+      "Mira, bajaron el reproceso sin cambiar el sistema. No lo esperaba.",
+      "Aunque el sistema sigue viejo, eh."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "oscar_c4_resultado_malo",
+    "personaje": "oscar",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "vindicado",
+    "condicion": { "tipo": "kpi", "metrica": "tasaReproceso", "operador": ">=", "valor": 40 },
+    "lineas": [
+      "¿Ves? El reproceso sigue alto. Te lo dije."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "oscar_consejo",
+    "personaje": "oscar",
+    "ciclo": 0,
+    "fase": "consejo",
+    "expresion": "tecnico",
+    "condicion": { "tipo": "pide_consejo" },
+    "lineas": [
+      "Si me dejas cambiar el C.R.A.S.S., en cuatro ciclos esto ya no tiene errores de interfaz.",
+      "Cien unidades. Todo el presupuesto, sí, pero lo resuelve de raíz."
+    ],
+    "respuestas": [
+      { "texto": "Es demasiado caro.", "efecto": "rechazar", "credibilidad": 0 },
+      { "texto": "Adelante.", "efecto": "aceptar:10", "credibilidad": 1 }
+    ]
+  },
+  {
+    "id": "oscar_vida_perdida",
+    "personaje": "oscar",
+    "ciclo": 0,
+    "fase": "vida_perdida",
+    "expresion": "serio",
+    "condicion": { "tipo": "vida_perdida" },
+    "lineas": [
+      "Esto pasa por no arreglar el sistema de fondo.",
+      "Los parches se caen solos."
+    ],
+    "respuestas": []
+  }
+]
