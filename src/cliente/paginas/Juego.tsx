@@ -9,6 +9,12 @@ import { AsesorAlgoritmico } from '../componentes/AsesorAlgoritmico.js';
 
 type Vista = 'datos' | 'asesores' | 'decisiones';
 
+const TABS: { id: Vista; label: string; icono: string }[] = [
+  { id: 'datos', label: 'Datos', icono: '📊' },
+  { id: 'asesores', label: 'Sala de Juntas', icono: '👥' },
+  { id: 'decisiones', label: 'Decisiones', icono: '⚡' },
+];
+
 export function Juego() {
   const nav = useNavigate();
   const [estado, setEstado] = useState<any>(null);
@@ -122,22 +128,43 @@ export function Juego() {
   if (cargando) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ fontSize: 18, color: 'var(--color-texto-secundario)' }}>Cargando partida...</p>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: '50%',
+            border: '3px solid var(--color-borde)',
+            borderTopColor: 'var(--color-primario)',
+            animation: 'spin 0.8s linear infinite',
+            margin: '0 auto 16px',
+          }} />
+          <p style={{ fontSize: 15, color: 'var(--color-texto-secundario)' }}>Cargando partida...</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="tarjeta" style={{ maxWidth: 500, textAlign: 'center' }}>
-          <p style={{ color: 'var(--color-peligro)', marginBottom: 16 }}>{error}</p>
-          <button className="btn-primario" onClick={() => { setError(''); iniciar(); }}>
-            Reintentar
-          </button>
-          <button className="btn-fantasma" style={{ marginLeft: 8 }} onClick={() => nav('/')}>
-            Volver
-          </button>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div className="tarjeta" style={{ maxWidth: 480, textAlign: 'center' }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 14,
+            background: 'var(--color-advertencia-suave)',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: 16,
+          }}>
+            <span style={{ fontSize: 28 }}>⏳</span>
+          </div>
+          <h3 style={{ color: 'var(--color-texto)', marginBottom: 8 }}>Sesion no disponible</h3>
+          <p style={{ color: 'var(--color-texto-secundario)', marginBottom: 20, fontSize: 14, lineHeight: 1.6 }}>{error}</p>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <button className="btn-primario" onClick={() => { setError(''); iniciar(); }}>
+              Reintentar
+            </button>
+            <button className="btn-fantasma" onClick={() => nav('/')}>
+              Volver
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -151,53 +178,77 @@ export function Juego() {
   const presupuesto = estado.presupuestoDisponible ?? 0;
   const esTratamiento = infoExp?.grupo === 'tratamiento';
 
+  const credColor = credibilidad >= 60
+    ? '#4ade80'
+    : credibilidad >= 30
+      ? '#fbbf24'
+      : '#f87171';
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-fondo)' }}>
       <div className="barra-estado">
-        <div className="barra-estado-item">
-          <span className="barra-estado-label">Director(a)</span>
-          <span className="barra-estado-valor">{nombreJugador}</span>
-        </div>
-        <div className="barra-estado-item">
-          <span className="barra-estado-label">Sesion</span>
-          <span className="barra-estado-valor">{sesionNombre}</span>
-        </div>
-        <div className="barra-estado-item">
-          <span className="barra-estado-label">Ciclo</span>
-          <span className="barra-estado-valor">{ciclo} / 4</span>
-        </div>
-        <div className="barra-estado-item">
-          <span className="barra-estado-label">Vidas</span>
-          <span className="barra-estado-valor">{'❤️'.repeat(vidas)}{'🖤'.repeat(3 - vidas)}</span>
-        </div>
-        <div className="barra-estado-item">
-          <span className="barra-estado-label">Credibilidad</span>
-          <span className="barra-estado-valor" style={{
-            color: credibilidad >= 60 ? 'var(--color-exito)' : credibilidad >= 30 ? 'var(--color-acento)' : 'var(--color-peligro)'
-          }}>
-            {credibilidad}%
-          </span>
-        </div>
-        <div className="barra-estado-item">
-          <span className="barra-estado-label">Presupuesto</span>
-          <span className="barra-estado-valor">${presupuesto}</span>
+        <div className="contenedor" style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
+          <div className="barra-estado-item">
+            <span className="barra-estado-label">Director(a)</span>
+            <span className="barra-estado-valor">{nombreJugador}</span>
+          </div>
+          <div className="barra-estado-item">
+            <span className="barra-estado-label">Sesion</span>
+            <span className="barra-estado-valor">{sesionNombre}</span>
+          </div>
+          <div className="barra-estado-item">
+            <span className="barra-estado-label">Ciclo</span>
+            <span className="barra-estado-valor">{ciclo} / 4</span>
+          </div>
+          <div className="barra-estado-item">
+            <span className="barra-estado-label">Vidas</span>
+            <span className="barra-estado-valor" style={{ letterSpacing: 2 }}>
+              {'❤️'.repeat(vidas)}{'🖤'.repeat(Math.max(0, 3 - vidas))}
+            </span>
+          </div>
+          <div className="barra-estado-item">
+            <span className="barra-estado-label">Credibilidad</span>
+            <span className="barra-estado-valor" style={{ color: credColor }}>
+              {credibilidad}%
+            </span>
+          </div>
+          <div className="barra-estado-item" style={{ marginLeft: 'auto' }}>
+            <span className="barra-estado-label">Presupuesto</span>
+            <span className="barra-estado-valor">${presupuesto}</span>
+          </div>
         </div>
       </div>
 
-      <div className="contenedor" style={{ flex: 1, paddingTop: 16, paddingBottom: 32 }}>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          <button className={`tab ${vista === 'datos' ? 'activo' : ''}`}
-            onClick={() => onCambioVista('datos')}>
-            Datos
-          </button>
-          <button className={`tab ${vista === 'asesores' ? 'activo' : ''}`}
-            onClick={() => onCambioVista('asesores')}>
-            Sala de Juntas
-          </button>
-          <button className={`tab ${vista === 'decisiones' ? 'activo' : ''}`}
-            onClick={() => onCambioVista('decisiones')}>
-            Decisiones
-          </button>
+      <div className="contenedor" style={{ flex: 1, paddingTop: 20, paddingBottom: 40 }}>
+        <div style={{
+          display: 'flex',
+          gap: 4,
+          marginBottom: 20,
+          background: 'var(--color-superficie)',
+          borderRadius: 'var(--radio)',
+          padding: 4,
+          boxShadow: 'var(--sombra)',
+          border: '1px solid var(--color-borde-sutil)',
+        }}>
+          {TABS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => onCambioVista(t.id)}
+              style={{
+                flex: 1,
+                padding: '10px 16px',
+                borderRadius: 'var(--radio-sm)',
+                fontSize: 14,
+                fontWeight: vista === t.id ? 600 : 500,
+                background: vista === t.id ? 'var(--color-primario)' : 'transparent',
+                color: vista === t.id ? '#fff' : 'var(--color-texto-secundario)',
+                transition: 'all var(--transicion)',
+              }}
+            >
+              <span style={{ marginRight: 6 }}>{t.icono}</span>
+              {t.label}
+            </button>
+          ))}
         </div>
 
         {esTratamiento && vista === 'decisiones' && <AsesorAlgoritmico />}

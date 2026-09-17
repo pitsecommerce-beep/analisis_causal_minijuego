@@ -21,34 +21,60 @@ export function AsesorAlgoritmico() {
   return (
     <div className="tarjeta" style={{
       borderLeft: '4px solid var(--color-acento)',
-      marginBottom: 16,
+      marginBottom: 20,
+      background: 'var(--color-acento-suave)',
+      border: '1px solid rgba(200, 146, 42, 0.15)',
+      borderLeftWidth: 4,
+      borderLeftColor: 'var(--color-acento)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <span style={{ fontSize: 24 }}>🤖</span>
-        <strong style={{ color: 'var(--color-acento)' }}>Asesor Algoritmico</strong>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: 10,
+          background: 'rgba(200, 146, 42, 0.15)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span style={{ fontSize: 20 }}>🤖</span>
+        </div>
+        <div>
+          <strong style={{ color: 'var(--color-acento)', fontSize: 14 }}>Asesor Algoritmico</strong>
+          <p style={{ fontSize: 11, color: 'var(--color-texto-terciario)' }}>Analisis basado en datos del proceso</p>
+        </div>
       </div>
-
-      <p style={{ fontSize: 13, color: 'var(--color-texto-secundario)', marginBottom: 12 }}>
-        Basado en el analisis de los datos del proceso, puedo sugerirte una accion.
-      </p>
 
       {!recomendacion && (
         <button className="btn-acento" onClick={consultar} disabled={cargando}
-          style={{ padding: '8px 16px', fontSize: 13 }}>
+          style={{ padding: '10px 18px', fontSize: 13 }}>
           {cargando ? 'Analizando...' : 'Pedir recomendacion'}
         </button>
       )}
 
-      {error && <p style={{ color: 'var(--color-peligro)', fontSize: 13, marginTop: 8 }}>{error}</p>}
+      {error && (
+        <div style={{
+          background: 'var(--color-peligro-suave)',
+          color: 'var(--color-peligro)',
+          padding: '8px 12px',
+          borderRadius: 'var(--radio)',
+          fontSize: 13,
+          marginTop: 10,
+        }}>
+          {error}
+        </div>
+      )}
 
       {recomendacion && (
-        <div style={{ marginTop: 12, padding: 12, background: '#fffff0', borderRadius: 'var(--radio)' }}>
-          <p style={{ fontSize: 14, marginBottom: 8 }}>{recomendacion.explicacion}</p>
-          <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--color-texto-secundario)' }}>
-            <span>Metrica: <strong>{recomendacion.metricaPrioritaria}</strong></span>
-            <span>Confianza: <strong>{Math.round(recomendacion.confianza * 100)}%</strong></span>
+        <div style={{
+          marginTop: 12,
+          padding: 14,
+          background: 'var(--color-superficie)',
+          borderRadius: 'var(--radio)',
+          border: '1px solid var(--color-borde-sutil)',
+        }}>
+          <p style={{ fontSize: 14, marginBottom: 10, lineHeight: 1.6 }}>{recomendacion.explicacion}</p>
+          <div style={{ display: 'flex', gap: 20, fontSize: 12, color: 'var(--color-texto-secundario)' }}>
+            <span>Metrica: <strong style={{ color: 'var(--color-texto)' }}>{recomendacion.metricaPrioritaria}</strong></span>
+            <span>Confianza: <strong style={{ color: 'var(--color-texto)' }}>{Math.round(recomendacion.confianza * 100)}%</strong></span>
           </div>
-          <button className="btn-fantasma" style={{ marginTop: 8, fontSize: 12 }}
+          <button className="btn-fantasma" style={{ marginTop: 10, fontSize: 12, padding: '6px 12px' }}
             onClick={() => { setRecomendacion(null); }}>
             Consultar de nuevo
           </button>
