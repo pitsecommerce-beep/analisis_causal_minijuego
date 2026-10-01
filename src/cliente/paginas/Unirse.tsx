@@ -52,7 +52,7 @@ export function Unirse() {
             background: 'var(--color-primario-suave)',
             marginBottom: 16,
           }}>
-            <span style={{ fontSize: 24 }}>🎯</span>
+            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primario)' }}>ETF</span>
           </div>
           <h2 style={{ color: 'var(--color-primario)', marginBottom: 6, fontSize: 22, fontWeight: 700 }}>
             Unirse a la sesion

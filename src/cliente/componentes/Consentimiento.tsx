@@ -33,7 +33,7 @@ export function Consentimiento({ onAceptado }: Props) {
             width: 52, height: 52, borderRadius: 14,
             background: 'var(--color-info-suave)', marginBottom: 14,
           }}>
-            <span style={{ fontSize: 26 }}>📋</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-info)' }}>CI</span>
           </div>
           <h2 style={{ color: 'var(--color-primario)', fontSize: 22, fontWeight: 700 }}>
             Consentimiento informado

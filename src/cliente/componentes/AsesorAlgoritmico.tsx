@@ -33,7 +33,7 @@ export function AsesorAlgoritmico() {
           background: 'rgba(200, 146, 42, 0.15)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <span style={{ fontSize: 20 }}>🤖</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-acento)' }}>AA</span>
         </div>
         <div>
           <strong style={{ color: 'var(--color-acento)', fontSize: 14 }}>Asesor Algoritmico</strong>

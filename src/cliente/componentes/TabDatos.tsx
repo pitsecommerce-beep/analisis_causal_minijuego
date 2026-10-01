@@ -2,15 +2,15 @@ import { useState, useEffect, useMemo } from 'react';
 import { api } from '../api.js';
 
 const HERRAMIENTAS = [
-  { id: 'histograma', nombre: 'Histograma', icono: '📊' },
-  { id: 'pareto', nombre: 'Pareto', icono: '📉' },
-  { id: 'diagrama_corrida', nombre: 'Corrida', icono: '📈' },
-  { id: 'dispersion', nombre: 'Dispersion', icono: '⚡' },
-  { id: 'tabla_dinamica', nombre: 'Pivote', icono: '🔄' },
-  { id: 'filtro', nombre: 'Filtrar', icono: '🔍' },
-  { id: 'contar', nombre: 'Contar', icono: '🔢' },
-  { id: 'sumar', nombre: 'Sumar', icono: '➕' },
-  { id: 'estadisticas', nombre: 'Stats', icono: '📐' },
+  { id: 'histograma', nombre: 'Histograma' },
+  { id: 'pareto', nombre: 'Pareto' },
+  { id: 'diagrama_corrida', nombre: 'Corrida' },
+  { id: 'dispersion', nombre: 'Dispersion' },
+  { id: 'tabla_dinamica', nombre: 'Pivote' },
+  { id: 'filtro', nombre: 'Filtrar' },
+  { id: 'contar', nombre: 'Contar' },
+  { id: 'sumar', nombre: 'Sumar' },
+  { id: 'estadisticas', nombre: 'Stats' },
 ];
 
 const MAPA_VERIFICACIONES: Record<string, { columnas: string[]; herramientas: string[] }> = {
@@ -225,7 +225,6 @@ export function TabDatos({ onHerramientaUsada }: Props) {
               borderColor: herramientasUsadas.has(h.id) ? 'var(--color-acento)' : undefined,
               color: herramientasUsadas.has(h.id) ? 'var(--color-acento)' : undefined,
             }}>
-            <span style={{ fontSize: 18 }}>{h.icono}</span>
             {h.nombre}
           </button>
         ))}

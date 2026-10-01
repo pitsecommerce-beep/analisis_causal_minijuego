@@ -33,8 +33,12 @@ export function Inicio() {
             backdropFilter: 'blur(10px)',
             marginBottom: 24,
             border: '1px solid rgba(255, 255, 255, 0.15)',
+            fontSize: 28,
+            fontWeight: 800,
+            color: 'rgba(255, 255, 255, 0.85)',
+            letterSpacing: '-0.04em',
           }}>
-            <span style={{ fontSize: 36 }}>🏦</span>
+            ETF
           </div>
 
           <h1 style={{

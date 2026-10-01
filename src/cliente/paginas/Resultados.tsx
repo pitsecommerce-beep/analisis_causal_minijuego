@@ -21,13 +21,13 @@ const COLORES_DESENLACE: Record<string, { color: string; bg: string }> = {
   destituido: { color: '#7f1d1d', bg: '#fce8e6' },
 };
 
-const NOMBRES_DIMENSION: Record<string, { nombre: string; icono: string }> = {
-  diagnostico: { nombre: 'Diagnostico (causa raiz)', icono: '🔍' },
-  criterio: { nombre: 'Criterio (evidencia)', icono: '📋' },
-  impacto: { nombre: 'Impacto (mejora KPIs)', icono: '📈' },
-  metodo: { nombre: 'Metodo (herramientas)', icono: '🛠' },
-  compromisos: { nombre: 'Compromisos', icono: '🤝' },
-  penalizaciones: { nombre: 'Penalizaciones', icono: '⚠️' },
+const NOMBRES_DIMENSION: Record<string, { nombre: string; color: string }> = {
+  diagnostico: { nombre: 'Diagnostico (causa raiz)', color: '#2563a8' },
+  criterio: { nombre: 'Criterio (evidencia)', color: '#7c3aed' },
+  impacto: { nombre: 'Impacto (mejora KPIs)', color: '#059669' },
+  metodo: { nombre: 'Metodo (herramientas)', color: '#0891b2' },
+  compromisos: { nombre: 'Compromisos', color: '#c8922a' },
+  penalizaciones: { nombre: 'Penalizaciones', color: '#c0392b' },
 };
 
 export function Resultados() {
@@ -38,6 +38,7 @@ export function Resultados() {
   const [pasosEnOrden, setPasosEnOrden] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [resultado, setResultado] = useState<any>(null);
+  const [errorCierre, setErrorCierre] = useState('');
   const [herramientas] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem('herramientasUsadas') ?? '[]');
@@ -56,6 +57,7 @@ export function Resultados() {
 
   async function enviarCierre() {
     setCargando(true);
+    setErrorCierre('');
     try {
       const causas = causasSeleccionadas.map(id => {
         const c = CAUSAS_OPCIONES.find(x => x.id === id);
@@ -64,7 +66,9 @@ export function Resultados() {
       const res = await api.partida.cierre(causas, herramientas, consultoGuia, pasosEnOrden);
       setResultado(res);
       setFase('resultado');
-    } catch { /* ignore */ }
+    } catch (err: any) {
+      setErrorCierre(err.message || 'Error al enviar el cierre');
+    }
     setCargando(false);
   }
 
@@ -95,7 +99,7 @@ export function Resultados() {
               background: 'var(--color-primario-suave)',
               marginBottom: 16,
             }}>
-              <span style={{ fontSize: 28 }}>📝</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primario)' }}>ETF</span>
             </div>
             <h2 style={{ color: 'var(--color-primario)', fontSize: 22, fontWeight: 700 }}>
               Cierre de partida
@@ -161,6 +165,20 @@ export function Resultados() {
             </label>
           </div>
 
+          {errorCierre && (
+            <div style={{
+              background: 'var(--color-peligro-suave)',
+              color: 'var(--color-peligro)',
+              padding: '10px 14px',
+              borderRadius: 'var(--radio)',
+              fontSize: 13,
+              fontWeight: 500,
+              marginBottom: 12,
+            }}>
+              {errorCierre}
+            </div>
+          )}
+
           <button className="btn-acento" style={{ width: '100%', padding: 16, fontSize: 16, borderRadius: 12 }}
             onClick={enviarCierre} disabled={cargando || causasSeleccionadas.length === 0}>
             {cargando ? 'Evaluando...' : 'Ver mi resultado'}
@@ -210,7 +228,11 @@ export function Resultados() {
         {ramonCierre && (
           <div className="tarjeta" style={{ marginBottom: 20, borderLeft: `4px solid ${theme.color}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-              <span style={{ fontSize: 24 }}>🧐</span>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 28, height: 28, borderRadius: 8,
+                background: '#0f2b4a', color: '#fff', fontSize: 14, fontWeight: 700,
+              }}>R</span>
               <strong style={{ color: 'var(--color-primario)', fontSize: 14 }}>Ramon Betancourt (Consejo)</strong>
             </div>
             <div className="dialogo-burbuja" style={{ maxWidth: '100%' }}>
@@ -237,7 +259,10 @@ export function Resultados() {
                 <div key={dim}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 6, alignItems: 'center' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 16 }}>{info.icono}</span>
+                      <span style={{
+                        display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+                        background: info.color, flexShrink: 0,
+                      }} />
                       {info.nombre}
                     </span>
                     <strong style={{
