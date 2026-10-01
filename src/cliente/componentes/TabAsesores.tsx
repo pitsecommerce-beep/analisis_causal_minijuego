@@ -10,12 +10,13 @@ const NOMBRES: Record<string, { nombre: string; rol: string }> = {
   ramon: { nombre: 'Ramon Betancourt', rol: 'Consejo' },
 };
 
-const EXPRESIONES: Record<string, string> = {
-  neutral: '😐', serio: '😤', confiado: '😏', preocupado: '😟',
-  entusiasta: '😊', nervioso: '😰', aliviado: '😌', molesto: '😠',
-  frustrado: '😩', satisfecho: '😌', resignado: '🤷', solemne: '🧐',
-  firme: '💪', sorprendido: '😮', tecnico: '🤓', impaciente: '⏳',
-  amable: '🤝', defensivo: '🛡️',
+const COLORES_PERSONAJE: Record<string, string> = {
+  bernardo: '#2563a8',
+  oscar: '#7c3aed',
+  paulina: '#0891b2',
+  silvia: '#c8922a',
+  diego: '#059669',
+  ramon: '#0f2b4a',
 };
 
 interface Props {
@@ -87,7 +88,7 @@ export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           marginBottom: 14,
         }}>
-          <span style={{ fontSize: 26 }}>👥</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-texto-terciario)' }}>SJ</span>
         </div>
         <p style={{ color: 'var(--color-texto-secundario)', fontSize: 15 }}>
           No hay dialogos en este momento.
@@ -124,11 +125,12 @@ export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
                 <div style={{
                   width: 44, height: 44, borderRadius: 12,
-                  background: 'var(--color-primario-suave)',
+                  background: COLORES_PERSONAJE[personaje] ?? 'var(--color-primario)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 22, flexShrink: 0,
+                  fontSize: 16, fontWeight: 700, color: '#fff', flexShrink: 0,
+                  letterSpacing: '-0.02em',
                 }}>
-                  {EXPRESIONES[nodos[0]?.expresion] ?? '😐'}
+                  {(info?.nombre ?? personaje).charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <strong style={{ color: 'var(--color-primario)', fontSize: 15 }}>
@@ -163,7 +165,7 @@ export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
                       alignItems: 'center',
                       gap: 6,
                     }}>
-                      {nodo.afirmacion.veredicto === 'verdadero' ? '✅' : nodo.afirmacion.veredicto === 'parcial' ? '⚠️' : '❌'}
+                      {nodo.afirmacion.veredicto === 'verdadero' ? 'V' : nodo.afirmacion.veredicto === 'parcial' ? '~' : 'X'}
                       <span>{nodo.afirmacion.id}</span>
                     </div>
                   )}

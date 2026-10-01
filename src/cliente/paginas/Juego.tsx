@@ -9,10 +9,10 @@ import { AsesorAlgoritmico } from '../componentes/AsesorAlgoritmico.js';
 
 type Vista = 'datos' | 'asesores' | 'decisiones';
 
-const TABS: { id: Vista; label: string; icono: string }[] = [
-  { id: 'datos', label: 'Datos', icono: '📊' },
-  { id: 'asesores', label: 'Sala de Juntas', icono: '👥' },
-  { id: 'decisiones', label: 'Decisiones', icono: '⚡' },
+const TABS: { id: Vista; label: string }[] = [
+  { id: 'datos', label: 'Datos' },
+  { id: 'asesores', label: 'Sala de Juntas' },
+  { id: 'decisiones', label: 'Decisiones' },
 ];
 
 export function Juego() {
@@ -153,7 +153,7 @@ export function Juego() {
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             marginBottom: 16,
           }}>
-            <span style={{ fontSize: 28 }}>⏳</span>
+            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-advertencia)' }}>!</span>
           </div>
           <h3 style={{ color: 'var(--color-texto)', marginBottom: 8 }}>Sesion no disponible</h3>
           <p style={{ color: 'var(--color-texto-secundario)', marginBottom: 20, fontSize: 14, lineHeight: 1.6 }}>{error}</p>
@@ -202,8 +202,13 @@ export function Juego() {
           </div>
           <div className="barra-estado-item">
             <span className="barra-estado-label">Vidas</span>
-            <span className="barra-estado-valor" style={{ letterSpacing: 2 }}>
-              {'❤️'.repeat(vidas)}{'🖤'.repeat(Math.max(0, 3 - vidas))}
+            <span className="barra-estado-valor" style={{ display: 'inline-flex', gap: 4 }}>
+              {Array.from({ length: 3 }, (_, i) => (
+                <span key={i} style={{
+                  display: 'inline-block', width: 10, height: 10, borderRadius: '50%',
+                  background: i < vidas ? '#4ade80' : 'rgba(255,255,255,0.2)',
+                }} />
+              ))}
             </span>
           </div>
           <div className="barra-estado-item">
@@ -245,7 +250,6 @@ export function Juego() {
                 transition: 'all var(--transicion)',
               }}
             >
-              <span style={{ marginRight: 6 }}>{t.icono}</span>
               {t.label}
             </button>
           ))}

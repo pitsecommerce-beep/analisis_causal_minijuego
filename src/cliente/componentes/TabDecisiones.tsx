@@ -156,7 +156,7 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
               border: '1px solid rgba(26, 122, 76, 0.15)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 18 }}>✅</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-exito)' }}>OK</span>
                 <strong style={{ color: 'var(--color-exito)', fontSize: 14 }}>Compromiso declarado</strong>
               </div>
               <p style={{ fontSize: 14, color: 'var(--color-texto-secundario)' }}>
@@ -222,7 +222,7 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
                 alignItems: 'center',
                 gap: 8,
               }}>
-                <span style={{ fontSize: 16 }}>📊</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-primario)', letterSpacing: '0.04em' }}>KPI</span>
                 KPIs actuales
               </h4>
               <div style={{ fontSize: 13 }}>

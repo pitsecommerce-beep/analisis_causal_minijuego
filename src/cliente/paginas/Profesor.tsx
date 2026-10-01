@@ -45,7 +45,7 @@ function Login() {
             width: 48, height: 48, borderRadius: 12,
             background: 'var(--color-primario-suave)', marginBottom: 16,
           }}>
-            <span style={{ fontSize: 24 }}>👨‍🏫</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primario)' }}>Prof</span>
           </div>
           <h2 style={{ color: 'var(--color-primario)', fontSize: 22, fontWeight: 700 }}>
             {modo === 'login' ? 'Panel del Profesor' : 'Crear cuenta'}

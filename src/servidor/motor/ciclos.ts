@@ -43,7 +43,7 @@ export interface EstadoPartida {
 
 export function crearPartida(kpisIniciales: KPIs, semilla: number): EstadoPartida {
   return {
-    cicloActual: 0,
+    cicloActual: 1,
     kpis: clonarKPIs(kpisIniciales),
     vidas: 3,
     credibilidad: 60,
@@ -130,7 +130,6 @@ export function procesarCiclo(
   catalogoAcciones: AccionConfig[],
   eventosConfig: EventoConfig[]
 ): ResultadoCiclo {
-  partida.cicloActual++;
   const ciclo = partida.cicloActual;
   const kpisAntes = clonarKPIs(partida.kpis);
 
@@ -245,5 +244,6 @@ export function procesarCiclo(
   };
 
   partida.resultadosCiclo.push(resultado);
+  partida.cicloActual++;
   return resultado;
 }
