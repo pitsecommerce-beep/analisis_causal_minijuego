@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api.js';
+import { useUI } from './ui/Notificaciones.js';
 
 const NOMBRES: Record<string, { nombre: string; rol: string }> = {
   bernardo: { nombre: 'Bernardo', rol: 'Gte. Regional' },
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
+  const { avisar } = useUI();
   const [dialogos, setDialogos] = useState<any[]>([]);
   const [respondidos, setRespondidos] = useState<Set<string>>(new Set());
   const [cargando, setCargando] = useState(true);
@@ -37,7 +39,9 @@ export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
     try {
       const data = await api.partida.dialogos();
       setDialogos(data);
-    } catch { /* ignore */ }
+    } catch (err: any) {
+      avisar('error', 'No se pudieron cargar los dialogos', err.message);
+    }
     setCargando(false);
   }
 
@@ -60,21 +64,22 @@ export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
           setDialogos(prev => [...prev, res.siguienteNodo]);
         }
       }
-    } catch { /* ignore */ }
+    } catch (err: any) {
+      setRespondidos(prev => {
+        const next = new Set(prev);
+        next.delete(nodoId);
+        return next;
+      });
+      setConversacion(prev => prev.slice(0, -1));
+      avisar('error', 'No se pudo enviar tu respuesta', err.message);
+    }
   }
 
   if (cargando) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: '50%',
-          border: '3px solid var(--color-borde)',
-          borderTopColor: 'var(--color-primario)',
-          animation: 'spin 0.8s linear infinite',
-          margin: '0 auto 12px',
-        }} />
+        <div className="spinner" />
         <p style={{ color: 'var(--color-texto-secundario)', fontSize: 14 }}>Cargando dialogos...</p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }

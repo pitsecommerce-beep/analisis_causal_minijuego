@@ -154,15 +154,8 @@ export function TabDatos({ onHerramientaUsada }: Props) {
   if (cargando) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: '50%',
-          border: '3px solid var(--color-borde)',
-          borderTopColor: 'var(--color-primario)',
-          animation: 'spin 0.8s linear infinite',
-          margin: '0 auto 12px',
-        }} />
+        <div className="spinner" />
         <p style={{ color: 'var(--color-texto-secundario)', fontSize: 14 }}>Cargando datos...</p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }

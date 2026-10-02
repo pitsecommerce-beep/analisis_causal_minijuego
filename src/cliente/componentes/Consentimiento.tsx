@@ -1,25 +1,31 @@
 import { useState } from 'react';
 import { api } from '../api.js';
+import { useUI } from './ui/Notificaciones.js';
+import { PiePagina } from './ui/PiePagina.js';
 
 interface Props {
   onAceptado: () => void;
 }
 
 export function Consentimiento({ onAceptado }: Props) {
+  const { avisar } = useUI();
   const [cargando, setCargando] = useState(false);
 
   async function responder(acepta: boolean) {
     setCargando(true);
     try {
       await api.experimento.consentimiento(acepta);
+      avisar('exito', acepta ? 'Gracias por participar en el estudio' : 'Respuesta registrada', acepta ? undefined : 'Tus datos no se incluiran en la investigacion.');
       onAceptado();
-    } catch { /* ignore */ }
+    } catch (err: any) {
+      avisar('error', 'No se pudo registrar tu respuesta', err.message);
+    }
     setCargando(false);
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
+    <div className="pagina">
+    <div className="pagina-contenido" style={{
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -84,6 +90,8 @@ export function Consentimiento({ onAceptado }: Props) {
           </button>
         </div>
       </div>
+    </div>
+    <PiePagina />
     </div>
   );
 }

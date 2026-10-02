@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
+import { useUI } from '../componentes/ui/Notificaciones.js';
+import { PiePagina } from '../componentes/ui/PiePagina.js';
 
 const CAUSAS_OPCIONES = [
   { id: 'ventana_captura_cuello', nombre: 'Ventana de captura como cuello de botella' },
@@ -32,6 +34,7 @@ const NOMBRES_DIMENSION: Record<string, { nombre: string; color: string }> = {
 
 export function Resultados() {
   const nav = useNavigate();
+  const { avisar, confirmar } = useUI();
   const [fase, setFase] = useState<'cierre' | 'resultado'>('cierre');
   const [causasSeleccionadas, setCausasSeleccionadas] = useState<string[]>([]);
   const [consultoGuia, setConsultoGuia] = useState(false);
@@ -56,6 +59,13 @@ export function Resultados() {
   }
 
   async function enviarCierre() {
+    const ok = await confirmar({
+      titulo: 'Enviar cierre de partida',
+      mensaje: `Declaraste ${causasSeleccionadas.length} causa(s) raiz. Una vez enviado el cierre se calculara tu puntuacion final y no podras modificarlo.`,
+      textoConfirmar: 'Enviar y ver resultado',
+      tono: 'advertencia',
+    });
+    if (!ok) return;
     setCargando(true);
     setErrorCierre('');
     try {
@@ -66,21 +76,28 @@ export function Resultados() {
       const res = await api.partida.cierre(causas, herramientas, consultoGuia, pasosEnOrden);
       setResultado(res);
       setFase('resultado');
+      avisar('exito', 'Cierre enviado', 'Tu resultado final esta listo.');
     } catch (err: any) {
       setErrorCierre(err.message || 'Error al enviar el cierre');
     }
     setCargando(false);
   }
 
-  function salir() {
+  async function salir() {
+    const ok = await confirmar({
+      titulo: 'Salir del simulador',
+      mensaje: 'Se cerrara tu sesion en este dispositivo. Tu resultado ya quedo registrado.',
+      textoConfirmar: 'Salir',
+    });
+    if (!ok) return;
     localStorage.clear();
     nav('/');
   }
 
   if (fase === 'cierre') {
     return (
-      <div style={{
-        minHeight: '100vh',
+      <div className="pagina">
+      <main className="pagina-contenido" style={{
         background: 'var(--color-fondo)',
         display: 'flex',
         alignItems: 'flex-start',
@@ -130,9 +147,9 @@ export function Resultados() {
                   }}>
                     <input
                       type="checkbox"
+                      className="casilla"
                       checked={sel}
                       onChange={() => toggleCausa(c.id)}
-                      style={{ width: 16, height: 16, accentColor: 'var(--color-primario)' }}
                     />
                     <span style={{ fontSize: 14 }}>{c.nombre}</span>
                   </label>
@@ -166,24 +183,18 @@ export function Resultados() {
           </div>
 
           {errorCierre && (
-            <div style={{
-              background: 'var(--color-peligro-suave)',
-              color: 'var(--color-peligro)',
-              padding: '10px 14px',
-              borderRadius: 'var(--radio)',
-              fontSize: 13,
-              fontWeight: 500,
-              marginBottom: 12,
-            }}>
+            <div className="alerta-error" role="alert" style={{ marginBottom: 12 }}>
               {errorCierre}
             </div>
           )}
 
-          <button className="btn-acento" style={{ width: '100%', padding: 16, fontSize: 16, borderRadius: 12 }}
+          <button className="btn-advertencia" style={{ width: '100%', padding: 16, fontSize: 16, borderRadius: 12 }}
             onClick={enviarCierre} disabled={cargando || causasSeleccionadas.length === 0}>
             {cargando ? 'Evaluando...' : 'Ver mi resultado'}
           </button>
         </div>
+      </main>
+      <PiePagina />
       </div>
     );
   }
@@ -194,8 +205,8 @@ export function Resultados() {
   const theme = COLORES_DESENLACE[desenlace.id] ?? { color: 'var(--color-primario)', bg: 'var(--color-primario-suave)' };
 
   return (
-    <div style={{
-      minHeight: '100vh',
+    <div className="pagina">
+    <main className="pagina-contenido" style={{
       background: 'var(--color-fondo)',
       padding: '40px 20px',
     }}>
@@ -322,6 +333,8 @@ export function Resultados() {
           Salir del simulador
         </button>
       </div>
+    </main>
+    <PiePagina />
     </div>
   );
 }

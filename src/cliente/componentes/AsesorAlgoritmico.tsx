@@ -49,14 +49,7 @@ export function AsesorAlgoritmico() {
       )}
 
       {error && (
-        <div style={{
-          background: 'var(--color-peligro-suave)',
-          color: 'var(--color-peligro)',
-          padding: '8px 12px',
-          borderRadius: 'var(--radio)',
-          fontSize: 13,
-          marginTop: 10,
-        }}>
+        <div className="alerta-error" role="alert" style={{ marginTop: 10 }}>
           {error}
         </div>
       )}

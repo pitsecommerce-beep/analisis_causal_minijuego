@@ -58,11 +58,11 @@ export function ProveedorUI({ children }: { children: ReactNode }) {
     return new Promise<boolean>(resolve => { resolverRef.current = resolve; });
   }, []);
 
-  function responder(valor: boolean) {
+  const responder = useCallback((valor: boolean) => {
     resolverRef.current?.(valor);
     resolverRef.current = null;
     setConfirmacion(null);
-  }
+  }, []);
 
   return (
     <Contexto.Provider value={{ avisar, confirmar }}>

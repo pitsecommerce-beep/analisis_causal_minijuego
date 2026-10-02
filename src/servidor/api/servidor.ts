@@ -245,6 +245,24 @@ app.post('/api/sesion/:codigo/unirse', async (req, res) => {
 // ║     RUTAS DE PROFESOR               ║
 // ╚══════════════════════════════════════╝
 
+async function esSesionDelProfesor(sesionId: string, profesorId: string): Promise<boolean> {
+  try {
+    const sesion = await obtenerSesionPorId(sesionId);
+    return sesion?.profesor_id === profesorId;
+  } catch {
+    return false;
+  }
+}
+
+async function sesionPropia(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
+  const propia = await esSesionDelProfesor(req.params['id'] as string, (req as RequestProfesor).profesorId);
+  if (!propia) {
+    res.status(404).json({ error: 'Sesion no encontrada' });
+    return;
+  }
+  next();
+}
+
 app.get('/api/profesor/sesiones', autenticarProfesor, async (req, res) => {
   try {
     const sesiones = await listarSesionesProfesor((req as RequestProfesor).profesorId);
@@ -254,7 +272,7 @@ app.get('/api/profesor/sesiones', autenticarProfesor, async (req, res) => {
   }
 });
 
-app.get('/api/profesor/sesion/:id', autenticarProfesor, async (req, res) => {
+app.get('/api/profesor/sesion/:id', autenticarProfesor, sesionPropia, async (req, res) => {
   try {
     const sesion = await obtenerSesionPorId(req.params.id!);
     const jugadores = await listarJugadoresSesion(sesion.id);
@@ -265,7 +283,7 @@ app.get('/api/profesor/sesion/:id', autenticarProfesor, async (req, res) => {
   }
 });
 
-app.post('/api/profesor/sesion/:id/iniciar', autenticarProfesor, async (req, res) => {
+app.post('/api/profesor/sesion/:id/iniciar', autenticarProfesor, sesionPropia, async (req, res) => {
   try {
     await actualizarEstadoSesion(req.params.id!, 'en_curso');
     res.json({ ok: true });
@@ -274,7 +292,7 @@ app.post('/api/profesor/sesion/:id/iniciar', autenticarProfesor, async (req, res
   }
 });
 
-app.post('/api/profesor/sesion/:id/finalizar', autenticarProfesor, async (req, res) => {
+app.post('/api/profesor/sesion/:id/finalizar', autenticarProfesor, sesionPropia, async (req, res) => {
   try {
     await actualizarEstadoSesion(req.params.id!, 'finalizada');
     res.json({ ok: true });
@@ -845,7 +863,7 @@ app.get('/api/config/metricas', autenticarJugador, async (_req, res) => {
 // ║     RUTAS DE EXPERIMENTO (ADENDA)   ║
 // ╚══════════════════════════════════════╝
 
-app.post('/api/profesor/sesion/:id/experimento', autenticarProfesor, async (req, res) => {
+app.post('/api/profesor/sesion/:id/experimento', autenticarProfesor, sesionPropia, async (req, res) => {
   const { modoExperimento, pctTratamiento } = req.body;
   try {
     await actualizarSesionExperimento(
@@ -934,7 +952,7 @@ app.post('/api/telemetria', autenticarJugador, async (req, res) => {
   }
 });
 
-app.get('/api/profesor/sesion/:id/telemetria', autenticarProfesor, async (req, res) => {
+app.get('/api/profesor/sesion/:id/telemetria', autenticarProfesor, sesionPropia, async (req, res) => {
   try {
     const data = await obtenerTelemetriaSesion(req.params.id!);
     res.json(data);
@@ -943,7 +961,7 @@ app.get('/api/profesor/sesion/:id/telemetria', autenticarProfesor, async (req, r
   }
 });
 
-app.get('/api/profesor/sesion/:id/resumen-experimento', autenticarProfesor, async (req, res) => {
+app.get('/api/profesor/sesion/:id/resumen-experimento', autenticarProfesor, sesionPropia, async (req, res) => {
   try {
     const resumen = await obtenerResumenExperimento(req.params.id!);
     res.json(resumen);
@@ -961,6 +979,11 @@ app.get('/api/profesor/sesion/:id/exportar', async (req, res) => {
     autenticarProfesor(req, res, ((err?: any) => err ? reject(err) : resolve()) as any);
   }).catch(() => { return; });
   if (res.headersSent) return;
+
+  if (!(await esSesionDelProfesor(req.params.id!, (req as RequestProfesor).profesorId))) {
+    res.status(404).json({ error: 'Sesion no encontrada' });
+    return;
+  }
 
   const formato = (req.query['formato'] as string) ?? 'json';
 

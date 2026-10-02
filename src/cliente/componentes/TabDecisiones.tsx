@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api.js';
+import { useUI } from './ui/Notificaciones.js';
 
 interface Props {
   estado: any;
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export function TabDecisiones({ estado, onEstadoCambio }: Props) {
+  const { avisar, confirmar } = useUI();
   const [acciones, setAcciones] = useState<any[]>([]);
   const [metricas, setMetricas] = useState<any[]>([]);
   const [seleccionadas, setSeleccionadas] = useState<number[]>([]);
@@ -39,12 +41,28 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
 
   async function confirmarAcciones() {
     if (seleccionadas.length === 0) return;
+    const nombres = seleccionadas.map(id => acciones.find(x => x.id === id)?.nombre ?? `Accion ${id}`);
+    const ok = await confirmar({
+      titulo: `Confirmar ${seleccionadas.length} accion(es)`,
+      mensaje: (
+        <>
+          <ul style={{ margin: '0 0 10px 18px' }}>
+            {nombres.map(n => <li key={n}>{n}</li>)}
+          </ul>
+          Se descontaran <strong>${costoSeleccion}</strong> de tu presupuesto. Una vez confirmadas no se pueden revertir.
+        </>
+      ),
+      textoConfirmar: 'Confirmar acciones',
+      tono: 'advertencia',
+    });
+    if (!ok) return;
     setError('');
     setCargando(true);
     try {
       const res = await api.partida.acciones(seleccionadas.map(id => ({ accionId: id })));
       onEstadoCambio(res);
       setSeleccionadas([]);
+      avisar('exito', 'Acciones confirmadas', `Presupuesto restante: $${res?.presupuestoDisponible ?? presupuesto - costoSeleccion}`);
     } catch (err: any) {
       setError(err.message);
     }
@@ -57,18 +75,32 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
     try {
       await api.partida.compromiso(metricaComp, parseFloat(valorComp));
       setCompromisoDeclarado(true);
+      avisar('exito', 'Compromiso declarado', `${metricaActual?.nombre ?? metricaComp}: ${valorComp} ${metricaActual?.unidad ?? ''}`.trim());
     } catch (err: any) {
       setError(err.message);
     }
   }
 
   async function avanzarCiclo() {
+    const ok = await confirmar({
+      titulo: 'Avanzar al siguiente ciclo',
+      mensaje: seleccionadas.length > 0
+        ? 'Tienes acciones seleccionadas sin confirmar y se descartaran. El ciclo actual se cerrara y no podras volver a el.'
+        : 'El ciclo actual se cerrara y no podras volver a el. Asegurate de haber tomado todas tus decisiones.',
+      textoConfirmar: 'Avanzar ciclo',
+      tono: 'advertencia',
+    });
+    if (!ok) return;
     setCargando(true);
     setError('');
     try {
       const res = await api.partida.avanzar();
       onEstadoCambio(res.estado);
       setCompromisoDeclarado(false);
+      setSeleccionadas([]);
+      if (!res.estado?.terminada && res.estado?.fase !== 'finalizada') {
+        avisar('info', `Ciclo ${res.estado?.cicloActual ?? ''} iniciado`.trim(), 'Revisa los nuevos datos y la sala de juntas.');
+      }
     } catch (err: any) {
       setError(err.message);
     }
@@ -105,8 +137,18 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
 
               return (
                 <div key={a.id}
+                  role="checkbox"
+                  aria-checked={sel}
+                  aria-disabled={yaElegida || noAlcanza}
+                  tabIndex={yaElegida || noAlcanza ? -1 : 0}
                   className={`accion-card ${sel ? 'seleccionada' : ''} ${yaElegida || noAlcanza ? 'deshabilitada' : ''}`}
-                  onClick={() => !yaElegida && !noAlcanza && toggleAccion(a.id)}>
+                  onClick={() => !yaElegida && !noAlcanza && toggleAccion(a.id)}
+                  onKeyDown={e => {
+                    if ((e.key === ' ' || e.key === 'Enter') && !yaElegida && !noAlcanza) {
+                      e.preventDefault();
+                      toggleAccion(a.id);
+                    }
+                  }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-texto)' }}>{a.nombre}</div>
@@ -134,7 +176,7 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
           </div>
 
           {seleccionadas.length > 0 && (
-            <button className="btn-acento" style={{ width: '100%', marginTop: 14, padding: 14, fontSize: 15 }}
+            <button className="btn-advertencia" style={{ width: '100%', marginTop: 14, padding: 14, fontSize: 15 }}
               onClick={confirmarAcciones} disabled={cargando || costoSeleccion > presupuesto}>
               Confirmar {seleccionadas.length} accion(es) (${costoSeleccion})
             </button>
@@ -156,7 +198,6 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
               border: '1px solid rgba(26, 122, 76, 0.15)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-exito)' }}>OK</span>
                 <strong style={{ color: 'var(--color-exito)', fontSize: 14 }}>Compromiso declarado</strong>
               </div>
               <p style={{ fontSize: 14, color: 'var(--color-texto-secundario)' }}>
@@ -166,13 +207,10 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
           ) : (
             <div className="tarjeta" style={{ marginBottom: 20 }}>
               <div style={{ marginBottom: 14 }}>
-                <label style={{
-                  fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 6,
-                  color: 'var(--color-texto-secundario)', textTransform: 'uppercase', letterSpacing: '0.06em',
-                }}>
+                <label className="campo-label" htmlFor="metrica-comp">
                   Metrica
                 </label>
-                <select value={metricaComp} onChange={e => {
+                <select id="metrica-comp" value={metricaComp} onChange={e => {
                   setMetricaComp(e.target.value);
                   if (kpis && e.target.value) setValorComp(String(kpis[e.target.value] ?? ''));
                 }}>
@@ -186,16 +224,13 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
               </div>
               {metricaComp && valorActual != null && (
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{
-                    fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 6,
-                    color: 'var(--color-texto-secundario)', textTransform: 'uppercase', letterSpacing: '0.06em',
-                  }}>
+                  <label className="campo-label" htmlFor="valor-comp">
                     Valor prometido
                     <span style={{ fontWeight: 400, textTransform: 'none', marginLeft: 6 }}>
                       (actual: {typeof valorActual === 'number' ? valorActual.toFixed(1) : valorActual})
                     </span>
                   </label>
-                  <input type="number" step="0.1" value={valorComp}
+                  <input id="valor-comp" type="number" step="0.1" value={valorComp}
                     onChange={e => setValorComp(e.target.value)} />
                 </div>
               )}
@@ -206,7 +241,7 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
             </div>
           )}
 
-          <button className="btn-acento" style={{ width: '100%', padding: 16, fontSize: 16, borderRadius: 12 }}
+          <button className="btn-advertencia" style={{ width: '100%', padding: 16, fontSize: 16, borderRadius: 12 }}
             onClick={avanzarCiclo} disabled={cargando || !compromisoDeclarado}>
             Avanzar al siguiente ciclo
           </button>
@@ -246,15 +281,7 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
       </div>
 
       {error && (
-        <div style={{
-          background: 'var(--color-peligro-suave)',
-          color: 'var(--color-peligro)',
-          padding: '10px 14px',
-          borderRadius: 'var(--radio)',
-          fontSize: 13,
-          fontWeight: 500,
-          marginTop: 14,
-        }}>
+        <div className="alerta-error" role="alert" style={{ marginTop: 14 }}>
           {error}
         </div>
       )}
