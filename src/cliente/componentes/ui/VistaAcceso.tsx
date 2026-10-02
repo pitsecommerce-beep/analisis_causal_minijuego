@@ -7,17 +7,24 @@ interface Props {
   subtitulo?: string;
   children: ReactNode;
   pie?: ReactNode;
+  navegacion?: boolean;
 }
 
-export function VistaAcceso({ titulo, subtitulo, children, pie }: Props) {
+export function VistaAcceso({ titulo, subtitulo, children, pie, navegacion = true }: Props) {
+  const marca = (
+    <>
+      <img src="/favicon.png" alt="" width={28} height={28} />
+      <span>Director de Operaciones</span>
+    </>
+  );
+
   return (
     <div className="pagina acceso">
       <header className="acceso-encabezado contenedor">
-        <Link to="/" className="acceso-marca">
-          <img src="/favicon.png" alt="" width={28} height={28} />
-          <span>Director de Operaciones</span>
-        </Link>
-        <Link to="/" className="enlace enlace-sutil">Volver al inicio</Link>
+        {navegacion
+          ? <Link to="/" className="acceso-marca">{marca}</Link>
+          : <div className="acceso-marca">{marca}</div>}
+        {navegacion && <Link to="/" className="enlace enlace-sutil">Volver al inicio</Link>}
       </header>
 
       <main className="pagina-contenido acceso-contenido">
