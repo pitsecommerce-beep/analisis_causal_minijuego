@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { obtenerSupabase } from '../db/supabase.js';
 import {
   crearSesion, obtenerSesionPorCodigo, obtenerSesionPorId,
-  actualizarEstadoSesion, listarSesionesProfesor,
+  actualizarEstadoSesion, listarSesionesProfesor, eliminarSesiones,
   registrarJugador, contarJugadores, listarJugadoresSesion,
   crearPartidaDB, obtenerPartida, actualizarPartida,
   listarPartidasSesion, registrarVerificacion, listarVerificaciones,
@@ -280,6 +280,33 @@ app.post('/api/profesor/sesion/:id/finalizar', autenticarProfesor, async (req, r
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Error al finalizar sesion' });
+  }
+});
+
+app.post('/api/profesor/sesiones/eliminar', autenticarProfesor, async (req, res) => {
+  const ids = req.body?.ids;
+  if (!Array.isArray(ids) || ids.length === 0 || !ids.every(id => typeof id === 'string')) {
+    res.status(400).json({ error: 'Debes indicar al menos una sesion' });
+    return;
+  }
+  try {
+    const eliminadas = await eliminarSesiones((req as RequestProfesor).profesorId, ids);
+    res.json({ ok: true, eliminadas });
+  } catch {
+    res.status(500).json({ error: 'Error al eliminar sesiones' });
+  }
+});
+
+app.delete('/api/profesor/sesion/:id', autenticarProfesor, async (req, res) => {
+  try {
+    const eliminadas = await eliminarSesiones((req as RequestProfesor).profesorId, [req.params.id!]);
+    if (eliminadas === 0) {
+      res.status(404).json({ error: 'Sesion no encontrada' });
+      return;
+    }
+    res.json({ ok: true, eliminadas });
+  } catch {
+    res.status(500).json({ error: 'Error al eliminar sesion' });
   }
 });
 
