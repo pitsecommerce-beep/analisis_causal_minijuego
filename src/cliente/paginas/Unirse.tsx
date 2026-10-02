@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { VistaAcceso } from '../componentes/ui/VistaAcceso.js';
 
@@ -32,7 +32,7 @@ export function Unirse() {
     <VistaAcceso
       titulo="Únete a una sesión"
       subtitulo="Ingresa el código que te compartió tu profesor."
-      pie={<>¿Eres profesor? <Link to="/profesor" className="enlace">Accede al panel</Link></>}
+      navegacion={false}
     >
       <form className="acceso-formulario" onSubmit={unirse}>
         <div>
