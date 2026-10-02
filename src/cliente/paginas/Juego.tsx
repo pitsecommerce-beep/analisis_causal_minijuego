@@ -207,20 +207,16 @@ export function Juego() {
   }
 
   if (esperando) {
-    return (
-      <>
-        <SalaEspera nombre={nombreJugador} sesion={sesionNombre} onVerTutorial={() => setMostrarOnboarding(true)} />
-        {mostrarOnboarding && <Onboarding onTerminar={terminarOnboarding} />}
-      </>
-    );
+    return <SalaEspera nombre={nombreJugador} sesion={sesionNombre} />;
   }
 
   if (cargando) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-superficie)' }}>
         <div style={{ textAlign: 'center' }}>
-          <div className="spinner" style={{ width: 40, height: 40, marginBottom: 16 }} />
-          <p style={{ fontSize: 15, color: 'var(--color-texto-secundario)' }}>Cargando partida...</p>
+          <img src="/favicon.png" alt="" width={48} height={48} style={{ marginBottom: 24 }} />
+          <div className="spinner" style={{ width: 28, height: 28, borderWidth: 2, marginBottom: 14 }} />
+          <p style={{ fontSize: 14, color: 'var(--color-texto-secundario)' }}>Cargando partida...</p>
         </div>
       </div>
     );
