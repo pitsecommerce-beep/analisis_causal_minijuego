@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { Icono } from './Iconos.js';
+import type { NombreIcono } from './Iconos.js';
 
 type TipoAviso = 'exito' | 'error' | 'info' | 'advertencia';
 
@@ -18,6 +20,7 @@ export interface OpcionesConfirmacion {
   textoConfirmar?: string;
   textoCancelar?: string;
   tono?: TonoConfirmacion;
+  icono?: NombreIcono;
 }
 
 interface ContextoUI {
@@ -29,11 +32,17 @@ const Contexto = createContext<ContextoUI | null>(null);
 
 const DURACION_AVISO = 4500;
 
-const ICONOS: Record<TipoAviso, string> = {
-  exito: '✓',
-  error: '×',
-  info: 'i',
-  advertencia: '!',
+const ICONOS_AVISO: Record<TipoAviso, NombreIcono> = {
+  exito: 'exito',
+  error: 'error',
+  info: 'info',
+  advertencia: 'advertencia',
+};
+
+const ICONOS_TONO: Record<TonoConfirmacion, NombreIcono> = {
+  primario: 'pregunta',
+  advertencia: 'advertencia',
+  peligro: 'peligro',
 };
 
 export function ProveedorUI({ children }: { children: ReactNode }) {
@@ -71,13 +80,13 @@ export function ProveedorUI({ children }: { children: ReactNode }) {
       <div className="avisos" role="region" aria-live="polite" aria-label="Notificaciones">
         {avisos.map(a => (
           <div key={a.id} className={`aviso aviso-${a.tipo}`} role={a.tipo === 'error' ? 'alert' : 'status'}>
-            <span className="aviso-icono" aria-hidden="true">{ICONOS[a.tipo]}</span>
+            <span className="aviso-icono"><Icono nombre={ICONOS_AVISO[a.tipo]} /></span>
             <div className="aviso-cuerpo">
               <div className="aviso-titulo">{a.titulo}</div>
               {a.mensaje && <div className="aviso-mensaje">{a.mensaje}</div>}
             </div>
             <button className="aviso-cerrar" onClick={() => cerrarAviso(a.id)} aria-label="Cerrar notificación">
-              {'×'}
+              <Icono nombre="cerrar" tamano={16} />
             </button>
           </div>
         ))}
@@ -110,8 +119,8 @@ function ModalConfirmacion({ opciones, onResponder }: {
   return (
     <div className="modal-fondo" onMouseDown={e => { if (e.target === e.currentTarget) onResponder(false); }}>
       <div className="modal" role="alertdialog" aria-modal="true" aria-labelledby="modal-titulo">
-        <div className={`modal-icono modal-icono-${tono}`} aria-hidden="true">
-          {tono === 'primario' ? '?' : '!'}
+        <div className={`modal-icono modal-icono-${tono}`}>
+          <Icono nombre={opciones.icono ?? ICONOS_TONO[tono]} tamano={26} grosor={1.8} />
         </div>
         <h3 id="modal-titulo" className="modal-titulo">{opciones.titulo}</h3>
         {opciones.mensaje && <div className="modal-mensaje">{opciones.mensaje}</div>}

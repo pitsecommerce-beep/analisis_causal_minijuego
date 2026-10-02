@@ -130,6 +130,7 @@ export function Juego() {
       mensaje: 'Tu avance queda guardado, pero tendrás que volver a unirte con el código de la sesión para continuar.',
       textoConfirmar: 'Salir',
       tono: 'advertencia',
+      icono: 'salir',
     });
     if (!ok) return;
     localStorage.clear();
