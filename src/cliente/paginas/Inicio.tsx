@@ -1,15 +1,11 @@
 import { useNavigate } from 'react-router-dom';
+import { PiePagina } from '../componentes/ui/PiePagina.js';
 
 export function Inicio() {
   const nav = useNavigate();
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      background: 'linear-gradient(135deg, #0f2b4a 0%, #1a4d80 50%, #0f2b4a 100%)',
-    }}>
+    <div className="pagina fondo-marca">
       <div style={{
         flex: 1,
         display: 'flex',
@@ -101,29 +97,9 @@ export function Inicio() {
               </button>
             </div>
           </div>
-
-          <div style={{
-            marginTop: 48,
-            paddingTop: 20,
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-          }}>
-            <p style={{
-              fontSize: 12,
-              color: 'rgba(255, 255, 255, 0.35)',
-              letterSpacing: '0.04em',
-            }}>
-              IPADE Business School
-            </p>
-            <p style={{
-              fontSize: 11,
-              color: 'rgba(255, 255, 255, 0.25)',
-              marginTop: 2,
-            }}>
-              Area de Direccion de Operaciones
-            </p>
-          </div>
         </div>
       </div>
+      <PiePagina oscuro />
     </div>
   );
 }

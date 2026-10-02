@@ -70,6 +70,17 @@ export async function listarSesionesProfesor(profesorId: string) {
   return data ?? [];
 }
 
+export async function eliminarSesiones(profesorId: string, ids: string[]): Promise<number> {
+  const { data, error } = await sb()
+    .from('sesiones_juego')
+    .delete()
+    .eq('profesor_id', profesorId)
+    .in('id', ids)
+    .select('id');
+  if (error) throw error;
+  return data?.length ?? 0;
+}
+
 // --- Jugadores ---
 
 export async function registrarJugador(sesionId: string, nombre: string, email?: string) {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
+import { PiePagina } from '../componentes/ui/PiePagina.js';
 
 export function Unirse() {
   const nav = useNavigate();
@@ -14,10 +15,10 @@ export function Unirse() {
     setError('');
     setCargando(true);
     try {
-      const res = await api.sesion.unirse(codigo.toUpperCase(), nombre);
+      const res = await api.sesion.unirse(codigo.trim().toUpperCase(), nombre.trim());
       localStorage.setItem('token', res.token);
       localStorage.setItem('tipoAuth', 'jugador');
-      localStorage.setItem('nombreJugador', nombre);
+      localStorage.setItem('nombreJugador', nombre.trim());
       localStorage.setItem('sesionNombre', res.sesion.nombre);
       nav('/juego');
     } catch (err: any) {
@@ -28,13 +29,12 @@ export function Unirse() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
+    <div className="pagina fondo-marca">
+    <div className="pagina-contenido" style={{
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0f2b4a 0%, #1a4d80 50%, #0f2b4a 100%)',
-      padding: '20px',
+      padding: '40px 20px',
     }}>
       <form
         className="tarjeta"
@@ -64,18 +64,13 @@ export function Unirse() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label style={{
-              fontSize: 12,
-              fontWeight: 600,
-              display: 'block',
-              marginBottom: 6,
-              color: 'var(--color-texto-secundario)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-            }}>
+            <label className="campo-label" htmlFor="codigo">
               Codigo de sesion
             </label>
             <input
+              id="codigo"
+              autoComplete="off"
+              autoFocus
               value={codigo}
               onChange={e => setCodigo(e.target.value)}
               placeholder="ABC123"
@@ -94,18 +89,13 @@ export function Unirse() {
             />
           </div>
           <div>
-            <label style={{
-              fontSize: 12,
-              fontWeight: 600,
-              display: 'block',
-              marginBottom: 6,
-              color: 'var(--color-texto-secundario)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-            }}>
+            <label className="campo-label" htmlFor="nombre">
               Tu nombre
             </label>
             <input
+              id="nombre"
+              autoComplete="name"
+              maxLength={60}
               value={nombre}
               onChange={e => setNombre(e.target.value)}
               placeholder="Juan Perez"
@@ -114,14 +104,7 @@ export function Unirse() {
           </div>
 
           {error && (
-            <div style={{
-              background: 'var(--color-peligro-suave)',
-              color: 'var(--color-peligro)',
-              padding: '10px 14px',
-              borderRadius: 'var(--radio)',
-              fontSize: 13,
-              fontWeight: 500,
-            }}>
+            <div className="alerta-error" role="alert">
               {error}
             </div>
           )}
@@ -145,6 +128,8 @@ export function Unirse() {
           Volver al inicio
         </button>
       </form>
+    </div>
+    <PiePagina oscuro />
     </div>
   );
 }

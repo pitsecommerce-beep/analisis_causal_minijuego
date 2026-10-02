@@ -6,6 +6,8 @@ import { TabAsesores } from '../componentes/TabAsesores.js';
 import { TabDecisiones } from '../componentes/TabDecisiones.js';
 import { Consentimiento } from '../componentes/Consentimiento.js';
 import { AsesorAlgoritmico } from '../componentes/AsesorAlgoritmico.js';
+import { useUI } from '../componentes/ui/Notificaciones.js';
+import { PiePagina } from '../componentes/ui/PiePagina.js';
 
 type Vista = 'datos' | 'asesores' | 'decisiones';
 
@@ -17,6 +19,7 @@ const TABS: { id: Vista; label: string }[] = [
 
 export function Juego() {
   const nav = useNavigate();
+  const { confirmar } = useUI();
   const [estado, setEstado] = useState<any>(null);
   const [vista, setVista] = useState<Vista>('datos');
   const [cargando, setCargando] = useState(true);
@@ -121,6 +124,18 @@ export function Juego() {
     iniciar();
   }
 
+  async function salir() {
+    const ok = await confirmar({
+      titulo: 'Salir del simulador',
+      mensaje: 'Tu avance queda guardado, pero tendras que volver a unirte con el codigo de la sesion para continuar.',
+      textoConfirmar: 'Salir',
+      tono: 'advertencia',
+    });
+    if (!ok) return;
+    localStorage.clear();
+    nav('/');
+  }
+
   if (mostrarConsentimiento) {
     return <Consentimiento onAceptado={onConsentimientoCompletado} />;
   }
@@ -129,15 +144,8 @@ export function Juego() {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: '50%',
-            border: '3px solid var(--color-borde)',
-            borderTopColor: 'var(--color-primario)',
-            animation: 'spin 0.8s linear infinite',
-            margin: '0 auto 16px',
-          }} />
+          <div className="spinner" style={{ width: 40, height: 40, marginBottom: 16 }} />
           <p style={{ fontSize: 15, color: 'var(--color-texto-secundario)' }}>Cargando partida...</p>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
     );
@@ -185,8 +193,8 @@ export function Juego() {
       : '#f87171';
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-fondo)' }}>
-      <div className="barra-estado">
+    <div className="pagina" style={{ background: 'var(--color-fondo)' }}>
+      <header className="barra-estado">
         <div className="contenedor" style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
           <div className="barra-estado-item">
             <span className="barra-estado-label">Director(a)</span>
@@ -221,10 +229,24 @@ export function Juego() {
             <span className="barra-estado-label">Presupuesto</span>
             <span className="barra-estado-valor">${presupuesto}</span>
           </div>
+          <div className="barra-estado-item" style={{ justifyContent: 'center' }}>
+            <button
+              onClick={salir}
+              style={{
+                background: 'rgba(255,255,255,0.1)',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.2)',
+                padding: '6px 14px',
+                fontSize: 13,
+              }}
+            >
+              Salir
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
-      <div className="contenedor" style={{ flex: 1, paddingTop: 20, paddingBottom: 40 }}>
+      <main className="contenedor" style={{ flex: 1, paddingTop: 20, paddingBottom: 40, width: '100%' }}>
         <div style={{
           display: 'flex',
           gap: 4,
@@ -239,6 +261,7 @@ export function Juego() {
             <button
               key={t.id}
               onClick={() => onCambioVista(t.id)}
+              aria-pressed={vista === t.id}
               style={{
                 flex: 1,
                 padding: '10px 16px',
@@ -267,7 +290,8 @@ export function Juego() {
         {vista === 'decisiones' && (
           <TabDecisiones estado={estado} onEstadoCambio={onEstadoCambio} />
         )}
-      </div>
+      </main>
+      <PiePagina />
     </div>
   );
 }

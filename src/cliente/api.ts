@@ -3,7 +3,6 @@ const BASE = '/api';
 function headers(): Record<string, string> {
   const h: Record<string, string> = { 'Content-Type': 'application/json' };
   const token = localStorage.getItem('token');
-  const tipo = localStorage.getItem('tipoAuth');
   if (token) h['Authorization'] = `Bearer ${token}`;
   return h;
 }
@@ -14,8 +13,13 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     headers: headers(),
     body: body ? JSON.stringify(body) : undefined,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? 'Error desconocido');
+  let data: any = null;
+  try {
+    data = await res.json();
+  } catch {
+    if (!res.ok) throw new Error(`Error del servidor (${res.status})`);
+  }
+  if (!res.ok) throw new Error(data?.error ?? 'Error desconocido');
   return data as T;
 }
 
@@ -29,6 +33,9 @@ export const api = {
     sesion: (id: string) => request<any>('GET', `/profesor/sesion/${id}`),
     iniciarSesion: (id: string) => request<any>('POST', `/profesor/sesion/${id}/iniciar`),
     finalizarSesion: (id: string) => request<any>('POST', `/profesor/sesion/${id}/finalizar`),
+    eliminarSesion: (id: string) => request<{ ok: boolean; eliminadas: number }>('DELETE', `/profesor/sesion/${id}`),
+    eliminarSesiones: (ids: string[]) =>
+      request<{ ok: boolean; eliminadas: number }>('POST', '/profesor/sesiones/eliminar', { ids }),
   },
   sesion: {
     buscar: (codigo: string) => request<any>('GET', `/sesion/${codigo}`),
