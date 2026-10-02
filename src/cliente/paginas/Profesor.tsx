@@ -1,9 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useUI } from '../componentes/ui/Notificaciones.js';
 import { PiePagina } from '../componentes/ui/PiePagina.js';
 import { VistaAcceso } from '../componentes/ui/VistaAcceso.js';
+
+const INTERVALO_REFRESCO = 4000;
+
+const FASES_PARTIDA: Record<string, { texto: string; clase: string }> = {
+  jugando: { texto: 'Jugando', clase: 'badge-info' },
+  finalizada: { texto: 'Terminó', clase: 'badge-exito' },
+};
 
 const ETIQUETAS_ESTADO: Record<string, { texto: string; clase: string }> = {
   abierta: { texto: 'Abierta', clase: 'badge-info' },
@@ -142,6 +149,10 @@ function Panel() {
   const [resumenExp, setResumenExp] = useState<any>(null);
   const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
   const [ocupado, setOcupado] = useState(false);
+  const [recientes, setRecientes] = useState<Set<string>>(new Set());
+  const [mostrarOcultos, setMostrarOcultos] = useState(false);
+  const detalleRef = useRef<any>(null);
+  detalleRef.current = detalle;
 
   useEffect(() => {
     if (!localStorage.getItem('token') || localStorage.getItem('tipoAuth') !== 'profesor') {
@@ -179,6 +190,36 @@ function Panel() {
       setCreando(false);
     }
   }
+
+  // Actualiza participantes en segundo plano sin tocar la configuración que se esté editando
+  async function refrescarDetalle(id: string) {
+    try {
+      const data = await api.profesor.sesion(id);
+      const actual = detalleRef.current;
+      if (!actual || actual.sesion.id !== id) return;
+      const previos = new Set(actual.jugadores.map((j: any) => j.id));
+      const nuevos = data.jugadores.filter((j: any) => !previos.has(j.id));
+      if (nuevos.length > 0) {
+        avisar('info', nuevos.length === 1 ? `${nuevos[0].nombre} se unió` : `${nuevos.length} participantes se unieron`, data.sesion.nombre);
+        const ids: string[] = nuevos.map((j: any) => j.id);
+        setRecientes(r => new Set([...r, ...ids]));
+        window.setTimeout(() => setRecientes(r => new Set([...r].filter(x => !ids.includes(x)))), 4000);
+      }
+      setDetalle({ ...actual, jugadores: data.jugadores, partidas: data.partidas });
+      if (data.sesion.modo_experimento) {
+        api.experimento.resumen(id).then(r => setResumenExp(r)).catch(() => {});
+      }
+    } catch { /* se reintenta en el siguiente intervalo */ }
+  }
+
+  const detalleId = detalle?.sesion?.id as string | undefined;
+  useEffect(() => {
+    if (!detalleId) return;
+    const id = window.setInterval(() => {
+      if (!document.hidden) refrescarDetalle(detalleId);
+    }, INTERVALO_REFRESCO);
+    return () => window.clearInterval(id);
+  }, [detalleId]);
 
   async function verDetalle(id: string) {
     try {
@@ -488,37 +529,69 @@ function Panel() {
                   </button>
                 </div>
 
-                <h4 style={{ marginBottom: 10, fontSize: 14, fontWeight: 600 }}>
-                  Participantes ({detalle.jugadores.length})
-                </h4>
-                {detalle.jugadores.length === 0
-                  ? <p style={{ fontSize: 14, color: 'var(--color-texto-terciario)', padding: '8px 0' }}>Nadie se ha unido todavía</p>
-                  : (
-                    <div style={{ borderRadius: 'var(--radio)', overflow: 'auto', border: '1px solid var(--color-borde-sutil)' }}>
-                      <table className="datos">
-                        <thead>
-                          <tr><th>Nombre</th><th>Estado</th><th>Puntuación</th></tr>
-                        </thead>
-                        <tbody>
-                          {detalle.jugadores.map((j: any) => {
-                            const partida = detalle.partidas.find((p: any) => p.jugador_id === j.id);
-                            return (
-                              <tr key={j.id}>
-                                <td style={{ fontWeight: 500 }}>{j.nombre}</td>
-                                <td>
-                                  <span className={`badge ${partida?.fase === 'finalizada' ? 'badge-exito' : partida ? 'badge-info' : 'badge-advertencia'}`}>
-                                    {partida?.fase ?? 'esperando'}
-                                  </span>
-                                </td>
-                                <td style={{ fontWeight: 600 }}>{partida?.puntuacion ?? '-'}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )
-                }
+                {(() => {
+                  const partidaDe = (id: string) => detalle.partidas.find((p: any) => p.jugador_id === id);
+                  // Quien no tiene partida y ya no reporta actividad probablemente tuvo un error y no está jugando
+                  const esActivo = (j: any) => !!partidaDe(j.id) || j.conectado !== false;
+                  const activos = detalle.jugadores.filter(esActivo);
+                  const ocultos = detalle.jugadores.filter((j: any) => !esActivo(j));
+                  const filas = mostrarOcultos ? detalle.jugadores : activos;
+                  return (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                        <h4 style={{ fontSize: 14, fontWeight: 600 }}>
+                          Participantes ({activos.length})
+                        </h4>
+                        <span className="en-vivo"><span className="en-vivo-punto" aria-hidden="true" />En vivo</span>
+                      </div>
+                      {filas.length === 0
+                        ? <p style={{ fontSize: 14, color: 'var(--color-texto-terciario)', padding: '8px 0' }}>Nadie se ha unido todavía</p>
+                        : (
+                          <div style={{ borderRadius: 'var(--radio)', overflow: 'auto', border: '1px solid var(--color-borde-sutil)' }}>
+                            <table className="datos">
+                              <thead>
+                                <tr><th>Nombre</th><th>Conexión</th><th>Estado</th><th>Puntuación</th></tr>
+                              </thead>
+                              <tbody>
+                                {filas.map((j: any) => {
+                                  const partida = partidaDe(j.id);
+                                  const fase = partida ? FASES_PARTIDA[partida.fase] ?? { texto: partida.fase, clase: 'badge-info' } : { texto: 'En espera', clase: 'badge-advertencia' };
+                                  return (
+                                    <tr key={j.id} className={`${recientes.has(j.id) ? 'fila-nueva' : ''} ${esActivo(j) ? '' : 'fila-inactiva'}`}>
+                                      <td style={{ fontWeight: 500 }}>{j.nombre}</td>
+                                      <td>
+                                        {j.conectado == null
+                                          ? <span style={{ color: 'var(--color-texto-terciario)' }}>-</span>
+                                          : (
+                                            <span className={`conexion ${j.conectado ? 'conexion-si' : 'conexion-no'}`}>
+                                              <span className="conexion-punto" aria-hidden="true" />
+                                              {j.conectado ? 'Conectado' : 'Sin conexión'}
+                                            </span>
+                                          )}
+                                      </td>
+                                      <td><span className={`badge ${fase.clase}`}>{fase.texto}</span></td>
+                                      <td style={{ fontWeight: 600 }}>{partida?.puntuacion ?? '-'}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )
+                      }
+                      {ocultos.length > 0 && (
+                        <p style={{ fontSize: 12, color: 'var(--color-texto-secundario)', marginTop: 8 }}>
+                          {mostrarOcultos
+                            ? `En gris, ${ocultos.length === 1 ? 'quien se desconectó' : 'quienes se desconectaron'} sin empezar a jugar. Pueden volver a unirse con el mismo nombre.`
+                            : `${ocultos.length === 1 ? '1 participante se desconectó' : `${ocultos.length} participantes se desconectaron`} sin empezar a jugar y no ${ocultos.length === 1 ? 'aparece' : 'aparecen'} en la tabla. Pueden volver a unirse con el mismo nombre.`}{' '}
+                          <button className="enlace" style={{ background: 'none', padding: 0, fontSize: 12 }} onClick={() => setMostrarOcultos(!mostrarOcultos)}>
+                            {mostrarOcultos ? 'Ocultar' : 'Mostrar'}
+                          </button>
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
 
                 <div style={{ marginTop: 24, borderTop: '1px solid var(--color-borde)', paddingTop: 20 }}>
                   <h4 style={{ marginBottom: 10, fontSize: 14, fontWeight: 600, color: 'var(--color-primario)' }}>

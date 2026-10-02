@@ -104,6 +104,35 @@ export async function obtenerJugadorPorToken(token: string) {
   return data;
 }
 
+export async function obtenerJugadorPorNombre(sesionId: string, nombre: string) {
+  const { data, error } = await sb()
+    .from('jugadores')
+    .select('*')
+    .eq('sesion_id', sesionId)
+    .eq('nombre', nombre)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function registrarLatido(jugadorId: string) {
+  const { error } = await sb()
+    .from('jugadores')
+    .update({ ultima_actividad: new Date().toISOString() })
+    .eq('id', jugadorId);
+  if (error) throw error;
+}
+
+export async function renovarTokenJugador(jugadorId: string): Promise<string> {
+  const token = generarToken();
+  const { error } = await sb()
+    .from('jugadores')
+    .update({ token, ultima_actividad: new Date().toISOString() })
+    .eq('id', jugadorId);
+  if (error) throw error;
+  return token;
+}
+
 export async function contarJugadores(sesionId: string): Promise<number> {
   const { count, error } = await sb()
     .from('jugadores')
@@ -116,7 +145,7 @@ export async function contarJugadores(sesionId: string): Promise<number> {
 export async function listarJugadoresSesion(sesionId: string) {
   const { data, error } = await sb()
     .from('jugadores')
-    .select('id, nombre, email, created_at')
+    .select('*')
     .eq('sesion_id', sesionId)
     .order('created_at');
   if (error) throw error;

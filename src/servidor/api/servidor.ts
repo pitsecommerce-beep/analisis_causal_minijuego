@@ -10,6 +10,7 @@ import {
   crearSesion, obtenerSesionPorCodigo, obtenerSesionPorId,
   actualizarEstadoSesion, listarSesionesProfesor, eliminarSesiones,
   registrarJugador, contarJugadores, listarJugadoresSesion,
+  obtenerJugadorPorNombre, registrarLatido, renovarTokenJugador,
   crearPartidaDB, obtenerPartida, actualizarPartida,
   listarPartidasSesion, registrarVerificacion, listarVerificaciones,
   actualizarSesionExperimento, asignarGrupoJugador,
@@ -19,6 +20,7 @@ import {
 import { generarRecomendacion } from '../experimento/asesor-algoritmico.js';
 import { serializarDialogo, deserializarDialogo } from '../db/serializar.js';
 import { autenticarProfesor, autenticarJugador } from './middleware.js';
+import { estaConectado } from './presencia.js';
 import type { RequestProfesor, RequestJugador } from './middleware.js';
 import { crearPartida, elegirAcciones, declararCompromiso, procesarCiclo } from '../motor/ciclos.js';
 import { evaluarPartida, determinarDesenlace } from '../puntuacion/evaluacion.js';
@@ -212,6 +214,29 @@ app.get('/api/sesion/:codigo', async (req, res) => {
   }
 });
 
+// Si el nombre ya existe y ese participante lleva tiempo sin actividad, se le entrega
+// un token nuevo para que pueda retomar su partida desde otro navegador o tras un error.
+async function reconectarJugador(req: express.Request, res: express.Response): Promise<void> {
+  try {
+    const sesion = await obtenerSesionPorCodigo(String(req.params['codigo']));
+    const existente = sesion ? await obtenerJugadorPorNombre(sesion.id, String(req.body.nombre)) : null;
+    if (!sesion || !existente || estaConectado(existente.ultima_actividad) !== false) {
+      res.status(409).json({ error: 'Ese nombre ya está en uso en esta sesión. Usa otro nombre.' });
+      return;
+    }
+    const token = await renovarTokenJugador(existente.id);
+    res.json({
+      jugadorId: existente.id,
+      token,
+      sesion: { id: sesion.id, nombre: sesion.nombre, estado: sesion.estado },
+      modoExperimento: sesion.modo_experimento ?? false,
+      reconectado: true,
+    });
+  } catch (err) {
+    responderError(res, 'Error al reconectar', err);
+  }
+}
+
 app.post('/api/sesion/:codigo/unirse', async (req, res) => {
   const { nombre, email } = req.body;
   if (!nombre) {
@@ -252,7 +277,7 @@ app.post('/api/sesion/:codigo/unirse', async (req, res) => {
     });
   } catch (err) {
     if (codigoError(err) === '23505') {
-      res.status(409).json({ error: 'Ese nombre ya está registrado en esta sesión. Usa otro nombre.' });
+      await reconectarJugador(req, res);
       return;
     }
     responderError(res, 'Error al unirse', err);
@@ -262,6 +287,17 @@ app.post('/api/sesion/:codigo/unirse', async (req, res) => {
 // ╔══════════════════════════════════════╗
 // ║     RUTAS DE PROFESOR               ║
 // ╚══════════════════════════════════════╝
+
+app.post('/api/jugador/latido', autenticarJugador, async (req, res) => {
+  const jugador = (req as RequestJugador).jugador;
+  try {
+    await registrarLatido(jugador.id);
+  } catch (err) {
+    // Sin la migracion 003 la presencia no se registra, pero la espera debe seguir funcionando
+    if (codigoError(err) !== '42703') console.error(`[${new Date().toISOString()}] Error al registrar latido:`, err);
+  }
+  res.json({ sesionEstado: jugador.sesionEstado });
+});
 
 function idParam(req: express.Request): string {
   const id = req.params['id'];
@@ -298,7 +334,10 @@ app.get('/api/profesor/sesiones', autenticarProfesor, async (req, res) => {
 app.get('/api/profesor/sesion/:id', autenticarProfesor, sesionPropia, async (req, res) => {
   try {
     const sesion = await obtenerSesionPorId(idParam(req));
-    const jugadores = await listarJugadoresSesion(sesion.id);
+    const jugadores = (await listarJugadoresSesion(sesion.id)).map(({ token: _token, ...j }) => ({
+      ...j,
+      conectado: estaConectado(j.ultima_actividad),
+    }));
     const partidas = await listarPartidasSesion(sesion.id);
     res.json({ sesion, jugadores, partidas });
   } catch (err) {
