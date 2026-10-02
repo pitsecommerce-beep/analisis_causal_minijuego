@@ -61,7 +61,7 @@ export function generarRecomendacion(
   return {
     accionRecomendada: mejorId,
     metricaPrioritaria,
-    explicacion: `Basandome en el analisis de los datos, la metrica "${metricaPrioritaria}" necesita atencion. Recomiendo la accion "${accion?.nombre ?? mejorId}" como siguiente paso.`,
+    explicacion: `Basándome en el análisis de los datos, la métrica "${metricaPrioritaria}" necesita atención. Recomiendo la acción "${accion?.nombre ?? mejorId}" como siguiente paso.`,
     confianza: 0.75,
   };
 }

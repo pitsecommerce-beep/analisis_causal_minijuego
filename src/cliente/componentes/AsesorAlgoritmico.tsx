@@ -36,15 +36,15 @@ export function AsesorAlgoritmico() {
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-acento)' }}>AA</span>
         </div>
         <div>
-          <strong style={{ color: 'var(--color-acento)', fontSize: 14 }}>Asesor Algoritmico</strong>
-          <p style={{ fontSize: 11, color: 'var(--color-texto-terciario)' }}>Analisis basado en datos del proceso</p>
+          <strong style={{ color: 'var(--color-acento)', fontSize: 14 }}>Asesor Algorítmico</strong>
+          <p style={{ fontSize: 11, color: 'var(--color-texto-terciario)' }}>Análisis basado en datos del proceso</p>
         </div>
       </div>
 
       {!recomendacion && (
         <button className="btn-acento" onClick={consultar} disabled={cargando}
           style={{ padding: '10px 18px', fontSize: 13 }}>
-          {cargando ? 'Analizando...' : 'Pedir recomendacion'}
+          {cargando ? 'Analizando...' : 'Pedir recomendación'}
         </button>
       )}
 
@@ -64,7 +64,7 @@ export function AsesorAlgoritmico() {
         }}>
           <p style={{ fontSize: 14, marginBottom: 10, lineHeight: 1.6 }}>{recomendacion.explicacion}</p>
           <div style={{ display: 'flex', gap: 20, fontSize: 12, color: 'var(--color-texto-secundario)' }}>
-            <span>Metrica: <strong style={{ color: 'var(--color-texto)' }}>{recomendacion.metricaPrioritaria}</strong></span>
+            <span>Métrica: <strong style={{ color: 'var(--color-texto)' }}>{recomendacion.metricaPrioritaria}</strong></span>
             <span>Confianza: <strong style={{ color: 'var(--color-texto)' }}>{Math.round(recomendacion.confianza * 100)}%</strong></span>
           </div>
           <button className="btn-fantasma" style={{ marginTop: 10, fontSize: 12, padding: '6px 12px' }}

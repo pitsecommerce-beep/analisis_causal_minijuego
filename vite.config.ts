@@ -6,7 +6,7 @@ export default defineConfig({
   root: '.',
   build: {
     outDir: 'dist/cliente',
-    emptyDirFirst: true,
+    emptyOutDir: true,
   },
   server: {
     proxy: {

@@ -2,14 +2,14 @@
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    "rootDir": "src",
-    "outDir": "dist",
+    "rootDir": ".",
+    "noEmit": true,
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
     "target": "es2022",
-    "types": [],
+    "types": ["node", "vite/client"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
@@ -17,8 +17,6 @@
 
     // Other Outputs
     "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
 
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,

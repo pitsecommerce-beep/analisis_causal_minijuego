@@ -7,12 +7,12 @@ import { PiePagina } from '../componentes/ui/PiePagina.js';
 const CAUSAS_OPCIONES = [
   { id: 'ventana_captura_cuello', nombre: 'Ventana de captura como cuello de botella' },
   { id: 'reproceso_documental', nombre: 'Reproceso documental (errores de captura)' },
-  { id: 'fuga_aprobados_sin_plastico', nombre: 'Fuga de aprobados sin plastico enviado' },
-  { id: 'secuencia_tardia_buro', nombre: 'Secuencia tardia de consulta al buro' },
-  { id: 'saturacion_sucursales', nombre: 'Saturacion de sucursales especificas' },
-  { id: 'falta_capacitacion', nombre: 'Falta de capacitacion del personal' },
-  { id: 'sistema_lento', nombre: 'Lentitud del sistema informatico' },
-  { id: 'politica_credito_restrictiva', nombre: 'Politica de credito demasiado restrictiva' },
+  { id: 'fuga_aprobados_sin_plastico', nombre: 'Fuga de aprobados sin plástico enviado' },
+  { id: 'secuencia_tardia_buro', nombre: 'Secuencia tardía de consulta al buró' },
+  { id: 'saturacion_sucursales', nombre: 'Saturación de sucursales específicas' },
+  { id: 'falta_capacitacion', nombre: 'Falta de capacitación del personal' },
+  { id: 'sistema_lento', nombre: 'Lentitud del sistema informático' },
+  { id: 'politica_credito_restrictiva', nombre: 'Política de crédito demasiado restrictiva' },
 ];
 
 const COLORES_DESENLACE: Record<string, { color: string; bg: string }> = {
@@ -24,10 +24,10 @@ const COLORES_DESENLACE: Record<string, { color: string; bg: string }> = {
 };
 
 const NOMBRES_DIMENSION: Record<string, { nombre: string; color: string }> = {
-  diagnostico: { nombre: 'Diagnostico (causa raiz)', color: '#2563a8' },
+  diagnostico: { nombre: 'Diagnóstico (causa raíz)', color: '#2563a8' },
   criterio: { nombre: 'Criterio (evidencia)', color: '#7c3aed' },
   impacto: { nombre: 'Impacto (mejora KPIs)', color: '#059669' },
-  metodo: { nombre: 'Metodo (herramientas)', color: '#0891b2' },
+  metodo: { nombre: 'Método (herramientas)', color: '#0891b2' },
   compromisos: { nombre: 'Compromisos', color: '#c8922a' },
   penalizaciones: { nombre: 'Penalizaciones', color: '#c0392b' },
 };
@@ -61,7 +61,7 @@ export function Resultados() {
   async function enviarCierre() {
     const ok = await confirmar({
       titulo: 'Enviar cierre de partida',
-      mensaje: `Declaraste ${causasSeleccionadas.length} causa(s) raiz. Una vez enviado el cierre se calculara tu puntuacion final y no podras modificarlo.`,
+      mensaje: `Declaraste ${causasSeleccionadas.length} causa(s) raíz. Una vez enviado el cierre se calculará tu puntuación final y no podrás modificarlo.`,
       textoConfirmar: 'Enviar y ver resultado',
       tono: 'advertencia',
     });
@@ -76,7 +76,7 @@ export function Resultados() {
       const res = await api.partida.cierre(causas, herramientas, consultoGuia, pasosEnOrden);
       setResultado(res);
       setFase('resultado');
-      avisar('exito', 'Cierre enviado', 'Tu resultado final esta listo.');
+      avisar('exito', 'Cierre enviado', 'Tu resultado final está listo.');
     } catch (err: any) {
       setErrorCierre(err.message || 'Error al enviar el cierre');
     }
@@ -86,7 +86,7 @@ export function Resultados() {
   async function salir() {
     const ok = await confirmar({
       titulo: 'Salir del simulador',
-      mensaje: 'Se cerrara tu sesion en este dispositivo. Tu resultado ya quedo registrado.',
+      mensaje: 'Se cerrará tu sesión en este dispositivo. Tu resultado ya quedó registrado.',
       textoConfirmar: 'Salir',
     });
     if (!ok) return;
@@ -122,13 +122,13 @@ export function Resultados() {
               Cierre de partida
             </h2>
             <p style={{ color: 'var(--color-texto-secundario)', fontSize: 14, marginTop: 6 }}>
-              Antes de ver tu resultado, declara cuales crees que son las causas raiz del problema.
+              Antes de ver tu resultado, declara cuáles crees que son las causas raíz del problema.
             </p>
           </div>
 
           <div className="tarjeta" style={{ marginBottom: 16 }}>
             <h4 style={{ marginBottom: 14, fontSize: 15, fontWeight: 600 }}>
-              Selecciona las causas raiz que identificaste
+              Selecciona las causas raíz que identificaste
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {CAUSAS_OPCIONES.map(c => {
@@ -160,7 +160,7 @@ export function Resultados() {
 
           <div className="tarjeta" style={{ marginBottom: 20 }}>
             <h4 style={{ marginBottom: 14, fontSize: 15, fontWeight: 600 }}>
-              Reflexion metodologica
+              Reflexión metodológica
             </h4>
             <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, cursor: 'pointer' }}>
               <input
@@ -169,7 +169,7 @@ export function Resultados() {
                 onChange={e => setConsultoGuia(e.target.checked)}
                 style={{ width: 16, height: 16, accentColor: 'var(--color-primario)' }}
               />
-              <span style={{ fontSize: 14 }}>Consulte la guia o nota tecnica durante el analisis</span>
+              <span style={{ fontSize: 14 }}>Consulté la guía o nota técnica durante el análisis</span>
             </label>
             <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
               <input
@@ -178,7 +178,7 @@ export function Resultados() {
                 onChange={e => setPasosEnOrden(e.target.checked)}
                 style={{ width: 16, height: 16, accentColor: 'var(--color-primario)' }}
               />
-              <span style={{ fontSize: 14 }}>Segui los pasos del metodo en orden</span>
+              <span style={{ fontSize: 14 }}>Seguí los pasos del método en orden</span>
             </label>
           </div>
 
@@ -244,7 +244,7 @@ export function Resultados() {
                 width: 28, height: 28, borderRadius: 8,
                 background: '#0f2b4a', color: '#fff', fontSize: 14, fontWeight: 700,
               }}>R</span>
-              <strong style={{ color: 'var(--color-primario)', fontSize: 14 }}>Ramon Betancourt (Consejo)</strong>
+              <strong style={{ color: 'var(--color-primario)', fontSize: 14 }}>Ramón Betancourt (Consejo)</strong>
             </div>
             <div className="dialogo-burbuja" style={{ maxWidth: '100%' }}>
               {ramonCierre.lineas.map((l: string, i: number) => (
@@ -256,7 +256,7 @@ export function Resultados() {
 
         <div className="tarjeta" style={{ marginBottom: 16 }}>
           <h3 style={{ marginBottom: 20, color: 'var(--color-primario)', fontSize: 16, fontWeight: 600 }}>
-            Desglose de puntuacion
+            Desglose de puntuación
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {(['diagnostico', 'criterio', 'impacto', 'metodo', 'compromisos', 'penalizaciones'] as const).map(dim => {

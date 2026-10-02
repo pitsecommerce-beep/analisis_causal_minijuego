@@ -12,7 +12,8 @@
     "dev:cliente": "vite",
     "build": "vite build",
     "start": "node --import tsx/esm src/servidor/api/servidor.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p ."
   },
   "repository": {
     "type": "git",

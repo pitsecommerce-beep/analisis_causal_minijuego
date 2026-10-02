@@ -20,7 +20,7 @@ function preguntar(prompt: string): Promise<string> {
 async function main() {
   console.log('\n=== DIRECTOR DE OPERACIONES - ETF Bank ===');
   console.log('Tienes 4 ciclos, 3 vidas, 100 de presupuesto.');
-  console.log('Objetivo: mejorar el proceso de tarjetas de credito.\n');
+  console.log('Objetivo: mejorar el proceso de tarjetas de crédito.\n');
 
   const semilla = Date.now();
   const partida = crearPartida({ ...config.kpisIniciales }, semilla);
@@ -43,7 +43,7 @@ async function main() {
       console.log(`     ${a.descripcion}`);
     }
 
-    const inputAcciones = await preguntar('\nElige acciones (numeros separados por coma, o Enter para ninguna): ');
+    const inputAcciones = await preguntar('\nElige acciones (números separados por coma, o Enter para ninguna): ');
     const ids = inputAcciones
       .split(',')
       .map((s) => parseInt(s.trim(), 10))
@@ -59,7 +59,7 @@ async function main() {
       for (const a of acciones) {
         const accionConfig = catalogo.find((c) => c.id === a.accionId);
         if (accionConfig?.requiereSucursales) {
-          const inputSuc = await preguntar(`  Accion ${a.accionId} requiere nombres de sucursales. Ingresa numeros: `);
+          const inputSuc = await preguntar(`  Acción ${a.accionId} requiere nombres de sucursales. Ingresa números: `);
           a.sucursalesNombradas = inputSuc
             .split(',')
             .map((s) => parseInt(s.trim(), 10))
@@ -77,24 +77,24 @@ async function main() {
 
     console.log('\nMetricas para compromiso:');
     for (let i = 0; i < METRICAS_DISPONIBLES.length; i++) {
-      const m = METRICAS_DISPONIBLES[i];
+      const m = METRICAS_DISPONIBLES[i]!;
       console.log(`  ${i + 1}. ${m.nombre} (${m.id})`);
     }
 
-    const inputMetrica = await preguntar('Elige metrica para compromiso (numero, o Enter para ventanaCapturaMedia): ');
+    const inputMetrica = await preguntar('Elige métrica para compromiso (número, o Enter para ventanaCapturaMedia): ');
     const idxMetrica = parseInt(inputMetrica.trim(), 10) - 1;
     const metricaElegida =
       idxMetrica >= 0 && idxMetrica < METRICAS_DISPONIBLES.length
-        ? METRICAS_DISPONIBLES[idxMetrica].id
+        ? METRICAS_DISPONIBLES[idxMetrica]!.id
         : 'ventanaCapturaMedia';
 
-    const valorActual = (partida.kpis as Record<string, number>)[metricaElegida] ?? 0;
+    const valorActual = (partida.kpis as unknown as Record<string, number>)[metricaElegida] ?? 0;
     console.log(`  Valor actual de ${metricaElegida}: ${valorActual}`);
 
-    const inputMeta = await preguntar(`  Tu meta para este ciclo (numero): `);
+    const inputMeta = await preguntar(`  Tu meta para este ciclo (número): `);
     const meta = parseFloat(inputMeta.trim());
     if (isNaN(meta)) {
-      console.log('  Meta invalida, se usa el valor actual.');
+      console.log('  Meta inválida, se usa el valor actual.');
       declararCompromiso(partida, metricaElegida, valorActual);
     } else {
       declararCompromiso(partida, metricaElegida, meta);
@@ -134,7 +134,7 @@ async function main() {
 
     console.log(`  Credibilidad: ${partida.credibilidad}`);
 
-    console.log('\n  KPIs despues:');
+    console.log('\n  KPIs después:');
     for (const l of formatearKPIs(resultado.kpisDespues)) console.log(`    ${l}`);
 
     if (partida.destituido) {
@@ -147,10 +147,10 @@ async function main() {
 
   if (!partida.destituido) {
     console.log('\n\n=== FIN DE LA PARTIDA ===');
-    console.log('Ahora se evalua tu desempeno.\n');
+    console.log('Ahora se evalúa tu desempeño.\n');
 
     const inputCausas = await preguntar(
-      'Causas raiz que declaras (IDs separados por coma):\n' +
+      'Causas raíz que declaras (IDs separados por coma):\n' +
         '  Opciones: ventana_captura_cuello, reproceso_documental, fuga_aprobados_sin_plastico,\n' +
         '  secuencia_tardia_buro, cultura_organizacional, falta_personal, sistema_legacy\n> '
     );
@@ -160,13 +160,13 @@ async function main() {
       .filter(Boolean)
       .map((id) => ({ id, nombre: id }));
 
-    const inputVerif = await preguntar('Afirmaciones verificadas (numero): ');
+    const inputVerif = await preguntar('Afirmaciones verificadas (número): ');
     const afirmaciones = parseInt(inputVerif.trim(), 10) || 0;
 
-    const inputRefut = await preguntar('Refutaciones con datos (numero): ');
+    const inputRefut = await preguntar('Refutaciones con datos (número): ');
     const refutaciones = parseInt(inputRefut.trim(), 10) || 0;
 
-    const inputSinVerif = await preguntar('Acciones sin verificar (numero): ');
+    const inputSinVerif = await preguntar('Acciones sin verificar (número): ');
     const sinVerificar = parseInt(inputSinVerif.trim(), 10) || 0;
 
     const inputHerr = await preguntar(
@@ -178,7 +178,7 @@ async function main() {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const inputGuia = await preguntar('Consultaste la guia/nota tecnica? (s/n): ');
+    const inputGuia = await preguntar('¿Consultaste la guía o nota técnica? (s/n): ');
     const consultoGuia = inputGuia.trim().toLowerCase() === 's';
 
     const inputPasos = await preguntar('Seguiste los pasos en orden? (s/n): ');
@@ -199,7 +199,7 @@ async function main() {
 
     const desenlace = determinarDesenlace(desglose.total, partida.destituido, config.desenlaces);
 
-    console.log('\n=== EVALUACION FINAL ===');
+    console.log('\n=== EVALUACIÓN FINAL ===');
     for (const d of desglose.detalles) console.log(`  ${d}`);
     console.log(`\n  TOTAL: ${desglose.total}/1000`);
     console.log(`  DESENLACE: ${desenlace.nombre}`);

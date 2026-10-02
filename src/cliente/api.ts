@@ -11,7 +11,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   const res = await fetch(`${BASE}${path}`, {
     method,
     headers: headers(),
-    body: body ? JSON.stringify(body) : undefined,
+    body: body ? JSON.stringify(body) : null,
   });
   let data: any = null;
   try {

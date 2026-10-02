@@ -39,11 +39,11 @@ for (const archivo of archivos) {
     }
 
     if (nodo.condicion) {
-      console.log(`    condicion: ${JSON.stringify(nodo.condicion)}`);
+      console.log(`    condición: ${JSON.stringify(nodo.condicion)}`);
     }
 
     if (nodo.afirmacion) {
-      console.log(`    afirmacion: ${nodo.afirmacion.id} (${nodo.afirmacion.veredicto})`);
+      console.log(`    afirmación: ${nodo.afirmacion.id} (${nodo.afirmacion.veredicto})`);
     }
   }
 
@@ -52,7 +52,7 @@ for (const archivo of archivos) {
   );
 
   for (let i = 0; i < aperturaPorCiclo.length; i++) {
-    if (aperturaPorCiclo[i].length === 0 && personaje !== 'ramon') {
+    if (aperturaPorCiclo[i]!.length === 0 && personaje !== 'ramon') {
       const msg = `${personaje}: sin nodo de apertura para ciclo ${i + 1}`;
       errores.push(msg);
       huerfanos++;
@@ -75,7 +75,7 @@ console.log(`\n${'='.repeat(50)}`);
 console.log(`RESUMEN`);
 console.log(`  Archivos: ${archivos.length}`);
 console.log(`  Nodos totales: ${totalNodos}`);
-console.log(`  Huerfanos (sin apertura): ${huerfanos}`);
+console.log(`  Huérfanos (sin apertura): ${huerfanos}`);
 console.log(`  Sin salida: ${sinSalida}`);
 
 if (errores.length > 0) {

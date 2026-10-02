@@ -5,12 +5,12 @@ const HERRAMIENTAS = [
   { id: 'histograma', nombre: 'Histograma' },
   { id: 'pareto', nombre: 'Pareto' },
   { id: 'diagrama_corrida', nombre: 'Corrida' },
-  { id: 'dispersion', nombre: 'Dispersion' },
+  { id: 'dispersion', nombre: 'Dispersión' },
   { id: 'tabla_dinamica', nombre: 'Pivote' },
   { id: 'filtro', nombre: 'Filtrar' },
   { id: 'contar', nombre: 'Contar' },
   { id: 'sumar', nombre: 'Sumar' },
-  { id: 'estadisticas', nombre: 'Stats' },
+  { id: 'estadisticas', nombre: 'Estadísticas' },
 ];
 
 const MAPA_VERIFICACIONES: Record<string, { columnas: string[]; herramientas: string[] }> = {
@@ -109,7 +109,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
       case 'sumar':
         res = nums.length > 0
           ? `SUMA (${colSeleccionada}): ${nums.reduce((a, b) => a + b, 0).toFixed(2)}`
-          : 'La columna no tiene valores numericos';
+          : 'La columna no tiene valores numéricos';
         break;
       case 'estadisticas':
         if (nums.length > 0) {
@@ -119,7 +119,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
           const p90 = sorted[Math.floor(sorted.length * 0.9)]!;
           const varianza = nums.reduce((s, v) => s + (v - media) ** 2, 0) / nums.length;
           const desvest = Math.sqrt(varianza);
-          res = `ESTADISTICAS (${colSeleccionada}):\n  N: ${nums.length}\n  Media: ${media.toFixed(2)}\n  Mediana: ${mediana}\n  Desv.Est: ${desvest.toFixed(2)}\n  P90: ${p90}\n  Min: ${sorted[0]}\n  Max: ${sorted[sorted.length - 1]}`;
+          res = `ESTADÍSTICAS (${colSeleccionada}):\n  N: ${nums.length}\n  Media: ${media.toFixed(2)}\n  Mediana: ${mediana}\n  Desv.Est: ${desvest.toFixed(2)}\n  P90: ${p90}\n  Min: ${sorted[0]}\n  Max: ${sorted[sorted.length - 1]}`;
         }
         break;
       case 'filtro':

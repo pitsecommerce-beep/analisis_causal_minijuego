@@ -65,8 +65,8 @@ export function Juego() {
       setEstado(res);
       telemetria('partida_iniciada', { ciclo: res.cicloActual });
     } catch (err: any) {
-      if (err.message.includes('aun no ha iniciado')) {
-        setError('La sesion aun no ha sido iniciada por el profesor. Espera un momento y recarga.');
+      if (err.message.includes('aún no ha iniciado')) {
+        setError('La sesión aún no ha sido iniciada por el profesor. Espera un momento y recarga.');
       } else {
         setError(err.message);
       }
@@ -127,7 +127,7 @@ export function Juego() {
   async function salir() {
     const ok = await confirmar({
       titulo: 'Salir del simulador',
-      mensaje: 'Tu avance queda guardado, pero tendras que volver a unirte con el codigo de la sesion para continuar.',
+      mensaje: 'Tu avance queda guardado, pero tendrás que volver a unirte con el código de la sesión para continuar.',
       textoConfirmar: 'Salir',
       tono: 'advertencia',
     });
@@ -163,7 +163,7 @@ export function Juego() {
           }}>
             <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-advertencia)' }}>!</span>
           </div>
-          <h3 style={{ color: 'var(--color-texto)', marginBottom: 8 }}>Sesion no disponible</h3>
+          <h3 style={{ color: 'var(--color-texto)', marginBottom: 8 }}>Sesión no disponible</h3>
           <p style={{ color: 'var(--color-texto-secundario)', marginBottom: 20, fontSize: 14, lineHeight: 1.6 }}>{error}</p>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
             <button className="btn-primario" onClick={() => { setError(''); iniciar(); }}>
@@ -201,7 +201,7 @@ export function Juego() {
             <span className="barra-estado-valor">{nombreJugador}</span>
           </div>
           <div className="barra-estado-item">
-            <span className="barra-estado-label">Sesion</span>
+            <span className="barra-estado-label">Sesión</span>
             <span className="barra-estado-valor">{sesionNombre}</span>
           </div>
           <div className="barra-estado-item">

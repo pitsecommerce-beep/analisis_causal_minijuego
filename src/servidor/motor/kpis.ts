@@ -40,17 +40,17 @@ export function recalcularDerivados(k: KPIs): void {
 
 export function formatearKPIs(k: KPIs): string[] {
   return [
-    `Ventana de captura (media): ${k.ventanaCapturaMedia} dias`,
-    `Ventana de captura (mediana): ${k.ventanaCapturaMediana} dias`,
-    `Back office: ${k.backOfficeDias} dias`,
-    `Ciclo total (mediana): ${k.cicloTotalMediana} dias`,
+    `Ventana de captura (media): ${k.ventanaCapturaMedia} días`,
+    `Ventana de captura (mediana): ${k.ventanaCapturaMediana} días`,
+    `Back office: ${k.backOfficeDias} días`,
+    `Ciclo total (mediana): ${k.cicloTotalMediana} días`,
     `Tasa de reproceso: ${k.tasaReproceso}%`,
     `Errores por 100 solicitudes: ${k.erroresPor100}`,
     `  Captura: ${k.erroresCaptura}  Incompletos: ${k.erroresIncompletos}  Ilegibles: ${k.erroresIlegibles}`,
     `Atorados: ${k.atorados} (${k.atoradosPct}%)`,
-    `Conversion: ${k.conversionPct}%`,
-    `Quejas (indice): ${k.quejasPct}%`,
-    `Dias perdidos en rechazados: ${k.diasPerdidosBuro}`,
+    `Conversión: ${k.conversionPct}%`,
+    `Quejas (índice): ${k.quejasPct}%`,
+    `Días perdidos en rechazados: ${k.diasPerdidosBuro}`,
     `Presupuesto gastado: ${k.presupuestoGastado}/100`,
   ];
 }

@@ -86,21 +86,21 @@ export function evaluarImpacto(
     Math.min(1, Math.max(0, reduccionCiclo / maxReduccionCiclo)) * (config.reduccionCiclo ?? 100)
   );
   puntos += ptsCiclo;
-  detalles.push(`Reduccion ciclo: ${reduccionCiclo} dias -> +${ptsCiclo}`);
+  detalles.push(`Reducción ciclo: ${reduccionCiclo} días -> +${ptsCiclo}`);
 
   const reduccionQuejas = kpisIniciales.quejasPct - kpisFinales.quejasPct;
   const ptsQuejas = Math.round(
     Math.min(1, Math.max(0, reduccionQuejas / 50)) * (config.reduccionQuejas ?? 60)
   );
   puntos += ptsQuejas;
-  detalles.push(`Reduccion quejas: ${reduccionQuejas}% -> +${ptsQuejas}`);
+  detalles.push(`Reducción quejas: ${reduccionQuejas}% -> +${ptsQuejas}`);
 
   const conversionPreservada = kpisFinales.conversionPct / kpisIniciales.conversionPct;
   const ptsConversion = Math.round(
     Math.min(1, Math.max(0, conversionPreservada)) * (config.conversionPreservada ?? 50)
   );
   puntos += ptsConversion;
-  detalles.push(`Conversion preservada: ${Math.round(conversionPreservada * 100)}% -> +${ptsConversion}`);
+  detalles.push(`Conversión preservada: ${Math.round(conversionPreservada * 100)}% -> +${ptsConversion}`);
 
   const presupuestoSobrante = 100 - kpisFinales.presupuestoGastado;
   const ptsPpto = Math.round((presupuestoSobrante / 100) * (config.presupuestoSobrante ?? 40));
@@ -140,7 +140,7 @@ export function evaluarMetodo(
   if (consultoGuia) {
     const ptsGuia = config.consultaGuia ?? 20;
     puntos += ptsGuia;
-    detalles.push(`Consulto guia/nota: +${ptsGuia}`);
+    detalles.push(`Consultó la guía o nota técnica: +${ptsGuia}`);
   }
 
   if (pasosEnOrden) {
@@ -186,7 +186,7 @@ export function calcularPenalizaciones(partida: EstadoPartida): { puntos: number
 
   if (partida.destituido) {
     puntos += -100;
-    detalles.push('Destitucion: -100');
+    detalles.push('Destitución: -100');
   }
 
   const gastoSinEfecto = partida.resultadosCiclo.some(
@@ -203,6 +203,13 @@ export function calcularPenalizaciones(partida: EstadoPartida): { puntos: number
   return { puntos, detalles };
 }
 
+export interface ConfigPuntuacion {
+  diagnostico?: Record<string, number>;
+  criterio?: Record<string, number>;
+  impacto?: Record<string, number>;
+  metodo?: Record<string, number>;
+}
+
 export function evaluarPartida(
   partida: EstadoPartida,
   kpisIniciales: KPIs,
@@ -213,7 +220,7 @@ export function evaluarPartida(
   herramientasUsadas: string[],
   consultoGuia: boolean,
   pasosEnOrden: boolean,
-  configPuntuacion: Record<string, Record<string, number>>
+  configPuntuacion: ConfigPuntuacion
 ): Desglose {
   const diag = evaluarDiagnostico(causasDeclaradas, configPuntuacion.diagnostico ?? {});
   const crit = evaluarCriterio(
@@ -241,13 +248,13 @@ export function evaluarPartida(
     penalizaciones: pen.puntos,
     total,
     detalles: [
-      '=== DIAGNOSTICO ===',
+      '=== DIAGNÓSTICO ===',
       ...diag.detalles,
       '=== CRITERIO ===',
       ...crit.detalles,
       '=== IMPACTO ===',
       ...imp.detalles,
-      '=== METODO ===',
+      '=== MÉTODO ===',
       ...met.detalles,
       '=== COMPROMISOS ===',
       ...comp.detalles,

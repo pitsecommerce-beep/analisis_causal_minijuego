@@ -14,7 +14,7 @@ export interface AccionConfig {
 export interface AccionElegida {
   accionId: number;
   cicloElegido: number;
-  sucursalesNombradas?: number[];
+  sucursalesNombradas?: number[] | undefined;
 }
 
 export interface ResultadoAccion {
@@ -112,7 +112,7 @@ export function aplicarAccion(
       kpis.diasPerdidosBuro -= reduccionDias;
       kpis.ventanaCapturaMedia = redondear(kpis.ventanaCapturaMedia * (1 + (e.costoOperativo ?? 0)), 1);
       resultado.cambios.push(
-        `Dias perdidos buro: -${reduccionDias}`,
+        `Días perdidos buró: -${reduccionDias}`,
         `Costo operativo: ${Math.round((e.costoOperativo ?? 0) * 100)}%`
       );
       break;
@@ -133,7 +133,7 @@ export function aplicarAccion(
     case 6: {
       const reduccionBO = Math.round(kpis.backOfficeDias * Math.abs(e.backOffice ?? 0));
       kpis.backOfficeDias -= reduccionBO;
-      resultado.cambios.push(`Back office: -${reduccionBO} dias`);
+      resultado.cambios.push(`Back office: -${reduccionBO} días`);
       break;
     }
 
@@ -147,8 +147,8 @@ export function aplicarAccion(
       const perdidaConversion = Math.abs(e.conversion ?? 0);
       kpis.conversionPct = redondear(kpis.conversionPct * (1 - perdidaConversion), 1);
       resultado.cambios.push(
-        `Ciclo aparente: ${e.cicloAparente} dias`,
-        `Conversion: -${Math.round(perdidaConversion * 100)}%`
+        `Ciclo aparente: ${e.cicloAparente} días`,
+        `Conversión: -${Math.round(perdidaConversion * 100)}%`
       );
       break;
     }

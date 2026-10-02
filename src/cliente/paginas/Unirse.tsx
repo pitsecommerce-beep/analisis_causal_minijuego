@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
-import { PiePagina } from '../componentes/ui/PiePagina.js';
+import { VistaAcceso } from '../componentes/ui/VistaAcceso.js';
 
 export function Unirse() {
   const nav = useNavigate();
@@ -29,107 +29,45 @@ export function Unirse() {
   }
 
   return (
-    <div className="pagina fondo-marca">
-    <div className="pagina-contenido" style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 20px',
-    }}>
-      <form
-        className="tarjeta"
-        style={{ maxWidth: 420, width: '100%', border: 'none', boxShadow: 'var(--sombra-elevada)' }}
-        onSubmit={unirse}
-      >
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 48,
-            height: 48,
-            borderRadius: 12,
-            background: 'var(--color-primario-suave)',
-            marginBottom: 16,
-          }}>
-            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primario)' }}>ETF</span>
-          </div>
-          <h2 style={{ color: 'var(--color-primario)', marginBottom: 6, fontSize: 22, fontWeight: 700 }}>
-            Unirse a la sesion
-          </h2>
-          <p style={{ color: 'var(--color-texto-secundario)', fontSize: 14 }}>
-            Ingresa el codigo que te proporciono tu profesor
-          </p>
+    <VistaAcceso
+      titulo="Únete a una sesión"
+      subtitulo="Ingresa el código que te compartió tu profesor."
+      pie={<>¿Eres profesor? <Link to="/profesor" className="enlace">Accede al panel</Link></>}
+    >
+      <form className="acceso-formulario" onSubmit={unirse}>
+        <div>
+          <label className="campo-label" htmlFor="codigo">Código de sesión</label>
+          <input
+            id="codigo"
+            className="campo-codigo"
+            autoComplete="off"
+            autoFocus
+            value={codigo}
+            onChange={e => setCodigo(e.target.value)}
+            placeholder="ABC123"
+            maxLength={8}
+            required
+          />
+        </div>
+        <div>
+          <label className="campo-label" htmlFor="nombre">Tu nombre</label>
+          <input
+            id="nombre"
+            autoComplete="name"
+            maxLength={60}
+            value={nombre}
+            onChange={e => setNombre(e.target.value)}
+            placeholder="Nombre y apellido"
+            required
+          />
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div>
-            <label className="campo-label" htmlFor="codigo">
-              Codigo de sesion
-            </label>
-            <input
-              id="codigo"
-              autoComplete="off"
-              autoFocus
-              value={codigo}
-              onChange={e => setCodigo(e.target.value)}
-              placeholder="ABC123"
-              maxLength={8}
-              required
-              style={{
-                textTransform: 'uppercase',
-                letterSpacing: 6,
-                textAlign: 'center',
-                fontSize: 22,
-                fontWeight: 700,
-                padding: '14px 16px',
-                background: 'var(--color-superficie-alt)',
-                border: '2px solid var(--color-borde)',
-              }}
-            />
-          </div>
-          <div>
-            <label className="campo-label" htmlFor="nombre">
-              Tu nombre
-            </label>
-            <input
-              id="nombre"
-              autoComplete="name"
-              maxLength={60}
-              value={nombre}
-              onChange={e => setNombre(e.target.value)}
-              placeholder="Juan Perez"
-              required
-            />
-          </div>
+        {error && <div className="alerta-error" role="alert">{error}</div>}
 
-          {error && (
-            <div className="alerta-error" role="alert">
-              {error}
-            </div>
-          )}
-
-          <button
-            className="btn-primario"
-            type="submit"
-            disabled={cargando}
-            style={{ padding: '14px', fontSize: 15, marginTop: 4 }}
-          >
-            {cargando ? 'Entrando...' : 'Entrar al simulador'}
-          </button>
-        </div>
-
-        <button
-          type="button"
-          className="btn-fantasma"
-          style={{ width: '100%', marginTop: 16 }}
-          onClick={() => nav('/')}
-        >
-          Volver al inicio
+        <button className="btn-primario" type="submit" disabled={cargando}>
+          {cargando ? 'Entrando...' : 'Entrar al simulador'}
         </button>
       </form>
-    </div>
-    <PiePagina oscuro />
-    </div>
+    </VistaAcceso>
   );
 }

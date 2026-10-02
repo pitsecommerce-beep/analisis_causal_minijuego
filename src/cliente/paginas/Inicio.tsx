@@ -64,7 +64,7 @@ export function Inicio() {
             marginBottom: 40,
             lineHeight: 1.6,
           }}>
-            Simulador de Analisis Causal
+            Simulador de Análisis Causal
           </p>
 
           <div style={{
