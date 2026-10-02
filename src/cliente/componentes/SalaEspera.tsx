@@ -17,10 +17,9 @@ const INTERVALO_FRASE = 8000;
 interface Props {
   nombre: string;
   sesion: string;
-  onVerTutorial: () => void;
 }
 
-export function SalaEspera({ nombre, sesion, onVerTutorial }: Props) {
+export function SalaEspera({ nombre, sesion }: Props) {
   const [indice, setIndice] = useState(() => Math.floor(Math.random() * FRASES.length));
 
   useEffect(() => {
@@ -31,16 +30,17 @@ export function SalaEspera({ nombre, sesion, onVerTutorial }: Props) {
   const frase = FRASES[indice]!;
 
   return (
-    <div className="pagina fondo-marca">
+    <div className="pagina espera-pagina">
       <main className="pagina-contenido espera">
-        <div className="espera-logo">
-          <img src="/favicon.png" alt="" width={48} height={48} />
+        <img src="/favicon.png" alt="" width={56} height={56} className="espera-logo" />
+
+        <div className="espera-indicador" aria-hidden="true">
+          <span /><span /><span />
         </div>
 
-        <div className="espera-estado" role="status">
-          <span className="espera-pulso" aria-hidden="true" />
+        <h1 className="espera-estado" role="status">
           Esperando a que el profesor inicie la sesión
-        </div>
+        </h1>
 
         <p className="espera-saludo">
           Hola, <strong>{nombre}</strong>. Ya estás en <strong>{sesion || 'la sesión'}</strong>.
@@ -52,11 +52,8 @@ export function SalaEspera({ nombre, sesion, onVerTutorial }: Props) {
           <figcaption>{frase.autor}</figcaption>
         </figure>
 
-        <button className="espera-tutorial" onClick={onVerTutorial}>
-          Mientras esperas, conoce cómo se juega
-        </button>
       </main>
-      <PiePagina oscuro />
+      <PiePagina />
     </div>
   );
 }

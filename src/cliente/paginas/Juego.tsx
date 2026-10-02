@@ -12,6 +12,7 @@ import type { NombreIcono } from '../componentes/ui/Iconos.js';
 import { PiePagina } from '../componentes/ui/PiePagina.js';
 import { SalaEspera } from '../componentes/SalaEspera.js';
 import { Onboarding } from '../componentes/Onboarding.js';
+import type { PasoRecorrido } from '../componentes/Onboarding.js';
 
 type Vista = 'datos' | 'asesores' | 'decisiones';
 
@@ -117,6 +118,82 @@ export function Juego() {
     return () => window.clearInterval(id);
   }, [!!estado]);
 
+  const pasosRecorrido: PasoRecorrido[] = [
+    {
+      icono: 'diagnostico',
+      titulo: 'Bienvenido(a), Director(a)',
+      texto: 'ETF Bank tarda demasiado en entregar tarjetas de crédito y las quejas crecen. Tu misión es encontrar las causas raíz con datos y corregirlas en 4 ciclos. Te mostramos el simulador en un minuto.',
+      alEntrar: () => setVista('datos'),
+    },
+    {
+      objetivo: 'ciclo',
+      icono: 'reloj',
+      titulo: 'Ciclos',
+      texto: 'La partida tiene 4 ciclos. En cada uno analizas, decides y avanzas. Al terminar el cuarto declaras las causas raíz y recibes tu evaluación.',
+    },
+    {
+      objetivo: 'vidas',
+      icono: 'corazon',
+      titulo: 'Vidas',
+      texto: 'Empiezas con 3. Si las pierdes todas, el consejo te destituye. Pierdes una cuando:',
+      puntos: [
+        'No tomas ninguna acción en un ciclo.',
+        'Tu resultado queda por debajo de la mitad de lo que prometiste.',
+        'Tu credibilidad llega a cero.',
+        'Gastas mucho presupuesto sin mover ningún KPI.',
+      ],
+    },
+    {
+      objetivo: 'credibilidad',
+      icono: 'escudo',
+      titulo: 'Credibilidad',
+      texto: 'Es la confianza que el consejo y tu equipo tienen en ti. Sube cuando respondes con evidencia y cumples tus compromisos. Baja cuando respondes sin evidencia, pospones decisiones o incumples lo que prometiste. Si llega a cero pierdes una vida.',
+    },
+    {
+      objetivo: 'presupuesto',
+      icono: 'sumar',
+      titulo: 'Presupuesto',
+      texto: 'Es el dinero para toda la partida, no por ciclo. Cada acción tiene un costo y lo que te sobre al final también suma puntos.',
+    },
+    {
+      objetivo: 'tab-datos',
+      icono: 'tabla',
+      titulo: 'Datos',
+      texto: 'Aquí están las solicitudes de tarjeta y los comentarios de clientes. Es tu fuente de evidencia.',
+      alEntrar: () => setVista('datos'),
+    },
+    {
+      objetivo: 'herramientas',
+      icono: 'histograma',
+      titulo: 'Herramientas de análisis',
+      texto: 'Haz doble clic en el encabezado de una columna para elegirla y luego aplica una herramienta. Verificar con datos te permite refutar afirmaciones en la Sala de Juntas.',
+      alEntrar: () => setVista('datos'),
+    },
+    {
+      objetivo: 'tab-asesores',
+      icono: 'mensajes',
+      titulo: 'Sala de Juntas',
+      texto: 'Tu equipo opina sobre el problema. Algunas afirmaciones son ciertas y otras engañosas. Responde con evidencia para convencerlos y ganar credibilidad.',
+    },
+    {
+      objetivo: 'tab-decisiones',
+      icono: 'decisiones',
+      titulo: 'Decisiones',
+      texto: 'Elige acciones dentro de tu presupuesto, declara a qué métrica te comprometes y avanza al siguiente ciclo. Algunas acciones tardan en surtir efecto.',
+    },
+    {
+      objetivo: 'ayuda',
+      icono: 'pregunta',
+      titulo: '¿Necesitas repasar?',
+      texto: 'Con este botón puedes volver a ver este recorrido cuando quieras.',
+    },
+    {
+      icono: 'exito',
+      titulo: 'Cómo se evalúa',
+      texto: 'Al final se evalúa tu diagnóstico, tu criterio con la evidencia, el impacto en los KPIs y tu método. Consejo: verifica antes de actuar.',
+    },
+  ];
+
   function terminarOnboarding() {
     try { localStorage.setItem(CLAVE_ONBOARDING, '1'); } catch { /* sin almacenamiento */ }
     setMostrarOnboarding(false);
@@ -207,20 +284,16 @@ export function Juego() {
   }
 
   if (esperando) {
-    return (
-      <>
-        <SalaEspera nombre={nombreJugador} sesion={sesionNombre} onVerTutorial={() => setMostrarOnboarding(true)} />
-        {mostrarOnboarding && <Onboarding onTerminar={terminarOnboarding} />}
-      </>
-    );
+    return <SalaEspera nombre={nombreJugador} sesion={sesionNombre} />;
   }
 
   if (cargando) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-superficie)' }}>
         <div style={{ textAlign: 'center' }}>
-          <div className="spinner" style={{ width: 40, height: 40, marginBottom: 16 }} />
-          <p style={{ fontSize: 15, color: 'var(--color-texto-secundario)' }}>Cargando partida...</p>
+          <img src="/favicon.png" alt="" width={48} height={48} style={{ marginBottom: 24 }} />
+          <div className="spinner" style={{ width: 28, height: 28, borderWidth: 2, marginBottom: 14 }} />
+          <p style={{ fontSize: 14, color: 'var(--color-texto-secundario)' }}>Cargando partida...</p>
         </div>
       </div>
     );
@@ -265,7 +338,7 @@ export function Juego() {
   return (
     <div className="pagina" style={{ background: 'var(--color-fondo)' }}>
       <header className="barra-estado">
-        <div className="contenedor" style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
+        <div className="contenedor" style={{ display: 'flex', alignItems: 'stretch', gap: 0, maxWidth: vista === 'datos' ? 1680 : undefined }}>
           <div className="barra-estado-item">
             <span className="barra-estado-label">Director(a)</span>
             <span className="barra-estado-valor">{nombreJugador}</span>
@@ -274,11 +347,11 @@ export function Juego() {
             <span className="barra-estado-label">Sesión</span>
             <span className="barra-estado-valor">{sesionNombre}</span>
           </div>
-          <div className="barra-estado-item">
+          <div className="barra-estado-item" data-tour="ciclo">
             <span className="barra-estado-label">Ciclo</span>
             <span className="barra-estado-valor">{ciclo} / 4</span>
           </div>
-          <div className="barra-estado-item">
+          <div className="barra-estado-item" data-tour="vidas">
             <span className="barra-estado-label">Vidas</span>
             <span className="barra-estado-valor" style={{ display: 'inline-flex', gap: 4 }}>
               {Array.from({ length: 3 }, (_, i) => (
@@ -289,19 +362,20 @@ export function Juego() {
               <span className="sr-only">{vidas} de 3</span>
             </span>
           </div>
-          <div className="barra-estado-item">
+          <div className="barra-estado-item" data-tour="credibilidad">
             <span className="barra-estado-label">Credibilidad</span>
             <span className="barra-estado-valor" style={{ color: credColor }}>
               {credibilidad}%
             </span>
           </div>
-          <div className="barra-estado-item" style={{ marginLeft: 'auto' }}>
+          <div className="barra-estado-item" data-tour="presupuesto" style={{ marginLeft: 'auto' }}>
             <span className="barra-estado-label">Presupuesto</span>
             <span className="barra-estado-valor">${presupuesto}</span>
           </div>
           <div className="barra-estado-item" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <button
               onClick={() => setMostrarOnboarding(true)}
+              data-tour="ayuda"
               aria-label="Ver cómo se juega"
               title="Cómo se juega"
               style={{
@@ -330,7 +404,7 @@ export function Juego() {
         </div>
       </header>
 
-      <main className="contenedor" style={{ flex: 1, paddingTop: 20, paddingBottom: 40, width: '100%' }}>
+      <main className="contenedor" style={{ flex: 1, paddingTop: 20, paddingBottom: 40, width: '100%', maxWidth: vista === 'datos' ? 1680 : undefined }}>
         <div style={{
           display: 'flex',
           gap: 4,
@@ -345,6 +419,7 @@ export function Juego() {
             <button
               key={t.id}
               onClick={() => onCambioVista(t.id)}
+              data-tour={`tab-${t.id}`}
               aria-pressed={vista === t.id}
               style={{
                 flex: 1,
@@ -383,7 +458,7 @@ export function Juego() {
         </div>
       </main>
       <PiePagina />
-      {mostrarOnboarding && <Onboarding onTerminar={terminarOnboarding} />}
+      {mostrarOnboarding && <Onboarding pasos={pasosRecorrido} onTerminar={terminarOnboarding} />}
     </div>
   );
 }

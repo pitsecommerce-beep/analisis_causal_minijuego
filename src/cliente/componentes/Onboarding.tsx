@@ -1,109 +1,137 @@
-import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { Icono } from './ui/Iconos.js';
 import type { NombreIcono } from './ui/Iconos.js';
 
-interface Tarjeta {
+export interface PasoRecorrido {
+  // Valor del atributo data-tour del elemento a señalar. Sin objetivo, el paso aparece centrado.
+  objetivo?: string;
   icono: NombreIcono;
   titulo: string;
-  texto: ReactNode;
+  texto: string;
   puntos?: string[];
+  // Se ejecuta al entrar al paso, por ejemplo para cambiar de pestaña
+  alEntrar?: () => void;
 }
 
-const TARJETAS: Tarjeta[] = [
-  {
-    icono: 'diagnostico',
-    titulo: 'Tu misión',
-    texto: 'Eres la nueva Dirección de Operaciones de ETF Bank. Las tarjetas de crédito tardan demasiado en entregarse y las quejas crecen. Encuentra las causas raíz con datos y corrígelas en 4 ciclos.',
-  },
-  {
-    icono: 'grafica',
-    titulo: 'Tu tablero',
-    texto: 'En la barra superior siempre verás cómo vas.',
-    puntos: [
-      'Ciclo: avanzas del 1 al 4.',
-      'Vidas: pierdes una si no decides nada, si incumples tu compromiso o si tu credibilidad llega a cero.',
-      'Credibilidad: sube cuando respondes con evidencia.',
-      'Presupuesto: cada acción tiene un costo.',
-    ],
-  },
-  {
-    icono: 'tabla',
-    titulo: 'Datos',
-    texto: 'Explora las solicitudes y los comentarios de clientes. Haz doble clic en un encabezado para elegir una columna y aplica herramientas como histograma, Pareto o estadísticas.',
-    puntos: ['Verificar con datos te permite refutar afirmaciones de tu equipo.'],
-  },
-  {
-    icono: 'mensajes',
-    titulo: 'Sala de Juntas',
-    texto: 'Tu equipo opina sobre el problema. Algunas afirmaciones son ciertas y otras son engañosas. Responde con evidencia para convencerlos y ganar credibilidad.',
-  },
-  {
-    icono: 'decisiones',
-    titulo: 'Decisiones',
-    texto: 'Elige acciones dentro de tu presupuesto, declara a qué métrica te comprometes y avanza al siguiente ciclo.',
-    puntos: ['Algunas acciones tardan uno o más ciclos en surtir efecto.'],
-  },
-  {
-    icono: 'exito',
-    titulo: 'Cómo se evalúa',
-    texto: 'Al final declaras las causas raíz que encontraste. Se evalúa tu diagnóstico, tu criterio con la evidencia, el impacto en los KPIs y tu método.',
-    puntos: ['Consejo: verifica antes de actuar.'],
-  },
-];
-
 interface Props {
+  pasos: PasoRecorrido[];
   onTerminar: () => void;
 }
 
-export function Onboarding({ onTerminar }: Props) {
+const MARGEN = 8;
+const ANCHO_GLOBO = 340;
+const SEPARACION = 14;
+
+interface Caja { top: number; left: number; width: number; height: number }
+
+function medir(objetivo?: string): Caja | null {
+  if (!objetivo) return null;
+  const el = document.querySelector(`[data-tour="${objetivo}"]`);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  if (r.width === 0 && r.height === 0) return null;
+  return { top: r.top - MARGEN, left: r.left - MARGEN, width: r.width + MARGEN * 2, height: r.height + MARGEN * 2 };
+}
+
+export function Onboarding({ pasos, onTerminar }: Props) {
   const [indice, setIndice] = useState(0);
-  const tarjeta = TARJETAS[indice]!;
-  const esUltima = indice === TARJETAS.length - 1;
+  const [caja, setCaja] = useState<Caja | null>(null);
+  const [altoGlobo, setAltoGlobo] = useState(0);
+  const globoRef = useRef<HTMLDivElement>(null);
+  const paso = pasos[indice]!;
+  const esUltimo = indice === pasos.length - 1;
+
+  const ir = useCallback((i: number) => {
+    setIndice(Math.max(0, Math.min(i, pasos.length - 1)));
+  }, [pasos.length]);
+
+  useEffect(() => {
+    paso.alEntrar?.();
+    const el = paso.objetivo ? document.querySelector(`[data-tour="${paso.objetivo}"]`) : null;
+    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [indice]);
+
+  // El objetivo puede aparecer tarde (datos cargando) o moverse con el scroll, así que se mide de forma continua
+  useEffect(() => {
+    let cuadro = 0;
+    const actualizar = () => {
+      setCaja(prev => {
+        const nueva = medir(paso.objetivo);
+        if (prev && nueva && prev.top === nueva.top && prev.left === nueva.left && prev.width === nueva.width && prev.height === nueva.height) return prev;
+        return nueva;
+      });
+      cuadro = window.requestAnimationFrame(actualizar);
+    };
+    actualizar();
+    return () => window.cancelAnimationFrame(cuadro);
+  }, [paso.objetivo]);
+
+  useLayoutEffect(() => {
+    if (globoRef.current) setAltoGlobo(globoRef.current.offsetHeight);
+  }, [indice, caja?.width]);
 
   useEffect(() => {
     function onTecla(e: KeyboardEvent) {
-      if (e.key === 'ArrowRight') setIndice(i => Math.min(i + 1, TARJETAS.length - 1));
-      if (e.key === 'ArrowLeft') setIndice(i => Math.max(i - 1, 0));
+      if (e.key === 'ArrowRight') ir(indice + 1);
+      if (e.key === 'ArrowLeft') ir(indice - 1);
       if (e.key === 'Escape') onTerminar();
     }
     window.addEventListener('keydown', onTecla);
     return () => window.removeEventListener('keydown', onTecla);
-  }, [onTerminar]);
+  }, [indice, ir, onTerminar]);
+
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const ancho = Math.min(ANCHO_GLOBO, vw - 32);
+  let estiloGlobo: CSSProperties;
+  let flecha: 'arriba' | 'abajo' | null = null;
+  let flechaLeft = 0;
+
+  if (caja) {
+    const cabeAbajo = caja.top + caja.height + SEPARACION + altoGlobo < vh - 16;
+    const top = cabeAbajo ? caja.top + caja.height + SEPARACION : Math.max(16, caja.top - SEPARACION - altoGlobo);
+    const centro = caja.left + caja.width / 2;
+    const left = Math.max(16, Math.min(centro - ancho / 2, vw - ancho - 16));
+    estiloGlobo = { top, left, width: ancho };
+    flecha = cabeAbajo ? 'arriba' : 'abajo';
+    flechaLeft = Math.max(20, Math.min(centro - left, ancho - 20));
+  } else {
+    estiloGlobo = { top: '50%', left: '50%', width: ancho, transform: 'translate(-50%, -50%)' };
+  }
 
   return (
-    <div className="modal-fondo">
-      <div className="onboarding" role="dialog" aria-modal="true" aria-labelledby="onboarding-titulo">
-        <div className="onboarding-encabezado">
-          <span className="onboarding-paso">{indice + 1} de {TARJETAS.length}</span>
-          <button className="enlace enlace-sutil onboarding-saltar" onClick={onTerminar}>Saltar</button>
-        </div>
+    <div className="recorrido" role="dialog" aria-modal="true" aria-labelledby="recorrido-titulo">
+      <div className="recorrido-bloqueo" />
+      {caja
+        ? <div className="recorrido-foco" style={{ top: caja.top, left: caja.left, width: caja.width, height: caja.height }} />
+        : <div className="recorrido-velo" />}
 
-        <div key={indice} className="onboarding-cuerpo transicion-contenido">
-          <div className="icono-insignia icono-insignia-primario icono-insignia-lg">
-            <Icono nombre={tarjeta.icono} tamano={26} grosor={1.8} />
+      <div ref={globoRef} key={indice} className="recorrido-globo" style={estiloGlobo}>
+        {flecha && <span className={`recorrido-flecha recorrido-flecha-${flecha}`} style={{ left: flechaLeft }} />}
+        <div className="recorrido-cabecera">
+          <div className="icono-insignia icono-insignia-primario icono-insignia-sm">
+            <Icono nombre={paso.icono} tamano={18} />
           </div>
-          <h2 id="onboarding-titulo" className="onboarding-titulo">{tarjeta.titulo}</h2>
-          <p className="onboarding-texto">{tarjeta.texto}</p>
-          {tarjeta.puntos && (
-            <ul className="onboarding-puntos">
-              {tarjeta.puntos.map(p => <li key={p}>{p}</li>)}
-            </ul>
-          )}
+          <h2 id="recorrido-titulo" className="recorrido-titulo">{paso.titulo}</h2>
         </div>
-
-        <div className="onboarding-pie">
-          <div className="onboarding-puntos-nav" aria-hidden="true">
-            {TARJETAS.map((_, i) => (
-              <span key={i} className={`onboarding-punto ${i === indice ? 'activo' : ''}`} />
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {indice > 0 && (
-              <button className="btn-fantasma btn-sm" onClick={() => setIndice(indice - 1)}>Anterior</button>
+        <p className="recorrido-texto">{paso.texto}</p>
+        {paso.puntos && (
+          <ul className="onboarding-puntos">
+            {paso.puntos.map(p => <li key={p}>{p}</li>)}
+          </ul>
+        )}
+        <div className="recorrido-pie">
+          <span className="onboarding-paso">{indice + 1} de {pasos.length}</span>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {!esUltimo && (
+              <button className="enlace enlace-sutil onboarding-saltar" onClick={onTerminar}>Saltar</button>
             )}
-            <button className="btn-primario btn-sm" onClick={() => esUltima ? onTerminar() : setIndice(indice + 1)}>
-              {esUltima ? 'Comenzar' : 'Siguiente'}
+            {indice > 0 && (
+              <button className="btn-fantasma btn-sm" onClick={() => ir(indice - 1)}>Anterior</button>
+            )}
+            <button className="btn-primario btn-sm" onClick={() => esUltimo ? onTerminar() : ir(indice + 1)} autoFocus>
+              {esUltimo ? 'Comenzar' : 'Siguiente'}
             </button>
           </div>
         </div>
