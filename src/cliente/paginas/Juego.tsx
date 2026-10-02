@@ -338,7 +338,7 @@ export function Juego() {
   return (
     <div className="pagina" style={{ background: 'var(--color-fondo)' }}>
       <header className="barra-estado">
-        <div className="contenedor" style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
+        <div className="contenedor" style={{ display: 'flex', alignItems: 'stretch', gap: 0, maxWidth: vista === 'datos' ? 1680 : undefined }}>
           <div className="barra-estado-item">
             <span className="barra-estado-label">Director(a)</span>
             <span className="barra-estado-valor">{nombreJugador}</span>
@@ -404,7 +404,7 @@ export function Juego() {
         </div>
       </header>
 
-      <main className="contenedor" style={{ flex: 1, paddingTop: 20, paddingBottom: 40, width: '100%' }}>
+      <main className="contenedor" style={{ flex: 1, paddingTop: 20, paddingBottom: 40, width: '100%', maxWidth: vista === 'datos' ? 1680 : undefined }}>
         <div style={{
           display: 'flex',
           gap: 4,
