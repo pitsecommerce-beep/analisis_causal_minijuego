@@ -639,21 +639,54 @@ table.datos tr:hover td { background: var(--color-primario-suave); }
   to { transform: scale(3); opacity: 0; }
 }
 
-/* ── Onboarding ── */
+/* ── Recorrido guiado ── */
 
-.onboarding {
+.recorrido { position: fixed; inset: 0; z-index: 950; }
+.recorrido-bloqueo { position: absolute; inset: 0; }
+.recorrido-velo {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 27, 42, 0.55);
+  animation: fundido 0.2s ease-out;
+}
+.recorrido-foco {
+  position: fixed;
+  border-radius: var(--radio);
+  box-shadow: 0 0 0 9999px rgba(15, 27, 42, 0.55), 0 0 0 3px var(--color-acento-claro);
+  pointer-events: none;
+  transition: top 0.3s cubic-bezier(0.22, 1, 0.36, 1), left 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.3s cubic-bezier(0.22, 1, 0.36, 1), height 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.recorrido-globo {
+  position: fixed;
   background: var(--color-superficie);
   border-radius: var(--radio-lg);
   box-shadow: var(--sombra-elevada);
-  width: 100%;
-  max-width: 480px;
-  padding: 20px 24px 22px;
-  animation: modal-entrada 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 18px 20px 16px;
+  animation: contenido-entrada 0.25s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
-.onboarding-encabezado {
+.recorrido-flecha {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--color-superficie);
+  transform: translateX(-50%) rotate(45deg);
+}
+.recorrido-flecha-arriba { top: -7px; }
+.recorrido-flecha-abajo { bottom: -7px; }
+.recorrido-cabecera { display: flex; align-items: center; gap: 12px; }
+.recorrido-titulo { font-size: 16px; font-weight: 700; color: var(--color-texto); }
+.recorrido-texto {
+  font-size: 13.5px;
+  color: var(--color-texto-secundario);
+  line-height: 1.6;
+  margin-top: 10px;
+}
+.recorrido-pie {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 16px;
 }
 .onboarding-paso {
   font-size: 12px;
@@ -662,37 +695,17 @@ table.datos tr:hover td { background: var(--color-primario-suave); }
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.onboarding-saltar { background: none; padding: 4px 0; }
-.onboarding-cuerpo {
-  text-align: center;
-  padding: 20px 8px 8px;
-  min-height: 270px;
-}
-.onboarding-titulo {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-texto);
-  margin-top: 16px;
-  letter-spacing: -0.01em;
-}
-.onboarding-texto {
-  font-size: 14px;
-  color: var(--color-texto-secundario);
-  line-height: 1.65;
-  margin-top: 8px;
-}
+.onboarding-saltar { background: none; padding: 4px 6px; }
 .onboarding-puntos {
   list-style: none;
-  text-align: left;
-  margin: 14px auto 0;
-  max-width: 380px;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 .onboarding-puntos li {
   position: relative;
-  padding-left: 18px;
+  padding-left: 16px;
   font-size: 13px;
   color: var(--color-texto);
   line-height: 1.5;
@@ -700,28 +713,13 @@ table.datos tr:hover td { background: var(--color-primario-suave); }
 .onboarding-puntos li::before {
   content: '';
   position: absolute;
-  left: 4px;
+  left: 3px;
   top: 8px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--color-acento);
 }
-.onboarding-pie {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 16px;
-}
-.onboarding-puntos-nav { display: flex; gap: 6px; }
-.onboarding-punto {
-  width: 7px;
-  height: 7px;
-  border-radius: 4px;
-  background: var(--color-borde);
-  transition: all var(--transicion);
-}
-.onboarding-punto.activo { width: 20px; background: var(--color-primario); }
 
 /* ── Presencia en panel del profesor ── */
 

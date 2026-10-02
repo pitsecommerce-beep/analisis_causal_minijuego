@@ -212,7 +212,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+      <div data-tour="herramientas" style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
         {HERRAMIENTAS.map(h => (
           <button key={h.id} className="herramienta-btn" onClick={() => aplicarHerramienta(h.id)}
             style={{
