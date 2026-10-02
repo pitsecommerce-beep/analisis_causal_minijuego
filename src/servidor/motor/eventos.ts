@@ -43,7 +43,7 @@ export function sortearEvento(
   if (noUsados.length === 0) return null;
 
   const idx = Math.floor(rng() * noUsados.length);
-  return noUsados[idx];
+  return noUsados[idx] ?? null;
 }
 
 export function aplicarEvento(

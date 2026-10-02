@@ -14,7 +14,7 @@ export interface AccionConfig {
 export interface AccionElegida {
   accionId: number;
   cicloElegido: number;
-  sucursalesNombradas?: number[];
+  sucursalesNombradas?: number[] | undefined;
 }
 
 export interface ResultadoAccion {

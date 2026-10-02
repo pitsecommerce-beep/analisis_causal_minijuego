@@ -77,7 +77,7 @@ async function main() {
 
     console.log('\nMetricas para compromiso:');
     for (let i = 0; i < METRICAS_DISPONIBLES.length; i++) {
-      const m = METRICAS_DISPONIBLES[i];
+      const m = METRICAS_DISPONIBLES[i]!;
       console.log(`  ${i + 1}. ${m.nombre} (${m.id})`);
     }
 
@@ -85,10 +85,10 @@ async function main() {
     const idxMetrica = parseInt(inputMetrica.trim(), 10) - 1;
     const metricaElegida =
       idxMetrica >= 0 && idxMetrica < METRICAS_DISPONIBLES.length
-        ? METRICAS_DISPONIBLES[idxMetrica].id
+        ? METRICAS_DISPONIBLES[idxMetrica]!.id
         : 'ventanaCapturaMedia';
 
-    const valorActual = (partida.kpis as Record<string, number>)[metricaElegida] ?? 0;
+    const valorActual = (partida.kpis as unknown as Record<string, number>)[metricaElegida] ?? 0;
     console.log(`  Valor actual de ${metricaElegida}: ${valorActual}`);
 
     const inputMeta = await preguntar(`  Tu meta para este ciclo (número): `);

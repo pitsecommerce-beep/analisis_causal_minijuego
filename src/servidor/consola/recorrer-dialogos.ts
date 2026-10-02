@@ -52,7 +52,7 @@ for (const archivo of archivos) {
   );
 
   for (let i = 0; i < aperturaPorCiclo.length; i++) {
-    if (aperturaPorCiclo[i].length === 0 && personaje !== 'ramon') {
+    if (aperturaPorCiclo[i]!.length === 0 && personaje !== 'ramon') {
       const msg = `${personaje}: sin nodo de apertura para ciclo ${i + 1}`;
       errores.push(msg);
       huerfanos++;

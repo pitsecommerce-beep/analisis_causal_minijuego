@@ -14,7 +14,7 @@ function jugarPartida(opts: {
   const partida = crearPartida(kpisBase, 20260825);
 
   for (let ciclo = 1; ciclo <= 4; ciclo++) {
-    let acciones: { accionId: number; cicloElegido: number; sucursalesNombradas?: number[] }[] = [];
+    let acciones: { accionId: number; cicloElegido: number; sucursalesNombradas?: number[] | undefined }[] = [];
 
     if (ciclo === 1) {
       acciones = opts.accionesCiclo1.map((id) => ({

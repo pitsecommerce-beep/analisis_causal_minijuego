@@ -203,6 +203,13 @@ export function calcularPenalizaciones(partida: EstadoPartida): { puntos: number
   return { puntos, detalles };
 }
 
+export interface ConfigPuntuacion {
+  diagnostico?: Record<string, number>;
+  criterio?: Record<string, number>;
+  impacto?: Record<string, number>;
+  metodo?: Record<string, number>;
+}
+
 export function evaluarPartida(
   partida: EstadoPartida,
   kpisIniciales: KPIs,
@@ -213,7 +220,7 @@ export function evaluarPartida(
   herramientasUsadas: string[],
   consultoGuia: boolean,
   pasosEnOrden: boolean,
-  configPuntuacion: Record<string, Record<string, number>>
+  configPuntuacion: ConfigPuntuacion
 ): Desglose {
   const diag = evaluarDiagnostico(causasDeclaradas, configPuntuacion.diagnostico ?? {});
   const crit = evaluarCriterio(

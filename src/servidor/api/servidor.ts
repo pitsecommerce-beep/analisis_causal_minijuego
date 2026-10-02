@@ -43,7 +43,7 @@ if (fs.existsSync(clientePath)) {
 
 // --- Datos cargados al inicio ---
 
-let datosJuego: DatosCargados;
+let datosJuego!: DatosCargados;
 const dialogos: Record<string, NodoDialogo[]> = {};
 
 function cargarDatosInicio() {
@@ -245,6 +245,11 @@ app.post('/api/sesion/:codigo/unirse', async (req, res) => {
 // ║     RUTAS DE PROFESOR               ║
 // ╚══════════════════════════════════════╝
 
+function idParam(req: express.Request): string {
+  const id = req.params['id'];
+  return Array.isArray(id) ? id[0] ?? '' : id ?? '';
+}
+
 async function esSesionDelProfesor(sesionId: string, profesorId: string): Promise<boolean> {
   try {
     const sesion = await obtenerSesionPorId(sesionId);
@@ -255,7 +260,7 @@ async function esSesionDelProfesor(sesionId: string, profesorId: string): Promis
 }
 
 async function sesionPropia(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
-  const propia = await esSesionDelProfesor(req.params['id'] as string, (req as RequestProfesor).profesorId);
+  const propia = await esSesionDelProfesor(idParam(req), (req as RequestProfesor).profesorId);
   if (!propia) {
     res.status(404).json({ error: 'Sesión no encontrada' });
     return;
@@ -274,7 +279,7 @@ app.get('/api/profesor/sesiones', autenticarProfesor, async (req, res) => {
 
 app.get('/api/profesor/sesion/:id', autenticarProfesor, sesionPropia, async (req, res) => {
   try {
-    const sesion = await obtenerSesionPorId(req.params.id!);
+    const sesion = await obtenerSesionPorId(idParam(req));
     const jugadores = await listarJugadoresSesion(sesion.id);
     const partidas = await listarPartidasSesion(sesion.id);
     res.json({ sesion, jugadores, partidas });
@@ -285,7 +290,7 @@ app.get('/api/profesor/sesion/:id', autenticarProfesor, sesionPropia, async (req
 
 app.post('/api/profesor/sesion/:id/iniciar', autenticarProfesor, sesionPropia, async (req, res) => {
   try {
-    await actualizarEstadoSesion(req.params.id!, 'en_curso');
+    await actualizarEstadoSesion(idParam(req), 'en_curso');
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Error al iniciar sesión' });
@@ -294,7 +299,7 @@ app.post('/api/profesor/sesion/:id/iniciar', autenticarProfesor, sesionPropia, a
 
 app.post('/api/profesor/sesion/:id/finalizar', autenticarProfesor, sesionPropia, async (req, res) => {
   try {
-    await actualizarEstadoSesion(req.params.id!, 'finalizada');
+    await actualizarEstadoSesion(idParam(req), 'finalizada');
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Error al finalizar sesión' });
@@ -317,7 +322,7 @@ app.post('/api/profesor/sesiones/eliminar', autenticarProfesor, async (req, res)
 
 app.delete('/api/profesor/sesion/:id', autenticarProfesor, async (req, res) => {
   try {
-    const eliminadas = await eliminarSesiones((req as RequestProfesor).profesorId, [req.params['id'] as string]);
+    const eliminadas = await eliminarSesiones((req as RequestProfesor).profesorId, [idParam(req)]);
     if (eliminadas === 0) {
       res.status(404).json({ error: 'Sesión no encontrada' });
       return;
@@ -867,7 +872,7 @@ app.post('/api/profesor/sesion/:id/experimento', autenticarProfesor, sesionPropi
   const { modoExperimento, pctTratamiento } = req.body;
   try {
     await actualizarSesionExperimento(
-      req.params.id!,
+      idParam(req),
       modoExperimento ?? false,
       pctTratamiento ?? 50
     );
@@ -954,7 +959,7 @@ app.post('/api/telemetria', autenticarJugador, async (req, res) => {
 
 app.get('/api/profesor/sesion/:id/telemetria', autenticarProfesor, sesionPropia, async (req, res) => {
   try {
-    const data = await obtenerTelemetriaSesion(req.params.id!);
+    const data = await obtenerTelemetriaSesion(idParam(req));
     res.json(data);
   } catch {
     res.status(500).json({ error: 'Error al obtener telemetría' });
@@ -963,7 +968,7 @@ app.get('/api/profesor/sesion/:id/telemetria', autenticarProfesor, sesionPropia,
 
 app.get('/api/profesor/sesion/:id/resumen-experimento', autenticarProfesor, sesionPropia, async (req, res) => {
   try {
-    const resumen = await obtenerResumenExperimento(req.params.id!);
+    const resumen = await obtenerResumenExperimento(idParam(req));
     res.json(resumen);
   } catch {
     res.status(500).json({ error: 'Error al obtener resumen' });
@@ -980,7 +985,7 @@ app.get('/api/profesor/sesion/:id/exportar', async (req, res) => {
   }).catch(() => { return; });
   if (res.headersSent) return;
 
-  if (!(await esSesionDelProfesor(req.params.id, (req as unknown as RequestProfesor).profesorId))) {
+  if (!(await esSesionDelProfesor(idParam(req), (req as unknown as RequestProfesor).profesorId))) {
     res.status(404).json({ error: 'Sesión no encontrada' });
     return;
   }
@@ -989,8 +994,8 @@ app.get('/api/profesor/sesion/:id/exportar', async (req, res) => {
 
   try {
     const [telemetria, resumen] = await Promise.all([
-      obtenerTelemetriaSesion(req.params.id!),
-      obtenerResumenExperimento(req.params.id!),
+      obtenerTelemetriaSesion(idParam(req)),
+      obtenerResumenExperimento(idParam(req)),
     ]);
 
     if (formato === 'csv') {

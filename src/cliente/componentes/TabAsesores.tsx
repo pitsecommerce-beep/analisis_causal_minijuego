@@ -107,8 +107,7 @@ export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
 
   const porPersonaje: Record<string, any[]> = {};
   for (const d of dialogos) {
-    if (!porPersonaje[d.personaje]) porPersonaje[d.personaje] = [];
-    porPersonaje[d.personaje].push(d);
+    (porPersonaje[d.personaje] ??= []).push(d);
   }
 
   return (

@@ -88,8 +88,8 @@ export interface EstadisticasVerificacion {
 function mediana(arr: number[]): number {
   const sorted = [...arr].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
-  if (sorted.length % 2 === 0) return (sorted[mid - 1] + sorted[mid]) / 2;
-  return sorted[mid];
+  if (sorted.length % 2 === 0) return (sorted[mid - 1]! + sorted[mid]!) / 2;
+  return sorted[mid]!;
 }
 
 function media(arr: number[]): number {
@@ -110,8 +110,8 @@ function correlacion(xs: number[], ys: number[]): number {
   let dx2 = 0;
   let dy2 = 0;
   for (let i = 0; i < n; i++) {
-    const dx = xs[i] - mx;
-    const dy = ys[i] - my;
+    const dx = xs[i]! - mx;
+    const dy = ys[i]! - my;
     num += dx * dy;
     dx2 += dx * dx;
     dy2 += dy * dy;

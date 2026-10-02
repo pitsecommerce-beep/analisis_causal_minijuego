@@ -62,7 +62,7 @@ export function evaluarCondicion(
 ): boolean {
   switch (cond.tipo) {
     case 'kpi': {
-      const valor = (partida.kpis as Record<string, number>)[cond.metrica!] ?? 0;
+      const valor = (partida.kpis as unknown as Record<string, number>)[cond.metrica!] ?? 0;
       const umbral = cond.valor as number;
       switch (cond.operador) {
         case '>': return valor > umbral;
