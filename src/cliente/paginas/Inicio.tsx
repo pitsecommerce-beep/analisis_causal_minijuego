@@ -22,19 +22,14 @@ export function Inicio() {
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 72,
-            height: 72,
-            borderRadius: 18,
-            background: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
+            width: 80,
+            height: 80,
+            borderRadius: 20,
+            background: 'rgba(255, 255, 255, 0.95)',
             marginBottom: 24,
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            fontSize: 28,
-            fontWeight: 800,
-            color: 'rgba(255, 255, 255, 0.85)',
-            letterSpacing: '-0.04em',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.18)',
           }}>
-            ETF
+            <img src="/favicon.png" alt="IPADE" width={52} height={52} />
           </div>
 
           <h1 style={{

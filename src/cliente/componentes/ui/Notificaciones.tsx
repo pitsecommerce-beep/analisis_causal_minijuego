@@ -12,7 +12,7 @@ interface Aviso {
   mensaje?: string | undefined;
 }
 
-type TonoConfirmacion = 'primario' | 'advertencia' | 'peligro';
+type TonoConfirmacion = 'primario' | 'exito' | 'advertencia' | 'peligro';
 
 export interface OpcionesConfirmacion {
   titulo: string;
@@ -41,6 +41,7 @@ const ICONOS_AVISO: Record<TipoAviso, NombreIcono> = {
 
 const ICONOS_TONO: Record<TonoConfirmacion, NombreIcono> = {
   primario: 'pregunta',
+  exito: 'exito',
   advertencia: 'advertencia',
   peligro: 'peligro',
 };
@@ -105,7 +106,7 @@ function ModalConfirmacion({ opciones, onResponder }: {
 }) {
   const confirmarRef = useRef<HTMLButtonElement>(null);
   const tono = opciones.tono ?? 'primario';
-  const claseBoton = tono === 'peligro' ? 'btn-peligro' : tono === 'advertencia' ? 'btn-advertencia' : 'btn-primario';
+  const claseBoton = tono === 'peligro' ? 'btn-peligro' : tono === 'advertencia' ? 'btn-advertencia' : tono === 'exito' ? 'btn-exito' : 'btn-primario';
 
   useEffect(() => {
     confirmarRef.current?.focus();

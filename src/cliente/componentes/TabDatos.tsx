@@ -1,16 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Icono } from './ui/Iconos.js';
+import type { NombreIcono } from './ui/Iconos.js';
 import { api } from '../api.js';
 
-const HERRAMIENTAS = [
-  { id: 'histograma', nombre: 'Histograma' },
-  { id: 'pareto', nombre: 'Pareto' },
-  { id: 'diagrama_corrida', nombre: 'Corrida' },
-  { id: 'dispersion', nombre: 'Dispersión' },
-  { id: 'tabla_dinamica', nombre: 'Pivote' },
-  { id: 'filtro', nombre: 'Filtrar' },
-  { id: 'contar', nombre: 'Contar' },
-  { id: 'sumar', nombre: 'Sumar' },
-  { id: 'estadisticas', nombre: 'Estadísticas' },
+const HERRAMIENTAS: { id: string; nombre: string; icono: NombreIcono }[] = [
+  { id: 'histograma', nombre: 'Histograma', icono: 'histograma' },
+  { id: 'pareto', nombre: 'Pareto', icono: 'pareto' },
+  { id: 'diagrama_corrida', nombre: 'Corrida', icono: 'corrida' },
+  { id: 'dispersion', nombre: 'Dispersión', icono: 'dispersion' },
+  { id: 'tabla_dinamica', nombre: 'Pivote', icono: 'tabla' },
+  { id: 'filtro', nombre: 'Filtrar', icono: 'filtro' },
+  { id: 'contar', nombre: 'Contar', icono: 'contar' },
+  { id: 'sumar', nombre: 'Sumar', icono: 'sumar' },
+  { id: 'estadisticas', nombre: 'Estadísticas', icono: 'estadisticas' },
 ];
 
 const MAPA_VERIFICACIONES: Record<string, { columnas: string[]; herramientas: string[] }> = {
@@ -218,6 +220,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
               borderColor: herramientasUsadas.has(h.id) ? 'var(--color-acento)' : undefined,
               color: herramientasUsadas.has(h.id) ? 'var(--color-acento)' : undefined,
             }}>
+            <Icono nombre={h.icono} tamano={18} />
             {h.nombre}
           </button>
         ))}

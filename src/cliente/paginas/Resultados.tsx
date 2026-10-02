@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useUI } from '../componentes/ui/Notificaciones.js';
+import { Icono } from '../componentes/ui/Iconos.js';
 import { PiePagina } from '../componentes/ui/PiePagina.js';
 
 const CAUSAS_OPCIONES = [
@@ -108,17 +109,8 @@ export function Resultados() {
       }}>
         <div style={{ maxWidth: 640, width: '100%' }}>
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 56,
-              height: 56,
-              borderRadius: 14,
-              background: 'var(--color-primario-suave)',
-              marginBottom: 16,
-            }}>
-              <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primario)' }}>ETF</span>
+            <div className="icono-insignia icono-insignia-primario icono-insignia-lg" style={{ marginBottom: 16 }}>
+              <Icono nombre="diagnostico" tamano={26} grosor={1.8} />
             </div>
             <h2 style={{ color: 'var(--color-primario)', fontSize: 22, fontWeight: 700 }}>
               Cierre de partida
@@ -207,7 +199,7 @@ export function Resultados() {
   const theme = COLORES_DESENLACE[desenlace.id] ?? { color: 'var(--color-primario)', bg: 'var(--color-primario-suave)' };
 
   return (
-    <div className="pagina">
+    <div className="pagina transicion-pagina">
     <main className="pagina-contenido" style={{
       background: 'var(--color-fondo)',
       padding: '40px 20px',
