@@ -41,7 +41,10 @@ export const api = {
     buscar: (codigo: string) => request<any>('GET', `/sesion/${codigo}`),
     crear: (nombre: string) => request<any>('POST', '/sesion', { nombre }),
     unirse: (codigo: string, nombre: string, email?: string) =>
-      request<{ jugadorId: string; token: string; sesion: any }>('POST', `/sesion/${codigo}/unirse`, { nombre, email }),
+      request<{ jugadorId: string; token: string; sesion: any; reconectado?: boolean }>('POST', `/sesion/${codigo}/unirse`, { nombre, email }),
+  },
+  jugador: {
+    latido: () => request<{ sesionEstado: string }>('POST', '/jugador/latido'),
   },
   partida: {
     iniciar: () => request<any>('POST', '/partida/iniciar'),

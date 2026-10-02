@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { VistaAcceso } from '../componentes/ui/VistaAcceso.js';
+import { useUI } from '../componentes/ui/Notificaciones.js';
 
 export function Unirse() {
   const nav = useNavigate();
+  const { avisar } = useUI();
   const [codigo, setCodigo] = useState('');
   const [nombre, setNombre] = useState('');
   const [error, setError] = useState('');
@@ -20,6 +22,7 @@ export function Unirse() {
       localStorage.setItem('tipoAuth', 'jugador');
       localStorage.setItem('nombreJugador', nombre.trim());
       localStorage.setItem('sesionNombre', res.sesion.nombre);
+      if (res.reconectado) avisar('info', 'Retomaste tu partida', 'Continuarás donde te quedaste.');
       nav('/juego');
     } catch (err: any) {
       setError(err.message);

@@ -568,6 +568,221 @@ table.datos tr:hover td { background: var(--color-primario-suave); }
   to { opacity: 1; transform: none; }
 }
 
+/* ── Sala de espera ── */
+
+.espera {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 20px;
+  color: #fff;
+}
+.espera-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  margin-bottom: 28px;
+}
+.espera-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.espera-pulso {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-acento-claro);
+}
+.espera-pulso::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--color-acento-claro);
+  animation: pulso 1.6s ease-out infinite;
+}
+.espera-saludo {
+  margin-top: 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.7;
+}
+.espera-saludo strong { color: rgba(255, 255, 255, 0.9); font-weight: 600; }
+.espera-frase {
+  max-width: 560px;
+  margin: 44px 0 36px;
+  min-height: 110px;
+}
+.espera-frase blockquote {
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+.espera-frase figcaption {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--color-acento-claro);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.espera-tutorial {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 10px 20px;
+  font-size: 14px;
+}
+.espera-tutorial:hover { background: rgba(255, 255, 255, 0.18); }
+
+@keyframes pulso {
+  from { transform: scale(1); opacity: 0.7; }
+  to { transform: scale(3); opacity: 0; }
+}
+
+/* ── Onboarding ── */
+
+.onboarding {
+  background: var(--color-superficie);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-elevada);
+  width: 100%;
+  max-width: 480px;
+  padding: 20px 24px 22px;
+  animation: modal-entrada 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.onboarding-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.onboarding-paso {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-texto-terciario);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.onboarding-saltar { background: none; padding: 4px 0; }
+.onboarding-cuerpo {
+  text-align: center;
+  padding: 20px 8px 8px;
+  min-height: 270px;
+}
+.onboarding-titulo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-texto);
+  margin-top: 16px;
+  letter-spacing: -0.01em;
+}
+.onboarding-texto {
+  font-size: 14px;
+  color: var(--color-texto-secundario);
+  line-height: 1.65;
+  margin-top: 8px;
+}
+.onboarding-puntos {
+  list-style: none;
+  text-align: left;
+  margin: 14px auto 0;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.onboarding-puntos li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--color-texto);
+  line-height: 1.5;
+}
+.onboarding-puntos li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-acento);
+}
+.onboarding-pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+.onboarding-puntos-nav { display: flex; gap: 6px; }
+.onboarding-punto {
+  width: 7px;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--color-borde);
+  transition: all var(--transicion);
+}
+.onboarding-punto.activo { width: 20px; background: var(--color-primario); }
+
+/* ── Presencia en panel del profesor ── */
+
+.en-vivo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-exito);
+}
+.en-vivo-punto {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-exito);
+}
+.en-vivo-punto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--color-exito);
+  animation: pulso 1.8s ease-out infinite;
+}
+.conexion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.conexion-punto { width: 8px; height: 8px; border-radius: 50%; }
+.conexion-si { color: var(--color-exito); }
+.conexion-si .conexion-punto { background: var(--color-exito); }
+.conexion-no { color: var(--color-texto-terciario); }
+.conexion-no .conexion-punto { background: var(--color-borde); }
+table.datos tr.fila-nueva td { animation: fila-nueva 2.5s ease-out; }
+table.datos tr.fila-inactiva td { color: var(--color-texto-terciario); }
+@keyframes fila-nueva {
+  from { background: var(--color-exito-suave); }
+  to { background: transparent; }
+}
+
 /* ── Lista de sesiones ── */
 
 .sesiones-barra {

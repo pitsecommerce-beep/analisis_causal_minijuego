@@ -10,8 +10,18 @@ import { useUI } from '../componentes/ui/Notificaciones.js';
 import { Icono } from '../componentes/ui/Iconos.js';
 import type { NombreIcono } from '../componentes/ui/Iconos.js';
 import { PiePagina } from '../componentes/ui/PiePagina.js';
+import { SalaEspera } from '../componentes/SalaEspera.js';
+import { Onboarding } from '../componentes/Onboarding.js';
 
 type Vista = 'datos' | 'asesores' | 'decisiones';
+
+const INTERVALO_ESPERA = 4000;
+const INTERVALO_LATIDO = 15000;
+const CLAVE_ONBOARDING = 'onboardingVisto';
+
+function onboardingVisto(): boolean {
+  try { return localStorage.getItem(CLAVE_ONBOARDING) === '1'; } catch { return false; }
+}
 
 const TABS: { id: Vista; label: string; icono: NombreIcono }[] = [
   { id: 'datos', label: 'Datos', icono: 'tabla' },
@@ -21,7 +31,7 @@ const TABS: { id: Vista; label: string; icono: NombreIcono }[] = [
 
 export function Juego() {
   const nav = useNavigate();
-  const { confirmar } = useUI();
+  const { confirmar, avisar } = useUI();
   const [estado, setEstado] = useState<any>(null);
   const [vista, setVista] = useState<Vista>('datos');
   const [cargando, setCargando] = useState(true);
@@ -29,6 +39,8 @@ export function Juego() {
   const [herramientasUsadas, setHerramientasUsadas] = useState<string[]>([]);
   const [infoExp, setInfoExp] = useState<{ modoExperimento: boolean; grupo: string | null; consentimiento: boolean } | null>(null);
   const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false);
+  const [esperando, setEsperando] = useState(false);
+  const [mostrarOnboarding, setMostrarOnboarding] = useState(false);
   const inicioRef = useRef(Date.now());
 
   const nombreJugador = localStorage.getItem('nombreJugador') ?? 'Jugador';
@@ -54,10 +66,60 @@ export function Juego() {
         return;
       }
 
-      await iniciar();
+      await comprobarSesion();
     } catch {
-      await iniciar();
+      await comprobarSesion();
     }
+  }
+
+  // Consulta el estado de la sesión: espera si aún no inicia, entra al juego si ya está en curso
+  async function comprobarSesion() {
+    try {
+      const { sesionEstado } = await api.jugador.latido();
+      if (sesionEstado === 'abierta') {
+        setEsperando(true);
+        setCargando(false);
+        return;
+      }
+      if (sesionEstado === 'finalizada') {
+        setError('Esta sesión ya terminó. Pide a tu profesor el código de una sesión activa.');
+        setCargando(false);
+        return;
+      }
+    } catch { /* si falla, se intenta iniciar directamente */ }
+    setEsperando(false);
+    await iniciar();
+  }
+
+  useEffect(() => {
+    if (!esperando) return;
+    const id = window.setInterval(async () => {
+      try {
+        const { sesionEstado } = await api.jugador.latido();
+        if (sesionEstado !== 'abierta') {
+          setEsperando(false);
+          if (sesionEstado === 'en_curso') {
+            avisar('exito', 'La sesión comenzó', 'Mucho éxito, Director(a).');
+            await iniciar();
+          } else {
+            setError('Esta sesión ya terminó. Pide a tu profesor el código de una sesión activa.');
+          }
+        }
+      } catch { /* reintenta en el siguiente intervalo */ }
+    }, INTERVALO_ESPERA);
+    return () => window.clearInterval(id);
+  }, [esperando]);
+
+  // Latido durante la partida para que el profesor vea a la persona como conectada
+  useEffect(() => {
+    if (!estado) return;
+    const id = window.setInterval(() => { api.jugador.latido().catch(() => {}); }, INTERVALO_LATIDO);
+    return () => window.clearInterval(id);
+  }, [!!estado]);
+
+  function terminarOnboarding() {
+    try { localStorage.setItem(CLAVE_ONBOARDING, '1'); } catch { /* sin almacenamiento */ }
+    setMostrarOnboarding(false);
   }
 
   async function iniciar() {
@@ -65,6 +127,7 @@ export function Juego() {
     try {
       const res = await api.partida.iniciar();
       setEstado(res);
+      if (!onboardingVisto()) setMostrarOnboarding(true);
       telemetria('partida_iniciada', { ciclo: res.cicloActual });
     } catch (err: any) {
       if (err.message.includes('aún no ha iniciado')) {
@@ -123,24 +186,33 @@ export function Juego() {
   function onConsentimientoCompletado() {
     setMostrarConsentimiento(false);
     api.experimento.info().then(info => setInfoExp(info)).catch(() => {});
-    iniciar();
+    comprobarSesion();
   }
 
   async function salir() {
     const ok = await confirmar({
       titulo: 'Salir del simulador',
-      mensaje: 'Tu avance queda guardado, pero tendrás que volver a unirte con el código de la sesión para continuar.',
+      mensaje: 'Tu avance queda guardado. Para continuar, vuelve a unirte con el mismo código y el mismo nombre.',
       textoConfirmar: 'Salir',
       tono: 'advertencia',
       icono: 'salir',
     });
     if (!ok) return;
     localStorage.clear();
-    nav('/');
+    nav('/unirse');
   }
 
   if (mostrarConsentimiento) {
     return <Consentimiento onAceptado={onConsentimientoCompletado} />;
+  }
+
+  if (esperando) {
+    return (
+      <>
+        <SalaEspera nombre={nombreJugador} sesion={sesionNombre} onVerTutorial={() => setMostrarOnboarding(true)} />
+        {mostrarOnboarding && <Onboarding onTerminar={terminarOnboarding} />}
+      </>
+    );
   }
 
   if (cargando) {
@@ -164,7 +236,7 @@ export function Juego() {
           <h3 style={{ color: 'var(--color-texto)', marginBottom: 8 }}>Sesión no disponible</h3>
           <p style={{ color: 'var(--color-texto-secundario)', marginBottom: 20, fontSize: 14, lineHeight: 1.6 }}>{error}</p>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-            <button className="btn-primario" onClick={() => { setError(''); iniciar(); }}>
+            <button className="btn-primario" onClick={() => { setError(''); setCargando(true); comprobarSesion(); }}>
               Reintentar
             </button>
             <button className="btn-fantasma" onClick={() => nav('/unirse')}>
@@ -227,7 +299,21 @@ export function Juego() {
             <span className="barra-estado-label">Presupuesto</span>
             <span className="barra-estado-valor">${presupuesto}</span>
           </div>
-          <div className="barra-estado-item" style={{ justifyContent: 'center' }}>
+          <div className="barra-estado-item" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={() => setMostrarOnboarding(true)}
+              aria-label="Ver cómo se juega"
+              title="Cómo se juega"
+              style={{
+                display: 'inline-flex',
+                background: 'rgba(255,255,255,0.1)',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.2)',
+                padding: 6,
+              }}
+            >
+              <Icono nombre="pregunta" tamano={18} />
+            </button>
             <button
               onClick={salir}
               style={{
@@ -297,6 +383,7 @@ export function Juego() {
         </div>
       </main>
       <PiePagina />
+      {mostrarOnboarding && <Onboarding onTerminar={terminarOnboarding} />}
     </div>
   );
 }

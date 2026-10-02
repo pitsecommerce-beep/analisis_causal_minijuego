@@ -50,7 +50,7 @@ export function Resultados() {
   });
 
   useEffect(() => {
-    if (!localStorage.getItem('token')) nav('/');
+    if (!localStorage.getItem('token')) nav('/unirse');
   }, []);
 
   function toggleCausa(id: string) {
@@ -94,7 +94,7 @@ export function Resultados() {
     });
     if (!ok) return;
     localStorage.clear();
-    nav('/');
+    nav('/unirse');
   }
 
   if (fase === 'cierre') {
