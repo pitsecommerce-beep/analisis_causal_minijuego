@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api.js';
+import { Icono } from './ui/Iconos.js';
 import { useUI } from './ui/Notificaciones.js';
 
 interface Props {
@@ -259,7 +260,7 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
                 alignItems: 'center',
                 gap: 8,
               }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-primario)', letterSpacing: '0.04em' }}>KPI</span>
+                <Icono nombre="grafica" tamano={18} />
                 KPIs actuales
               </h4>
               <div style={{ fontSize: 13 }}>

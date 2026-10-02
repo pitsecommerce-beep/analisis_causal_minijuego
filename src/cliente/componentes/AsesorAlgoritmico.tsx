@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Icono } from './ui/Iconos.js';
 import { api } from '../api.js';
 
 export function AsesorAlgoritmico() {
@@ -28,12 +29,8 @@ export function AsesorAlgoritmico() {
       borderLeftColor: 'var(--color-acento)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-        <div style={{
-          width: 36, height: 36, borderRadius: 10,
-          background: 'rgba(200, 146, 42, 0.15)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-acento)' }}>AA</span>
+        <div className="icono-insignia icono-insignia-acento icono-insignia-sm">
+          <Icono nombre="asesor" tamano={18} />
         </div>
         <div>
           <strong style={{ color: 'var(--color-acento)', fontSize: 14 }}>Asesor Algorítmico</strong>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api } from '../api.js';
 import { useUI } from './ui/Notificaciones.js';
+import { Icono } from './ui/Iconos.js';
 import { PiePagina } from './ui/PiePagina.js';
 
 interface Props {
@@ -34,12 +35,8 @@ export function Consentimiento({ onAceptado }: Props) {
     }}>
       <div className="tarjeta" style={{ maxWidth: 580, width: '100%' }}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 52, height: 52, borderRadius: 14,
-            background: 'var(--color-info-suave)', marginBottom: 14,
-          }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-info)' }}>CI</span>
+          <div className="icono-insignia icono-insignia-info icono-insignia-lg" style={{ marginBottom: 14 }}>
+            <Icono nombre="escudo" tamano={26} grosor={1.8} />
           </div>
           <h2 style={{ color: 'var(--color-primario)', fontSize: 22, fontWeight: 700 }}>
             Consentimiento informado

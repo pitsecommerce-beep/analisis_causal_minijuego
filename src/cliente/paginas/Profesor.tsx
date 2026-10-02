@@ -238,7 +238,7 @@ function Panel() {
       titulo: `Iniciar "${s.nombre}"`,
       mensaje: 'Los participantes podrán comenzar a jugar en cuanto la sesión inicie.',
       textoConfirmar: 'Iniciar sesión',
-      tono: 'advertencia',
+      tono: 'exito',
       icono: 'iniciar',
     });
     if (!ok) return;
@@ -441,7 +441,7 @@ function Panel() {
                         Ver
                       </button>
                       {s.estado === 'abierta' && (
-                        <button className="btn-advertencia btn-sm" onClick={() => iniciarSesion(s)}>
+                        <button className="btn-exito btn-sm" onClick={() => iniciarSesion(s)}>
                           Iniciar
                         </button>
                       )}

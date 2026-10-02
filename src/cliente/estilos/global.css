@@ -69,6 +69,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   box-shadow: var(--sombra);
 }
 
+.btn-exito {
+  background: var(--color-exito);
+  color: #fff;
+}
+.btn-exito:hover:not(:disabled) {
+  background: #15663f;
+  box-shadow: var(--sombra);
+}
+
 .btn-peligro-sutil {
   background: transparent;
   color: var(--color-peligro);
@@ -341,7 +350,7 @@ table.datos tr:hover td { background: var(--color-primario-suave); }
   border-radius: var(--radio);
   font-size: 11px;
   font-weight: 500;
-  min-width: 76px;
+  min-width: 84px;
   transition: all var(--transicion);
   color: var(--color-texto-secundario);
 }
@@ -511,6 +520,54 @@ table.datos tr:hover td { background: var(--color-primario-suave); }
   font-weight: 700;
 }
 
+/* ── Insignias con icono ── */
+
+.icono-insignia {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+.icono-insignia-sm { width: 36px; height: 36px; }
+.icono-insignia-lg { width: 56px; height: 56px; }
+.icono-insignia-primario { color: var(--color-primario-claro); background: linear-gradient(145deg, #f1f6fc, var(--color-primario-suave)); }
+.icono-insignia-info { color: var(--color-info); background: linear-gradient(145deg, #f2f8fe, var(--color-info-suave)); }
+.icono-insignia-advertencia { color: var(--color-advertencia); background: linear-gradient(145deg, #fffaf1, var(--color-advertencia-suave)); }
+.icono-insignia-acento { color: var(--color-acento); background: linear-gradient(145deg, #fffbf2, #fbeed2); }
+.icono-insignia-neutro { color: var(--color-texto-terciario); background: var(--color-superficie-alt); }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Transiciones de pagina ── */
+
+.transicion-pagina {
+  animation: pagina-entrada 0.38s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.transicion-contenido {
+  animation: contenido-entrada 0.28s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+@keyframes pagina-entrada {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes contenido-entrada {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
 /* ── Lista de sesiones ── */
 
 .sesiones-barra {
@@ -658,6 +715,10 @@ input[type='checkbox'].casilla {
 .modal-icono-primario {
   color: var(--color-primario-claro);
   background: linear-gradient(145deg, #f1f6fc, var(--color-primario-suave));
+}
+.modal-icono-exito {
+  color: var(--color-exito);
+  background: linear-gradient(145deg, #f2fbf6, var(--color-exito-suave));
 }
 .modal-icono-advertencia {
   color: var(--color-advertencia);

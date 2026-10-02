@@ -7,14 +7,16 @@ import { TabDecisiones } from '../componentes/TabDecisiones.js';
 import { Consentimiento } from '../componentes/Consentimiento.js';
 import { AsesorAlgoritmico } from '../componentes/AsesorAlgoritmico.js';
 import { useUI } from '../componentes/ui/Notificaciones.js';
+import { Icono } from '../componentes/ui/Iconos.js';
+import type { NombreIcono } from '../componentes/ui/Iconos.js';
 import { PiePagina } from '../componentes/ui/PiePagina.js';
 
 type Vista = 'datos' | 'asesores' | 'decisiones';
 
-const TABS: { id: Vista; label: string }[] = [
-  { id: 'datos', label: 'Datos' },
-  { id: 'asesores', label: 'Sala de Juntas' },
-  { id: 'decisiones', label: 'Decisiones' },
+const TABS: { id: Vista; label: string; icono: NombreIcono }[] = [
+  { id: 'datos', label: 'Datos', icono: 'tabla' },
+  { id: 'asesores', label: 'Sala de Juntas', icono: 'mensajes' },
+  { id: 'decisiones', label: 'Decisiones', icono: 'decisiones' },
 ];
 
 export function Juego() {
@@ -156,13 +158,8 @@ export function Juego() {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
         <div className="tarjeta" style={{ maxWidth: 480, textAlign: 'center' }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 14,
-            background: 'var(--color-advertencia-suave)',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: 16,
-          }}>
-            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-advertencia)' }}>!</span>
+          <div className="icono-insignia icono-insignia-advertencia icono-insignia-lg" style={{ marginBottom: 16 }}>
+            <Icono nombre="reloj" tamano={26} grosor={1.8} />
           </div>
           <h3 style={{ color: 'var(--color-texto)', marginBottom: 8 }}>Sesión no disponible</h3>
           <p style={{ color: 'var(--color-texto-secundario)', marginBottom: 20, fontSize: 14, lineHeight: 1.6 }}>{error}</p>
@@ -170,7 +167,7 @@ export function Juego() {
             <button className="btn-primario" onClick={() => { setError(''); iniciar(); }}>
               Reintentar
             </button>
-            <button className="btn-fantasma" onClick={() => nav('/')}>
+            <button className="btn-fantasma" onClick={() => nav('/unirse')}>
               Volver
             </button>
           </div>
@@ -213,11 +210,11 @@ export function Juego() {
             <span className="barra-estado-label">Vidas</span>
             <span className="barra-estado-valor" style={{ display: 'inline-flex', gap: 4 }}>
               {Array.from({ length: 3 }, (_, i) => (
-                <span key={i} style={{
-                  display: 'inline-block', width: 10, height: 10, borderRadius: '50%',
-                  background: i < vidas ? '#4ade80' : 'rgba(255,255,255,0.2)',
-                }} />
+                <span key={i} style={{ display: 'inline-flex', color: i < vidas ? '#f87171' : 'rgba(255,255,255,0.25)' }}>
+                  <Icono nombre="corazon" tamano={15} relleno={i < vidas} grosor={i < vidas ? 0 : 2} />
+                </span>
               ))}
+              <span className="sr-only">{vidas} de 3</span>
             </span>
           </div>
           <div className="barra-estado-item">
@@ -272,8 +269,13 @@ export function Juego() {
                 background: vista === t.id ? 'var(--color-primario)' : 'transparent',
                 color: vista === t.id ? '#fff' : 'var(--color-texto-secundario)',
                 transition: 'all var(--transicion)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
               }}
             >
+              <Icono nombre={t.icono} tamano={17} />
               {t.label}
             </button>
           ))}
@@ -281,6 +283,7 @@ export function Juego() {
 
         {esTratamiento && vista === 'decisiones' && <AsesorAlgoritmico />}
 
+        <div key={vista} className="transicion-contenido">
         {vista === 'datos' && <TabDatos onHerramientaUsada={onHerramientaUsada} />}
         {vista === 'asesores' && (
           <TabAsesores
@@ -291,6 +294,7 @@ export function Juego() {
         {vista === 'decisiones' && (
           <TabDecisiones estado={estado} onEstadoCambio={onEstadoCambio} />
         )}
+        </div>
       </main>
       <PiePagina />
     </div>

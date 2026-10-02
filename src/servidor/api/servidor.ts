@@ -58,6 +58,25 @@ function cargarDatosInicio() {
 
 // --- Utilidades ---
 
+function codigoError(err: unknown): string | undefined {
+  if (err && typeof err === 'object' && 'code' in err) return String((err as { code: unknown }).code);
+  return undefined;
+}
+
+const MENSAJES_DB: Record<string, string> = {
+  '42703': 'La base de datos no tiene una columna requerida. Aplica todas las migraciones de supabase/migrations.',
+  '42P01': 'La base de datos no tiene una tabla requerida. Aplica todas las migraciones de supabase/migrations.',
+  '42501': 'La base de datos rechazó la operación por permisos. Revisa que SUPABASE_SERVICE_KEY sea la clave service_role.',
+  '23514': 'Un valor no cumple las restricciones de la base de datos.',
+};
+
+function responderError(res: express.Response, mensaje: string, err: unknown): void {
+  console.error(`[${new Date().toISOString()}] ${mensaje}:`, err);
+  const codigo = codigoError(err);
+  const detalle = codigo ? MENSAJES_DB[codigo] : undefined;
+  res.status(500).json({ error: detalle ? `${mensaje}. ${detalle}` : mensaje });
+}
+
 function datosParaJugador(datos: DatosCargados) {
   return {
     solicitudes: datos.solicitudes.map((s) => ({
@@ -170,8 +189,8 @@ app.post('/api/sesion', autenticarProfesor, async (req, res) => {
   try {
     const sesion = await crearSesion(profesorId, nombre, semilla);
     res.json(sesion);
-  } catch (err: unknown) {
-    res.status(500).json({ error: 'Error al crear sesión' });
+  } catch (err) {
+    responderError(res, 'Error al crear sesión', err);
   }
 });
 
@@ -188,8 +207,8 @@ app.get('/api/sesion/:codigo', async (req, res) => {
       nombre: sesion.nombre,
       estado: sesion.estado,
     });
-  } catch {
-    res.status(500).json({ error: 'Error al buscar sesión' });
+  } catch (err) {
+    responderError(res, 'Error al buscar sesión', err);
   }
 });
 
@@ -231,13 +250,12 @@ app.post('/api/sesion/:codigo/unirse', async (req, res) => {
       sesion: { id: sesion.id, nombre: sesion.nombre, estado: sesion.estado },
       modoExperimento: sesion.modo_experimento ?? false,
     });
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : '';
-    if (msg.includes('duplicate') || msg.includes('unique')) {
-      res.status(409).json({ error: 'Ese nombre ya está registrado en esta sesión' });
+  } catch (err) {
+    if (codigoError(err) === '23505') {
+      res.status(409).json({ error: 'Ese nombre ya está registrado en esta sesión. Usa otro nombre.' });
       return;
     }
-    res.status(500).json({ error: 'Error al unirse' });
+    responderError(res, 'Error al unirse', err);
   }
 });
 
@@ -272,8 +290,8 @@ app.get('/api/profesor/sesiones', autenticarProfesor, async (req, res) => {
   try {
     const sesiones = await listarSesionesProfesor((req as RequestProfesor).profesorId);
     res.json(sesiones);
-  } catch {
-    res.status(500).json({ error: 'Error al listar sesiones' });
+  } catch (err) {
+    responderError(res, 'Error al listar sesiones', err);
   }
 });
 
@@ -283,8 +301,8 @@ app.get('/api/profesor/sesion/:id', autenticarProfesor, sesionPropia, async (req
     const jugadores = await listarJugadoresSesion(sesion.id);
     const partidas = await listarPartidasSesion(sesion.id);
     res.json({ sesion, jugadores, partidas });
-  } catch {
-    res.status(500).json({ error: 'Error al obtener sesión' });
+  } catch (err) {
+    responderError(res, 'Error al obtener sesión', err);
   }
 });
 
@@ -292,8 +310,8 @@ app.post('/api/profesor/sesion/:id/iniciar', autenticarProfesor, sesionPropia, a
   try {
     await actualizarEstadoSesion(idParam(req), 'en_curso');
     res.json({ ok: true });
-  } catch {
-    res.status(500).json({ error: 'Error al iniciar sesión' });
+  } catch (err) {
+    responderError(res, 'Error al iniciar sesión', err);
   }
 });
 
@@ -301,8 +319,8 @@ app.post('/api/profesor/sesion/:id/finalizar', autenticarProfesor, sesionPropia,
   try {
     await actualizarEstadoSesion(idParam(req), 'finalizada');
     res.json({ ok: true });
-  } catch {
-    res.status(500).json({ error: 'Error al finalizar sesión' });
+  } catch (err) {
+    responderError(res, 'Error al finalizar sesión', err);
   }
 });
 
@@ -315,8 +333,8 @@ app.post('/api/profesor/sesiones/eliminar', autenticarProfesor, async (req, res)
   try {
     const eliminadas = await eliminarSesiones((req as RequestProfesor).profesorId, ids);
     res.json({ ok: true, eliminadas });
-  } catch {
-    res.status(500).json({ error: 'Error al eliminar sesiones' });
+  } catch (err) {
+    responderError(res, 'Error al eliminar sesiones', err);
   }
 });
 
@@ -328,8 +346,8 @@ app.delete('/api/profesor/sesion/:id', autenticarProfesor, async (req, res) => {
       return;
     }
     res.json({ ok: true, eliminadas });
-  } catch {
-    res.status(500).json({ error: 'Error al eliminar sesión' });
+  } catch (err) {
+    responderError(res, 'Error al eliminar sesión', err);
   }
 });
 
@@ -416,8 +434,8 @@ app.post('/api/datos/verificacion', autenticarJugador, async (req, res) => {
     await actualizarPartida(jugador.id, estado as any, serializarDialogo(estadoDialogo));
 
     res.json({ ok: true, verificaciones: [...estadoDialogo.verificaciones] });
-  } catch {
-    res.status(500).json({ error: 'Error al registrar verificación' });
+  } catch (err) {
+    responderError(res, 'Error al registrar verificación', err);
   }
 });
 
@@ -431,8 +449,8 @@ app.get('/api/datos/verificaciones', autenticarJugador, async (req, res) => {
     }
     const lista = await listarVerificaciones(partida.id);
     res.json(lista);
-  } catch {
-    res.status(500).json({ error: 'Error al listar verificaciones' });
+  } catch (err) {
+    responderError(res, 'Error al listar verificaciones', err);
   }
 });
 
@@ -462,8 +480,8 @@ app.post('/api/partida/iniciar', autenticarJugador, async (req, res) => {
     await crearPartidaDB(jugador.id, jugador.sesionId, estado, serializarDialogo(estadoDialogo));
     const partida = await obtenerPartida(jugador.id);
     res.json(estadoPublico(partida!));
-  } catch {
-    res.status(500).json({ error: 'Error al iniciar partida' });
+  } catch (err) {
+    responderError(res, 'Error al iniciar partida', err);
   }
 });
 
@@ -476,8 +494,8 @@ app.get('/api/partida', autenticarJugador, async (req, res) => {
       return;
     }
     res.json(estadoPublico(partida));
-  } catch {
-    res.status(500).json({ error: 'Error al obtener partida' });
+  } catch (err) {
+    responderError(res, 'Error al obtener partida', err);
   }
 });
 
@@ -519,8 +537,8 @@ app.post('/api/partida/acciones', autenticarJugador, async (req, res) => {
     await actualizarPartida(jugador.id, estado, serializarDialogo(estadoDialogo));
     const actualizada = await obtenerPartida(jugador.id);
     res.json(estadoPublico(actualizada!));
-  } catch {
-    res.status(500).json({ error: 'Error al elegir acciones' });
+  } catch (err) {
+    responderError(res, 'Error al elegir acciones', err);
   }
 });
 
@@ -544,8 +562,8 @@ app.post('/api/partida/compromiso', autenticarJugador, async (req, res) => {
     await actualizarPartida(jugador.id, estado, partida.estado_dialogo as any);
 
     res.json({ ok: true });
-  } catch {
-    res.status(500).json({ error: 'Error al declarar compromiso' });
+  } catch (err) {
+    responderError(res, 'Error al declarar compromiso', err);
   }
 });
 
@@ -573,8 +591,8 @@ app.post('/api/partida/avanzar', autenticarJugador, async (req, res) => {
 
     await actualizarPartida(jugador.id, estado, partida.estado_dialogo as any, extras as any);
     res.json({ resultado, estado: estadoPublico({ ...partida, estado, fase: extras.fase ?? partida.fase }) });
-  } catch {
-    res.status(500).json({ error: 'Error al avanzar ciclo' });
+  } catch (err) {
+    responderError(res, 'Error al avanzar ciclo', err);
   }
 });
 
@@ -711,8 +729,8 @@ app.get('/api/partida/dialogos', autenticarJugador, async (req, res) => {
     }
 
     res.json(resultado);
-  } catch {
-    res.status(500).json({ error: 'Error al obtener diálogos' });
+  } catch (err) {
+    responderError(res, 'Error al obtener diálogos', err);
   }
 });
 
@@ -777,8 +795,8 @@ app.post('/api/partida/respuesta', autenticarJugador, async (req, res) => {
     }
 
     res.json({ ok: true, credibilidad: estado.credibilidad, siguienteNodo });
-  } catch {
-    res.status(500).json({ error: 'Error al procesar respuesta' });
+  } catch (err) {
+    responderError(res, 'Error al procesar respuesta', err);
   }
 });
 
@@ -840,8 +858,8 @@ app.post('/api/partida/cierre', autenticarJugador, async (req, res) => {
       desenlace,
       ramonCierre: ramonCierre ? { lineas: ramonCierre.lineas, expresion: ramonCierre.expresion } : null,
     });
-  } catch {
-    res.status(500).json({ error: 'Error al evaluar cierre' });
+  } catch (err) {
+    responderError(res, 'Error al evaluar cierre', err);
   }
 });
 
@@ -877,8 +895,8 @@ app.post('/api/profesor/sesion/:id/experimento', autenticarProfesor, sesionPropi
       pctTratamiento ?? 50
     );
     res.json({ ok: true });
-  } catch {
-    res.status(500).json({ error: 'Error al configurar experimento' });
+  } catch (err) {
+    responderError(res, 'Error al configurar experimento', err);
   }
 });
 
@@ -888,8 +906,8 @@ app.post('/api/consentimiento', autenticarJugador, async (req, res) => {
     const jugador = (req as RequestJugador).jugador;
     await registrarConsentimiento(jugador.id, acepta ?? false);
     res.json({ ok: true });
-  } catch {
-    res.status(500).json({ error: 'Error al registrar consentimiento' });
+  } catch (err) {
+    responderError(res, 'Error al registrar consentimiento', err);
   }
 });
 
@@ -902,8 +920,8 @@ app.get('/api/experimento/info', autenticarJugador, async (req, res) => {
       grupo: jugador.grupo ?? null,
       consentimiento: jugador.consentimiento ?? false,
     });
-  } catch {
-    res.status(500).json({ error: 'Error al obtener info del experimento' });
+  } catch (err) {
+    responderError(res, 'Error al obtener info del experimento', err);
   }
 });
 
@@ -930,8 +948,8 @@ app.get('/api/experimento/recomendacion', autenticarJugador, async (req, res) =>
     });
 
     res.json(rec);
-  } catch {
-    res.status(500).json({ error: 'Error al generar recomendación' });
+  } catch (err) {
+    responderError(res, 'Error al generar recomendación', err);
   }
 });
 
@@ -952,8 +970,8 @@ app.post('/api/telemetria', autenticarJugador, async (req, res) => {
 
     await registrarEvento(partida.id, jugador.id, jugador.sesionId, tipo, datos ?? {});
     res.json({ ok: true });
-  } catch {
-    res.status(500).json({ error: 'Error al registrar evento' });
+  } catch (err) {
+    responderError(res, 'Error al registrar evento', err);
   }
 });
 
@@ -961,8 +979,8 @@ app.get('/api/profesor/sesion/:id/telemetria', autenticarProfesor, sesionPropia,
   try {
     const data = await obtenerTelemetriaSesion(idParam(req));
     res.json(data);
-  } catch {
-    res.status(500).json({ error: 'Error al obtener telemetría' });
+  } catch (err) {
+    responderError(res, 'Error al obtener telemetría', err);
   }
 });
 
@@ -970,8 +988,8 @@ app.get('/api/profesor/sesion/:id/resumen-experimento', autenticarProfesor, sesi
   try {
     const resumen = await obtenerResumenExperimento(idParam(req));
     res.json(resumen);
-  } catch {
-    res.status(500).json({ error: 'Error al obtener resumen' });
+  } catch (err) {
+    responderError(res, 'Error al obtener resumen', err);
   }
 });
 
@@ -1012,8 +1030,8 @@ app.get('/api/profesor/sesion/:id/exportar', async (req, res) => {
     } else {
       res.json({ resumen, telemetria });
     }
-  } catch {
-    res.status(500).json({ error: 'Error al exportar' });
+  } catch (err) {
+    responderError(res, 'Error al exportar', err);
   }
 });
 

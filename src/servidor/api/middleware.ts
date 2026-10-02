@@ -71,7 +71,8 @@ export async function autenticarJugador(
       consentimiento: jugador.consentimiento ?? false,
     };
     next();
-  } catch {
+  } catch (err) {
+    console.error(`[${new Date().toISOString()}] Error de autenticación de jugador:`, err);
     res.status(500).json({ error: 'Error de autenticación' });
   }
 }

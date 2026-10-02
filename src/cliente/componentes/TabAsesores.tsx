@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api.js';
+import { Icono } from './ui/Iconos.js';
 import { useUI } from './ui/Notificaciones.js';
 
 const NOMBRES: Record<string, { nombre: string; rol: string }> = {
@@ -87,13 +88,8 @@ export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
   if (dialogos.length === 0) {
     return (
       <div className="tarjeta" style={{ textAlign: 'center', padding: '40px 24px' }}>
-        <div style={{
-          width: 52, height: 52, borderRadius: 14,
-          background: 'var(--color-superficie-alt)',
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          marginBottom: 14,
-        }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-texto-terciario)' }}>SJ</span>
+        <div className="icono-insignia icono-insignia-neutro icono-insignia-lg" style={{ marginBottom: 14 }}>
+          <Icono nombre="mensajes" tamano={26} grosor={1.8} />
         </div>
         <p style={{ color: 'var(--color-texto-secundario)', fontSize: 15 }}>
           No hay diálogos en este momento.
@@ -163,14 +159,22 @@ export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
                         : nodo.afirmacion.veredicto === 'parcial'
                           ? 'var(--color-advertencia-suave)'
                           : 'var(--color-peligro-suave)',
+                      color: nodo.afirmacion.veredicto === 'verdadero'
+                        ? 'var(--color-exito)'
+                        : nodo.afirmacion.veredicto === 'parcial'
+                          ? 'var(--color-advertencia)'
+                          : 'var(--color-peligro)',
                       borderRadius: 'var(--radio-sm)',
                       marginBottom: 10,
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 6,
                     }}>
-                      {nodo.afirmacion.veredicto === 'verdadero' ? 'V' : nodo.afirmacion.veredicto === 'parcial' ? '~' : 'X'}
-                      <span>{nodo.afirmacion.id}</span>
+                      <Icono
+                        nombre={nodo.afirmacion.veredicto === 'verdadero' ? 'exito' : nodo.afirmacion.veredicto === 'parcial' ? 'parcial' : 'error'}
+                        tamano={14}
+                      />
+                      <span style={{ color: 'var(--color-texto)' }}>{nodo.afirmacion.id}</span>
                     </div>
                   )}
 
