@@ -119,11 +119,15 @@ function ModalConfirmacion({ opciones, onResponder }: {
   return (
     <div className="modal-fondo" onMouseDown={e => { if (e.target === e.currentTarget) onResponder(false); }}>
       <div className="modal" role="alertdialog" aria-modal="true" aria-labelledby="modal-titulo">
-        <div className={`modal-icono modal-icono-${tono}`}>
-          <Icono nombre={opciones.icono ?? ICONOS_TONO[tono]} tamano={26} grosor={1.8} />
+        <div className="modal-cabecera">
+          <div className={`modal-icono modal-icono-${tono}`}>
+            <Icono nombre={opciones.icono ?? ICONOS_TONO[tono]} tamano={22} grosor={1.9} />
+          </div>
+          <div className="modal-texto">
+            <h3 id="modal-titulo" className="modal-titulo">{opciones.titulo}</h3>
+            {opciones.mensaje && <div className="modal-mensaje">{opciones.mensaje}</div>}
+          </div>
         </div>
-        <h3 id="modal-titulo" className="modal-titulo">{opciones.titulo}</h3>
-        {opciones.mensaje && <div className="modal-mensaje">{opciones.mensaje}</div>}
         <div className="modal-acciones">
           <button className="btn-fantasma" onClick={() => onResponder(false)}>
             {opciones.textoCancelar ?? 'Cancelar'}
