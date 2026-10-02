@@ -64,6 +64,7 @@ export function Resultados() {
       mensaje: `Declaraste ${causasSeleccionadas.length} causa(s) raíz. Una vez enviado el cierre se calculará tu puntuación final y no podrás modificarlo.`,
       textoConfirmar: 'Enviar y ver resultado',
       tono: 'advertencia',
+      icono: 'enviar',
     });
     if (!ok) return;
     setCargando(true);
@@ -88,6 +89,7 @@ export function Resultados() {
       titulo: 'Salir del simulador',
       mensaje: 'Se cerrará tu sesión en este dispositivo. Tu resultado ya quedó registrado.',
       textoConfirmar: 'Salir',
+      icono: 'salir',
     });
     if (!ok) return;
     localStorage.clear();

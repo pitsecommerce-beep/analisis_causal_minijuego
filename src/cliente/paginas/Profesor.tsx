@@ -204,6 +204,7 @@ function Panel() {
         ? `El modo experimento quedará activo con ${pctTrat}% de participantes en el grupo tratamiento. Los participantes que ya se unieron conservan su grupo.`
         : 'El modo experimento quedará desactivado para esta sesión.',
       textoConfirmar: 'Guardar',
+      icono: 'guardar',
     });
     if (!ok) return;
     try {
@@ -238,6 +239,7 @@ function Panel() {
       mensaje: 'Los participantes podrán comenzar a jugar en cuanto la sesión inicie.',
       textoConfirmar: 'Iniciar sesión',
       tono: 'advertencia',
+      icono: 'iniciar',
     });
     if (!ok) return;
     try {
@@ -256,6 +258,7 @@ function Panel() {
       mensaje: 'Los participantes ya no podrán continuar sus partidas. Esta acción no se puede deshacer.',
       textoConfirmar: 'Finalizar sesión',
       tono: 'peligro',
+      icono: 'finalizar',
     });
     if (!ok) return;
     try {
@@ -276,6 +279,7 @@ function Panel() {
       mensaje: 'Se borrarán también los participantes, partidas y datos de telemetría asociados. Esta acción no se puede deshacer.',
       textoConfirmar: 'Eliminar',
       tono: 'peligro',
+      icono: 'eliminar',
     });
     if (!ok) return;
     setOcupado(true);
@@ -315,6 +319,7 @@ function Panel() {
       mensaje: 'Tendrás que volver a ingresar tu correo y contraseña para acceder al panel.',
       textoConfirmar: 'Cerrar sesión',
       tono: 'advertencia',
+      icono: 'salir',
     });
     if (!ok) return;
     localStorage.clear();

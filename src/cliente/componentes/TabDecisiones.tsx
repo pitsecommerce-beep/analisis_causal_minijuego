@@ -54,6 +54,7 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
       ),
       textoConfirmar: 'Confirmar acciones',
       tono: 'advertencia',
+      icono: 'acciones',
     });
     if (!ok) return;
     setError('');
@@ -89,6 +90,7 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
         : 'El ciclo actual se cerrará y no podrás volver a él. Asegúrate de haber tomado todas tus decisiones.',
       textoConfirmar: 'Avanzar ciclo',
       tono: 'advertencia',
+      icono: 'avanzar',
     });
     if (!ok) return;
     setCargando(true);
