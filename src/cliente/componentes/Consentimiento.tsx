@@ -15,7 +15,7 @@ export function Consentimiento({ onAceptado }: Props) {
     setCargando(true);
     try {
       await api.experimento.consentimiento(acepta);
-      avisar('exito', acepta ? 'Gracias por participar en el estudio' : 'Respuesta registrada', acepta ? undefined : 'Tus datos no se incluiran en la investigacion.');
+      avisar('exito', acepta ? 'Gracias por participar en el estudio' : 'Respuesta registrada', acepta ? undefined : 'Tus datos no se incluirán en la investigación.');
       onAceptado();
     } catch (err: any) {
       avisar('error', 'No se pudo registrar tu respuesta', err.message);
@@ -56,26 +56,26 @@ export function Consentimiento({ onAceptado }: Props) {
           marginBottom: 24,
         }}>
           <p style={{ marginBottom: 14 }}>
-            Esta sesion forma parte de un estudio de investigacion sobre la toma de decisiones
-            en contextos de analisis causal. Tu participacion es voluntaria.
+            Esta sesión forma parte de un estudio de investigación sobre la toma de decisiones
+            en contextos de análisis causal. Tu participación es voluntaria.
           </p>
           <p style={{ marginBottom: 14 }}>
-            <strong style={{ color: 'var(--color-texto)' }}>Datos recopilados:</strong> se registraran las acciones que realices dentro del
+            <strong style={{ color: 'var(--color-texto)' }}>Datos recopilados:</strong> se registrarán las acciones que realices dentro del
             juego (herramientas utilizadas, decisiones tomadas, tiempos de respuesta) de forma
-            anonimizada. Estos datos se usaran exclusivamente con fines academicos.
+            anonimizada. Estos datos se usarán exclusivamente con fines académicos.
           </p>
           <p style={{ marginBottom: 14 }}>
-            <strong style={{ color: 'var(--color-texto)' }}>Grupos:</strong> algunos participantes tendran acceso a un asesor algoritmico
-            adicional. La asignacion es aleatoria y no afecta tu evaluacion academica.
+            <strong style={{ color: 'var(--color-texto)' }}>Grupos:</strong> algunos participantes tendrán acceso a un asesor algorítmico
+            adicional. La asignación es aleatoria y no afecta tu evaluación académica.
           </p>
           <p style={{ marginBottom: 14 }}>
-            <strong style={{ color: 'var(--color-texto)' }}>Confidencialidad:</strong> tus datos seran tratados de forma anonima. Los
-            resultados agregados podran ser publicados en articulos academicos sin identificar
+            <strong style={{ color: 'var(--color-texto)' }}>Confidencialidad:</strong> tus datos serán tratados de forma anónima. Los
+            resultados agregados podrán ser publicados en artículos académicos sin identificar
             participantes individuales.
           </p>
           <p>
             Puedes participar en el juego sin aceptar el estudio. En ese caso, tus datos
-            no seran incluidos en el analisis de investigacion.
+            no serán incluidos en el análisis de investigación.
           </p>
         </div>
 

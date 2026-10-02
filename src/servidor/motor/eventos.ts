@@ -56,19 +56,19 @@ export function aplicarEvento(
 
   if (e.backOffice != null) {
     kpis.backOfficeDias += e.backOffice;
-    cambios.push(`Back office: +${e.backOffice} dias`);
+    cambios.push(`Back office: +${e.backOffice} días`);
   }
 
   if (e.revertirCapacitacion != null && accionesAplicadas.some((a) => a === 2 || a === 3)) {
     const reversion = Math.round(kpis.erroresCaptura * e.revertirCapacitacion * -1);
     kpis.erroresCaptura -= reversion;
-    cambios.push(`Efecto de capacitacion revertido parcialmente: errores +${Math.abs(reversion)}`);
+    cambios.push(`Efecto de capacitación revertido parcialmente: errores +${Math.abs(reversion)}`);
   }
 
   if (e.conversionCondicional != null && e.umbralCiclo != null) {
     if (kpis.cicloTotalMediana > e.umbralCiclo) {
       kpis.conversionPct = redondear(kpis.conversionPct * (1 + e.conversionCondicional), 1);
-      cambios.push(`Conversion: ${Math.round(e.conversionCondicional * 100)}% (ciclo > ${e.umbralCiclo} dias)`);
+      cambios.push(`Conversión: ${Math.round(e.conversionCondicional * 100)}% (ciclo > ${e.umbralCiclo} días)`);
     } else {
       cambios.push(`Sin efecto: ciclo dentro del umbral`);
     }
@@ -91,7 +91,7 @@ export function aplicarEvento(
 
   if (e.capacidadCrop != null) {
     kpis.backOfficeDias += Math.abs(e.capacidadCrop);
-    cambios.push(`Capacidad CrOP reducida: back office +${Math.abs(e.capacidadCrop)} dias`);
+    cambios.push(`Capacidad CrOP reducida: back office +${Math.abs(e.capacidadCrop)} días`);
   }
 
   recalcularDerivados(kpis);

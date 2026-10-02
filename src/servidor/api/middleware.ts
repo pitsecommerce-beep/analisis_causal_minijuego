@@ -33,7 +33,7 @@ export async function autenticarProfesor(
   const { data, error } = await sb.auth.getUser(token);
 
   if (error || !data.user) {
-    res.status(401).json({ error: 'Token invalido' });
+    res.status(401).json({ error: 'Token inválido' });
     return;
   }
 
@@ -57,7 +57,7 @@ export async function autenticarJugador(
   try {
     const jugador = await obtenerJugadorPorToken(token);
     if (!jugador) {
-      res.status(401).json({ error: 'Token invalido' });
+      res.status(401).json({ error: 'Token inválido' });
       return;
     }
 
@@ -72,6 +72,6 @@ export async function autenticarJugador(
     };
     next();
   } catch {
-    res.status(500).json({ error: 'Error de autenticacion' });
+    res.status(500).json({ error: 'Error de autenticación' });
   }
 }

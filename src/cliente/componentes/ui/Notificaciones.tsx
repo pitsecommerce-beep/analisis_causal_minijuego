@@ -7,7 +7,7 @@ interface Aviso {
   id: number;
   tipo: TipoAviso;
   titulo: string;
-  mensaje?: string;
+  mensaje?: string | undefined;
 }
 
 type TonoConfirmacion = 'primario' | 'advertencia' | 'peligro';
@@ -76,7 +76,7 @@ export function ProveedorUI({ children }: { children: ReactNode }) {
               <div className="aviso-titulo">{a.titulo}</div>
               {a.mensaje && <div className="aviso-mensaje">{a.mensaje}</div>}
             </div>
-            <button className="aviso-cerrar" onClick={() => cerrarAviso(a.id)} aria-label="Cerrar notificacion">
+            <button className="aviso-cerrar" onClick={() => cerrarAviso(a.id)} aria-label="Cerrar notificación">
               {'×'}
             </button>
           </div>

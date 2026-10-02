@@ -160,7 +160,7 @@ app.post('/api/profesor/login', async (req, res) => {
 app.post('/api/sesion', autenticarProfesor, async (req, res) => {
   const { nombre } = req.body;
   if (!nombre) {
-    res.status(400).json({ error: 'Nombre de sesion requerido' });
+    res.status(400).json({ error: 'Nombre de sesión requerido' });
     return;
   }
 
@@ -171,7 +171,7 @@ app.post('/api/sesion', autenticarProfesor, async (req, res) => {
     const sesion = await crearSesion(profesorId, nombre, semilla);
     res.json(sesion);
   } catch (err: unknown) {
-    res.status(500).json({ error: 'Error al crear sesion' });
+    res.status(500).json({ error: 'Error al crear sesión' });
   }
 });
 
@@ -179,7 +179,7 @@ app.get('/api/sesion/:codigo', async (req, res) => {
   try {
     const sesion = await obtenerSesionPorCodigo(req.params.codigo!);
     if (!sesion) {
-      res.status(404).json({ error: 'Sesion no encontrada' });
+      res.status(404).json({ error: 'Sesión no encontrada' });
       return;
     }
     res.json({
@@ -189,7 +189,7 @@ app.get('/api/sesion/:codigo', async (req, res) => {
       estado: sesion.estado,
     });
   } catch {
-    res.status(500).json({ error: 'Error al buscar sesion' });
+    res.status(500).json({ error: 'Error al buscar sesión' });
   }
 });
 
@@ -203,17 +203,17 @@ app.post('/api/sesion/:codigo/unirse', async (req, res) => {
   try {
     const sesion = await obtenerSesionPorCodigo(req.params.codigo!);
     if (!sesion) {
-      res.status(404).json({ error: 'Sesion no encontrada' });
+      res.status(404).json({ error: 'Sesión no encontrada' });
       return;
     }
     if (sesion.estado !== 'abierta' && sesion.estado !== 'en_curso') {
-      res.status(400).json({ error: 'La sesion ya no acepta jugadores' });
+      res.status(400).json({ error: 'La sesión ya no acepta jugadores' });
       return;
     }
 
     const count = await contarJugadores(sesion.id);
     if (count >= sesion.max_jugadores) {
-      res.status(400).json({ error: 'Sesion llena' });
+      res.status(400).json({ error: 'Sesión llena' });
       return;
     }
 
@@ -234,7 +234,7 @@ app.post('/api/sesion/:codigo/unirse', async (req, res) => {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : '';
     if (msg.includes('duplicate') || msg.includes('unique')) {
-      res.status(409).json({ error: 'Ese nombre ya esta registrado en esta sesion' });
+      res.status(409).json({ error: 'Ese nombre ya está registrado en esta sesión' });
       return;
     }
     res.status(500).json({ error: 'Error al unirse' });
@@ -257,7 +257,7 @@ async function esSesionDelProfesor(sesionId: string, profesorId: string): Promis
 async function sesionPropia(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
   const propia = await esSesionDelProfesor(req.params['id'] as string, (req as RequestProfesor).profesorId);
   if (!propia) {
-    res.status(404).json({ error: 'Sesion no encontrada' });
+    res.status(404).json({ error: 'Sesión no encontrada' });
     return;
   }
   next();
@@ -279,7 +279,7 @@ app.get('/api/profesor/sesion/:id', autenticarProfesor, sesionPropia, async (req
     const partidas = await listarPartidasSesion(sesion.id);
     res.json({ sesion, jugadores, partidas });
   } catch {
-    res.status(500).json({ error: 'Error al obtener sesion' });
+    res.status(500).json({ error: 'Error al obtener sesión' });
   }
 });
 
@@ -288,7 +288,7 @@ app.post('/api/profesor/sesion/:id/iniciar', autenticarProfesor, sesionPropia, a
     await actualizarEstadoSesion(req.params.id!, 'en_curso');
     res.json({ ok: true });
   } catch {
-    res.status(500).json({ error: 'Error al iniciar sesion' });
+    res.status(500).json({ error: 'Error al iniciar sesión' });
   }
 });
 
@@ -297,14 +297,14 @@ app.post('/api/profesor/sesion/:id/finalizar', autenticarProfesor, sesionPropia,
     await actualizarEstadoSesion(req.params.id!, 'finalizada');
     res.json({ ok: true });
   } catch {
-    res.status(500).json({ error: 'Error al finalizar sesion' });
+    res.status(500).json({ error: 'Error al finalizar sesión' });
   }
 });
 
 app.post('/api/profesor/sesiones/eliminar', autenticarProfesor, async (req, res) => {
   const ids = req.body?.ids;
   if (!Array.isArray(ids) || ids.length === 0 || !ids.every(id => typeof id === 'string')) {
-    res.status(400).json({ error: 'Debes indicar al menos una sesion' });
+    res.status(400).json({ error: 'Debes indicar al menos una sesión' });
     return;
   }
   try {
@@ -317,14 +317,14 @@ app.post('/api/profesor/sesiones/eliminar', autenticarProfesor, async (req, res)
 
 app.delete('/api/profesor/sesion/:id', autenticarProfesor, async (req, res) => {
   try {
-    const eliminadas = await eliminarSesiones((req as RequestProfesor).profesorId, [req.params.id!]);
+    const eliminadas = await eliminarSesiones((req as RequestProfesor).profesorId, [req.params['id'] as string]);
     if (eliminadas === 0) {
-      res.status(404).json({ error: 'Sesion no encontrada' });
+      res.status(404).json({ error: 'Sesión no encontrada' });
       return;
     }
     res.json({ ok: true, eliminadas });
   } catch {
-    res.status(500).json({ error: 'Error al eliminar sesion' });
+    res.status(500).json({ error: 'Error al eliminar sesión' });
   }
 });
 
@@ -374,8 +374,8 @@ app.get('/api/datos/columnas', autenticarJugador, (_req, res) => {
       { campo: 'intentos', nombre: 'Intentos', tipo: 'numero' },
       { campo: 'canalCaptacion', nombre: 'Canal', tipo: 'texto' },
       { campo: 'fechaComentario', nombre: 'Fecha', tipo: 'fecha' },
-      { campo: 'categoriaPrimaria', nombre: 'Categoria primaria', tipo: 'texto' },
-      { campo: 'categoriaSecundaria', nombre: 'Categoria secundaria', tipo: 'texto' },
+      { campo: 'categoriaPrimaria', nombre: 'Categoría primaria', tipo: 'texto' },
+      { campo: 'categoriaSecundaria', nombre: 'Categoría secundaria', tipo: 'texto' },
       { campo: 'comentarioCliente', nombre: 'Comentario', tipo: 'texto' },
     ],
   });
@@ -391,7 +391,7 @@ app.post('/api/datos/verificacion', autenticarJugador, async (req, res) => {
   const reglas = verificacionesConfig as Record<string, Record<string, unknown>>;
   const regla = reglas[verificacionId as string];
   if (!regla) {
-    res.status(400).json({ error: 'Verificacion no reconocida' });
+    res.status(400).json({ error: 'Verificación no reconocida' });
     return;
   }
 
@@ -412,7 +412,7 @@ app.post('/api/datos/verificacion', autenticarJugador, async (req, res) => {
 
     res.json({ ok: true, verificaciones: [...estadoDialogo.verificaciones] });
   } catch {
-    res.status(500).json({ error: 'Error al registrar verificacion' });
+    res.status(500).json({ error: 'Error al registrar verificación' });
   }
 });
 
@@ -439,7 +439,7 @@ app.post('/api/partida/iniciar', autenticarJugador, async (req, res) => {
   const jugador = (req as RequestJugador).jugador;
 
   if (jugador.sesionEstado !== 'en_curso') {
-    res.status(400).json({ error: 'La sesion aun no ha iniciado' });
+    res.status(400).json({ error: 'La sesión aún no ha iniciado' });
     return;
   }
 
@@ -522,7 +522,7 @@ app.post('/api/partida/acciones', autenticarJugador, async (req, res) => {
 app.post('/api/partida/compromiso', autenticarJugador, async (req, res) => {
   const { metrica, valorPrometido } = req.body;
   if (!metrica || valorPrometido == null) {
-    res.status(400).json({ error: 'metrica y valorPrometido requeridos' });
+    res.status(400).json({ error: 'Métrica y valor prometido requeridos' });
     return;
   }
 
@@ -707,7 +707,7 @@ app.get('/api/partida/dialogos', autenticarJugador, async (req, res) => {
 
     res.json(resultado);
   } catch {
-    res.status(500).json({ error: 'Error al obtener dialogos' });
+    res.status(500).json({ error: 'Error al obtener diálogos' });
   }
 });
 
@@ -926,7 +926,7 @@ app.get('/api/experimento/recomendacion', autenticarJugador, async (req, res) =>
 
     res.json(rec);
   } catch {
-    res.status(500).json({ error: 'Error al generar recomendacion' });
+    res.status(500).json({ error: 'Error al generar recomendación' });
   }
 });
 
@@ -957,7 +957,7 @@ app.get('/api/profesor/sesion/:id/telemetria', autenticarProfesor, sesionPropia,
     const data = await obtenerTelemetriaSesion(req.params.id!);
     res.json(data);
   } catch {
-    res.status(500).json({ error: 'Error al obtener telemetria' });
+    res.status(500).json({ error: 'Error al obtener telemetría' });
   }
 });
 
@@ -980,8 +980,8 @@ app.get('/api/profesor/sesion/:id/exportar', async (req, res) => {
   }).catch(() => { return; });
   if (res.headersSent) return;
 
-  if (!(await esSesionDelProfesor(req.params.id!, (req as RequestProfesor).profesorId))) {
-    res.status(404).json({ error: 'Sesion no encontrada' });
+  if (!(await esSesionDelProfesor(req.params.id, (req as unknown as RequestProfesor).profesorId))) {
+    res.status(404).json({ error: 'Sesión no encontrada' });
     return;
   }
 

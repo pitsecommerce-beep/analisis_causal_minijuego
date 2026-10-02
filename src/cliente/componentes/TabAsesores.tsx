@@ -4,11 +4,11 @@ import { useUI } from './ui/Notificaciones.js';
 
 const NOMBRES: Record<string, { nombre: string; rol: string }> = {
   bernardo: { nombre: 'Bernardo', rol: 'Gte. Regional' },
-  oscar: { nombre: 'Oscar', rol: 'Dir. Sistemas' },
+  oscar: { nombre: 'Óscar', rol: 'Dir. Sistemas' },
   paulina: { nombre: 'Paulina', rol: 'Contralora' },
-  silvia: { nombre: 'Silvia', rol: 'Gte. Capacitacion' },
+  silvia: { nombre: 'Silvia', rol: 'Gte. Capacitación' },
   diego: { nombre: 'Diego', rol: 'Analista CrOP' },
-  ramon: { nombre: 'Ramon Betancourt', rol: 'Consejo' },
+  ramon: { nombre: 'Ramón Betancourt', rol: 'Consejo' },
 };
 
 const COLORES_PERSONAJE: Record<string, string> = {
@@ -40,7 +40,7 @@ export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
       const data = await api.partida.dialogos();
       setDialogos(data);
     } catch (err: any) {
-      avisar('error', 'No se pudieron cargar los dialogos', err.message);
+      avisar('error', 'No se pudieron cargar los diálogos', err.message);
     }
     setCargando(false);
   }
@@ -79,7 +79,7 @@ export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
         <div className="spinner" />
-        <p style={{ color: 'var(--color-texto-secundario)', fontSize: 14 }}>Cargando dialogos...</p>
+        <p style={{ color: 'var(--color-texto-secundario)', fontSize: 14 }}>Cargando diálogos...</p>
       </div>
     );
   }
@@ -96,7 +96,7 @@ export function TabAsesores({ onCredibilidadCambio, onRecargar }: Props) {
           <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-texto-terciario)' }}>SJ</span>
         </div>
         <p style={{ color: 'var(--color-texto-secundario)', fontSize: 15 }}>
-          No hay dialogos en este momento.
+          No hay diálogos en este momento.
         </p>
         <p style={{ color: 'var(--color-texto-terciario)', fontSize: 13, marginTop: 4 }}>
           Avanza al siguiente ciclo para interactuar con tu equipo.

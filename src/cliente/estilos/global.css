@@ -424,6 +424,93 @@ table.datos tr:hover td { background: var(--color-primario-suave); }
   background: linear-gradient(135deg, #0f2b4a 0%, #1a4d80 50%, #0f2b4a 100%);
 }
 
+/* ── Enlaces ── */
+
+.enlace {
+  color: var(--color-primario-claro);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 4px;
+}
+.enlace:hover { text-decoration: underline; text-underline-offset: 3px; }
+.enlace-sutil { color: var(--color-texto-secundario); font-weight: 500; font-size: 13px; }
+.enlace-sutil:hover { color: var(--color-texto); }
+
+/* ── Vistas de acceso ── */
+
+.acceso { background: var(--color-fondo); }
+.acceso-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.acceso-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-primario);
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+.acceso-contenido {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px 56px;
+}
+.acceso-tarjeta {
+  width: 100%;
+  max-width: 380px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-lg);
+  padding: 32px 28px;
+  box-shadow: var(--sombra);
+}
+.acceso-titulo {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-texto);
+  letter-spacing: -0.02em;
+}
+.acceso-subtitulo {
+  font-size: 14px;
+  color: var(--color-texto-secundario);
+  margin-top: 4px;
+}
+.acceso-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+.acceso-formulario .campo-label {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  color: var(--color-texto);
+}
+.acceso-formulario button[type='submit'] { width: 100%; margin-top: 4px; }
+.acceso-pie {
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--color-texto-secundario);
+  text-align: center;
+}
+.campo-codigo {
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+}
+
 /* ── Lista de sesiones ── */
 
 .sesiones-barra {

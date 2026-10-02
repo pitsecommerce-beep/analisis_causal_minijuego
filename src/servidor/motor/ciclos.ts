@@ -66,10 +66,10 @@ export function elegirAcciones(
   let costoTotal = 0;
   for (const a of acciones) {
     const config = catalogoAcciones.find((c) => c.id === a.accionId);
-    if (!config) return { ok: false, error: `Accion ${a.accionId} no existe` };
+    if (!config) return { ok: false, error: `Acción ${a.accionId} no existe` };
 
     const yaElegida = partida.accionesElegidas.some((e) => e.accionId === a.accionId);
-    if (yaElegida) return { ok: false, error: `Accion ${a.accionId} ya fue elegida` };
+    if (yaElegida) return { ok: false, error: `Acción ${a.accionId} ya fue elegida` };
 
     costoTotal += config.costo;
   }
@@ -119,8 +119,8 @@ export const METRICAS_DISPONIBLES = [
   { id: 'cicloTotalMediana', nombre: 'Ciclo total (mediana)', unidad: 'dias' },
   { id: 'tasaReproceso', nombre: 'Tasa de reproceso', unidad: '%' },
   { id: 'atorados', nombre: 'Expedientes atorados', unidad: '' },
-  { id: 'conversionPct', nombre: 'Conversion', unidad: '%' },
-  { id: 'quejasPct', nombre: 'Quejas (indice)', unidad: '%' },
+  { id: 'conversionPct', nombre: 'Conversión', unidad: '%' },
+  { id: 'quejasPct', nombre: 'Quejas (índice)', unidad: '%' },
   { id: 'erroresPor100', nombre: 'Errores por 100 solicitudes', unidad: '' },
   { id: 'backOfficeDias', nombre: 'Back office', unidad: 'dias' },
 ];
@@ -185,14 +185,14 @@ export function procesarCiclo(
 
   if (sinAccionesEnPartida && ciclo >= 2) {
     vidaPerdida = true;
-    motivoVidaPerdida = 'No decidiste nada en el ciclo. La inaccion tambien se paga.';
+    motivoVidaPerdida = 'No decidiste nada en el ciclo. La inacción también se paga.';
   } else if (compromiso && fraccionCumplimiento < 0.5) {
     vidaPerdida = true;
     const valorReal = obtenerValorMetrica(partida.kpis, compromiso.metrica);
-    motivoVidaPerdida = `El resultado quedo por debajo de la mitad de lo que prometiste. Prometiste ${compromiso.valorPrometido}, resultado: ${valorReal}.`;
+    motivoVidaPerdida = `El resultado quedó por debajo de la mitad de lo que prometiste. Prometiste ${compromiso.valorPrometido}, resultado: ${valorReal}.`;
   } else if (partida.credibilidad <= 0) {
     vidaPerdida = true;
-    motivoVidaPerdida = 'Tu credibilidad llego a cero.';
+    motivoVidaPerdida = 'Tu credibilidad llegó a cero.';
     partida.credibilidad = 30;
   }
 
@@ -213,7 +213,7 @@ export function procesarCiclo(
 
   if (gastoEsteCiclo > 40 && !algunKpiMejoro && !vidaPerdida) {
     vidaPerdida = true;
-    motivoVidaPerdida = `Gastaste ${gastoEsteCiclo} unidades de presupuesto y ningun KPI se movio.`;
+    motivoVidaPerdida = `Gastaste ${gastoEsteCiclo} unidades de presupuesto y ningún KPI se movió.`;
   }
 
   if (vidaPerdida) {

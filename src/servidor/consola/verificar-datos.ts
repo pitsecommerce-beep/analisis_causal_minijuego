@@ -28,16 +28,16 @@ function run() {
   check('Documentos ilegibles', 187, estadisticas.erroresIlegibles);
   check('Casos con al menos un error', 897, estadisticas.casosConError);
   check('Intentos, media', '1.96', String(estadisticas.intentosMedia));
-  check('Intentos, desviacion', '0.89', String(estadisticas.intentosDesviacion));
+  check('Intentos, desviación', '0.89', String(estadisticas.intentosDesviacion));
   check('Ventana de captura, media', '18.9', String(estadisticas.ventanaCapturaMedia));
   check('Ventana de captura, mediana', '11', String(estadisticas.ventanaCapturaMediana));
-  check('Correlacion intentos-captura', '0.786', String(estadisticas.correlacionIntentoCaptura));
-  check('Buro corrido', 1397, estadisticas.buroCorrido);
-  check('Buro aceptado', 1022, estadisticas.buroAceptado);
+  check('Correlación intentos-captura', '0.786', String(estadisticas.correlacionIntentoCaptura));
+  check('Buró corrido', 1397, estadisticas.buroCorrido);
+  check('Buró aceptado', 1022, estadisticas.buroAceptado);
   check('Score aceptado', 873, estadisticas.scoreAceptado);
-  check('Plastico enviado', 731, estadisticas.plasticoEnviado);
+  check('Plástico enviado', 731, estadisticas.plasticoEnviado);
   check('Atorados', 142, estadisticas.atorados);
-  check('Dias perdidos en rechazados por buro', 6758, estadisticas.diasPerdidosRechazados);
+  check('Días perdidos en rechazados por buró', 6758, estadisticas.diasPerdidosRechazados);
   check(
     'Top 3 sucursales por errores',
     '110,676,728',

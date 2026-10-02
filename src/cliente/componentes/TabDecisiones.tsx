@@ -41,15 +41,15 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
 
   async function confirmarAcciones() {
     if (seleccionadas.length === 0) return;
-    const nombres = seleccionadas.map(id => acciones.find(x => x.id === id)?.nombre ?? `Accion ${id}`);
+    const nombres = seleccionadas.map(id => acciones.find(x => x.id === id)?.nombre ?? `Acción ${id}`);
     const ok = await confirmar({
-      titulo: `Confirmar ${seleccionadas.length} accion(es)`,
+      titulo: `Confirmar ${seleccionadas.length} acción(es)`,
       mensaje: (
         <>
           <ul style={{ margin: '0 0 10px 18px' }}>
             {nombres.map(n => <li key={n}>{n}</li>)}
           </ul>
-          Se descontaran <strong>${costoSeleccion}</strong> de tu presupuesto. Una vez confirmadas no se pueden revertir.
+          Se descontarán <strong>${costoSeleccion}</strong> de tu presupuesto. Una vez confirmadas no se pueden revertir.
         </>
       ),
       textoConfirmar: 'Confirmar acciones',
@@ -85,8 +85,8 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
     const ok = await confirmar({
       titulo: 'Avanzar al siguiente ciclo',
       mensaje: seleccionadas.length > 0
-        ? 'Tienes acciones seleccionadas sin confirmar y se descartaran. El ciclo actual se cerrara y no podras volver a el.'
-        : 'El ciclo actual se cerrara y no podras volver a el. Asegurate de haber tomado todas tus decisiones.',
+        ? 'Tienes acciones seleccionadas sin confirmar y se descartarán. El ciclo actual se cerrará y no podrás volver a él.'
+        : 'El ciclo actual se cerrará y no podrás volver a él. Asegúrate de haber tomado todas tus decisiones.',
       textoConfirmar: 'Avanzar ciclo',
       tono: 'advertencia',
     });
@@ -188,7 +188,7 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
             Compromiso del ciclo
           </h3>
           <p style={{ fontSize: 13, color: 'var(--color-texto-secundario)', marginBottom: 14, lineHeight: 1.6 }}>
-            Declara al consejo que metrica vas a mejorar y a cuanto te comprometes.
+            Declara al consejo qué métrica vas a mejorar y a cuánto te comprometes.
           </p>
 
           {compromisoDeclarado ? (
@@ -208,7 +208,7 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
             <div className="tarjeta" style={{ marginBottom: 20 }}>
               <div style={{ marginBottom: 14 }}>
                 <label className="campo-label" htmlFor="metrica-comp">
-                  Metrica
+                  Métrica
                 </label>
                 <select id="metrica-comp" value={metricaComp} onChange={e => {
                   setMetricaComp(e.target.value);

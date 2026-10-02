@@ -10,10 +10,10 @@ export function PiePagina({ oscuro = false }: Props) {
         <div>
           <strong>IPADE Business School</strong>
           <span className="pie-pagina-separador" aria-hidden="true">·</span>
-          <span>Area de Direccion de Operaciones</span>
+          <span>Área de Dirección de Operaciones</span>
         </div>
         <div className="pie-pagina-secundario">
-          Simulador de Analisis Causal · ETF Bank · {anio}
+          Simulador de Análisis Causal · ETF Bank · {anio}
         </div>
       </div>
     </footer>
