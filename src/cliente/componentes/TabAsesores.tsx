@@ -308,8 +308,10 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop }: Props) {
     const r = nodoActual.respuestas[i];
     if (!r) return;
     const nodoId = nodoActual.nodoId;
-    setCharla({ ...charla, modo: 'jugador', textoJugador: r.texto, enviando: true, abrirAlTerminar: r.efecto === 'abrir_laptop' });
-    marcar('respondidos', nodoId);
+    // "Déjame revisarlo" no cierra la pregunta: al volver, la persona la repite y puedes responder con evidencia
+    const revisaPrimero = r.efecto === 'abrir_laptop';
+    setCharla({ ...charla, modo: 'jugador', textoJugador: r.texto, enviando: true, abrirAlTerminar: revisaPrimero });
+    if (!revisaPrimero) marcar('respondidos', nodoId);
     try {
       const res = await api.partida.respuesta(nodoId, r.efecto, charla.personaje);
       if (res.credibilidad != null) onCredibilidadCambio?.(res.credibilidad);

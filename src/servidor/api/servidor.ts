@@ -21,6 +21,7 @@ import { generarRecomendacion } from '../experimento/asesor-algoritmico.js';
 import { serializarDialogo, deserializarDialogo } from '../db/serializar.js';
 import { autenticarProfesor, autenticarJugador } from './middleware.js';
 import { estaConectado } from './presencia.js';
+import { esCorreoProfesor, MENSAJE_DOMINIO } from './dominio.js';
 import type { RequestProfesor, RequestJugador } from './middleware.js';
 import { crearPartida, elegirAcciones, declararCompromiso, procesarCiclo } from '../motor/ciclos.js';
 import { evaluarPartida, determinarDesenlace } from '../puntuacion/evaluacion.js';
@@ -140,6 +141,10 @@ app.post('/api/profesor/registrar', async (req, res) => {
     res.status(400).json({ error: 'Email y password requeridos' });
     return;
   }
+  if (!esCorreoProfesor(email)) {
+    res.status(403).json({ error: MENSAJE_DOMINIO });
+    return;
+  }
 
   const sb = obtenerSupabase();
   const { data, error } = await sb.auth.admin.createUser({
@@ -160,6 +165,10 @@ app.post('/api/profesor/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     res.status(400).json({ error: 'Email y password requeridos' });
+    return;
+  }
+  if (!esCorreoProfesor(email)) {
+    res.status(403).json({ error: MENSAJE_DOMINIO });
     return;
   }
 
@@ -462,7 +471,7 @@ app.get('/api/datos/columnas', autenticarJugador, (_req, res) => {
   });
 });
 
-app.post('/api/datos/verificacion', autenticarJugador, async (req, res) => {
+app.post('/api/datos/verificacion', autenticarJugador, sesionActiva, async (req, res) => {
   const { verificacionId, herramienta } = req.body;
   if (!verificacionId) {
     res.status(400).json({ error: 'verificacionId requerido' });
@@ -516,18 +525,29 @@ app.get('/api/datos/verificaciones', autenticarJugador, async (req, res) => {
 // ║     RUTAS DE PARTIDA                ║
 // ╚══════════════════════════════════════╝
 
+// Cuando el profesor finaliza la sesión ya no se aceptan jugadas
+function rechazarSesionFinalizada(res: express.Response): void {
+  res.status(403).json({ error: 'Tu profesor finalizó la sesión.', sesionFinalizada: true });
+}
+
+function sesionActiva(req: express.Request, res: express.Response, next: express.NextFunction): void {
+  if ((req as RequestJugador).jugador.sesionEstado === 'finalizada') { rechazarSesionFinalizada(res); return; }
+  next();
+}
+
 app.post('/api/partida/iniciar', autenticarJugador, async (req, res) => {
   const jugador = (req as RequestJugador).jugador;
 
-  if (jugador.sesionEstado !== 'en_curso') {
-    res.status(400).json({ error: 'La sesión aún no ha iniciado' });
-    return;
-  }
-
   try {
+    // Una partida existente se devuelve aunque la sesión ya haya finalizado, para mostrar el resumen
     const existente = await obtenerPartida(jugador.id);
     if (existente) {
       res.json(estadoPublico(existente));
+      return;
+    }
+
+    if (jugador.sesionEstado !== 'en_curso') {
+      res.status(400).json({ error: jugador.sesionEstado === 'finalizada' ? 'La sesión ya terminó' : 'La sesión aún no ha iniciado' });
       return;
     }
 
@@ -557,7 +577,7 @@ app.get('/api/partida', autenticarJugador, async (req, res) => {
   }
 });
 
-app.post('/api/partida/acciones', autenticarJugador, async (req, res) => {
+app.post('/api/partida/acciones', autenticarJugador, sesionActiva, async (req, res) => {
   const { acciones } = req.body;
   if (!Array.isArray(acciones) || acciones.length === 0) {
     res.status(400).json({ error: 'Acciones requeridas (array de {accionId})' });
@@ -600,7 +620,7 @@ app.post('/api/partida/acciones', autenticarJugador, async (req, res) => {
   }
 });
 
-app.post('/api/partida/compromiso', autenticarJugador, async (req, res) => {
+app.post('/api/partida/compromiso', autenticarJugador, sesionActiva, async (req, res) => {
   const { metrica, valorPrometido } = req.body;
   if (!metrica || valorPrometido == null) {
     res.status(400).json({ error: 'Métrica y valor prometido requeridos' });
@@ -625,7 +645,7 @@ app.post('/api/partida/compromiso', autenticarJugador, async (req, res) => {
   }
 });
 
-app.post('/api/partida/avanzar', autenticarJugador, async (req, res) => {
+app.post('/api/partida/avanzar', autenticarJugador, sesionActiva, async (req, res) => {
   try {
     const jugador = (req as RequestJugador).jugador;
     const partida = await obtenerPartida(jugador.id);
@@ -792,7 +812,7 @@ app.get('/api/partida/dialogos', autenticarJugador, async (req, res) => {
   }
 });
 
-app.post('/api/partida/respuesta', autenticarJugador, async (req, res) => {
+app.post('/api/partida/respuesta', autenticarJugador, sesionActiva, async (req, res) => {
   const { nodoId, efecto, personaje } = req.body;
   if (!efecto) {
     res.status(400).json({ error: 'efecto requerido' });
@@ -881,6 +901,11 @@ app.post('/api/partida/cierre', autenticarJugador, async (req, res) => {
     }
 
     const estado = partida.estado as any;
+    // Tras finalizar la sesión solo puede declarar causas quien completó los ciclos
+    if (jugador.sesionEstado === 'finalizada' && !estado.terminada) {
+      rechazarSesionFinalizada(res);
+      return;
+    }
     const estadoDialogo = deserializarDialogo(partida.estado_dialogo as any);
 
     const verificaciones = await listarVerificaciones(partida.id);

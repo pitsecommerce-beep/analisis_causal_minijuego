@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { obtenerSupabase } from '../db/supabase.js';
 import { obtenerJugadorPorToken } from '../db/consultas.js';
+import { esCorreoProfesor, MENSAJE_DOMINIO } from './dominio.js';
 
 export interface RequestProfesor extends Request {
   profesorId: string;
@@ -34,6 +35,11 @@ export async function autenticarProfesor(
 
   if (error || !data.user) {
     res.status(401).json({ error: 'Token inválido' });
+    return;
+  }
+  // También bloquea cuentas creadas antes de la restricción de dominio
+  if (!esCorreoProfesor(data.user.email)) {
+    res.status(403).json({ error: MENSAJE_DOMINIO });
     return;
   }
 

@@ -1,4 +1,5 @@
 const BASE = '/api';
+export const EVENTO_SESION_FINALIZADA = 'sesion-finalizada';
 
 function headers(): Record<string, string> {
   const h: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -19,6 +20,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   } catch {
     if (!res.ok) throw new Error(`Error del servidor (${res.status})`);
   }
+  // Avisa a la pantalla de juego para que muestre el cierre en cuanto el servidor rechaza una jugada
+  if (data?.sesionFinalizada) window.dispatchEvent(new Event(EVENTO_SESION_FINALIZADA));
   if (!res.ok) throw new Error(data?.error ?? 'Error desconocido');
   return data as T;
 }

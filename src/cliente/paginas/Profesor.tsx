@@ -56,7 +56,7 @@ function Login() {
         <div>
           <label className="campo-label" htmlFor="email">Correo electrónico</label>
           <input id="email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
-            placeholder="correo@ejemplo.com" required autoFocus />
+            placeholder="nombre@ipade.mx" required autoFocus />
         </div>
         <div>
           <label className="campo-label" htmlFor="password">Contraseña</label>
@@ -114,7 +114,7 @@ function Registro() {
         <div>
           <label className="campo-label" htmlFor="email">Correo electrónico</label>
           <input id="email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
-            placeholder="correo@ejemplo.com" required autoFocus />
+            placeholder="nombre@ipade.mx" required autoFocus />
         </div>
         <div>
           <label className="campo-label" htmlFor="password">Contraseña</label>
