@@ -6,16 +6,17 @@
     "fase": "apertura",
     "expresion": "timido",
     "lineas": [
-      "Perdón. Yo... nomás una cosa.",
-      "Hay ciento cuarenta y dos expedientes aprobados que nunca salieron. La tarjeta no se mandó.",
-      "Nadie los está viendo."
+      "Perdón, solo quiero comentar algo.",
+      "Hay 142 expedientes aprobados a los que nunca se les envió la tarjeta.",
+      "Nadie les está dando seguimiento."
     ],
+    "pendiente": "Validar: Diego dice que hay 142 expedientes aprobados que nunca recibieron su tarjeta.",
     "afirmacion": { "id": "atorados_sin_plastico", "verificable": true, "veredicto": "cierta" },
     "respuestas": [
-      { "texto": "¿Ciento cuarenta y dos? Déjame verificar.", "efecto": "abrir_laptop", "credibilidad": 0 },
-      { "texto": "Automaticemos eso.", "efecto": "aceptar:5", "credibilidad": 2 },
-      { "texto": "Ya lo revisé. Tienes razón, son ciento cuarenta y dos.", "requiere": "verifico:atorados_sin_plastico", "efecto": "refutar", "credibilidad": 2 },
-      { "texto": "Ahorita hay temas más urgentes.", "efecto": "postergar", "credibilidad": -1 }
+      { "texto": "¿142? Déjame verificarlo.", "efecto": "abrir_laptop", "credibilidad": 0 },
+      { "texto": "Automaticemos el envío.", "efecto": "aceptar:5", "credibilidad": 2 },
+      { "texto": "Ya lo revisé y tienes razón, son 142.", "requiere": "verifico:atorados_sin_plastico", "efecto": "refutar", "credibilidad": 2 },
+      { "texto": "Ahora hay temas más urgentes.", "efecto": "postergar", "credibilidad": -1 }
     ]
   },
   {
@@ -25,16 +26,17 @@
     "fase": "segundo",
     "expresion": "atreviendose",
     "lineas": [
-      "Y otra cosa. Yo reviso expedientes todos los días.",
-      "Tres sucursales mandan el cuarenta por ciento de los errores. La 110, la 676 y la 728.",
-      "Si les pones un checklist, se acaba la mitad del retrabajo."
+      "Otra cosa: yo reviso expedientes todos los días.",
+      "Tres sucursales, la 110, la 676 y la 728, generan el 40% de los errores.",
+      "Si les pedimos un checklist, se elimina la mitad del retrabajo."
     ],
+    "pendiente": "Validar: Diego dice que las sucursales 110, 676 y 728 generan el 40% de los errores. Recomienda un checklist para ellas.",
     "afirmacion": { "id": "concentracion_sucursales", "verificable": true, "veredicto": "cierta" },
     "respuestas": [
-      { "texto": "¿Cuáles dijiste? Déjame anotarlo.", "efecto": "abrir_laptop", "credibilidad": 1 },
-      { "texto": "Ponemos el checklist.", "efecto": "aceptar:1", "credibilidad": 2 },
+      { "texto": "¿Cuáles sucursales? Déjame anotarlo.", "efecto": "abrir_laptop", "credibilidad": 1 },
+      { "texto": "Pongamos el checklist.", "efecto": "aceptar:1", "credibilidad": 2 },
       { "texto": "Ya lo verifiqué en los datos.", "requiere": "verifico:concentracion_sucursales", "efecto": "confirmar", "credibilidad": 2 },
-      { "texto": "Silvia quiere capacitar a las dieciocho.", "efecto": "postergar", "credibilidad": 0 }
+      { "texto": "Silvia quiere capacitar a las 18 sucursales.", "efecto": "postergar", "credibilidad": 0 }
     ]
   },
   {
@@ -44,13 +46,14 @@
     "fase": "tercero",
     "expresion": "decidido",
     "lineas": [
-      "Y lo del buró. Ahorita lo consultan al final, cuando ya hiciste toda la captura.",
-      "Si lo corres primero, dejas de trabajar expedientes que van a rebotar."
+      "Y sobre el buró de crédito: hoy se consulta al final, cuando la captura ya está completa.",
+      "Si se consultara al principio, no trabajaríamos expedientes que al final se van a rechazar."
     ],
+    "pendiente": "Revisar: Diego recomienda consultar el buró de crédito al inicio del proceso, antes de la captura.",
     "afirmacion": { "id": "secuencia_buro", "verificable": true, "veredicto": "cierta" },
     "respuestas": [
       { "texto": "Paulina dijo algo parecido.", "efecto": "postergar", "credibilidad": 0 },
-      { "texto": "Tiene sentido. Cambiemos la secuencia.", "efecto": "aceptar:4", "credibilidad": 2 },
+      { "texto": "Tiene sentido. Cambiemos el orden.", "efecto": "aceptar:4", "credibilidad": 2 },
       { "texto": "Déjame ver cuánto trabajo se pierde.", "efecto": "abrir_laptop", "credibilidad": 1 }
     ]
   },
@@ -61,7 +64,7 @@
     "fase": "apertura",
     "expresion": "callado",
     "lineas": [
-      "Director... ¿puedo decir algo?"
+      "Director, ¿puedo comentar algo?"
     ],
     "respuestas": [
       { "texto": "Adelante, Diego.", "efecto": "escuchar", "credibilidad": 1 },
@@ -76,7 +79,8 @@
     "expresion": "informando",
     "condicion": { "tipo": "escuchado" },
     "lineas": [
-      "Los atorados siguen ahí. Cada día que pasa es un cliente que ya nos aprobó y no tiene su tarjeta."
+      "Los expedientes aprobados sin tarjeta siguen ahí.",
+      "Cada día es un cliente aprobado que todavía no recibe su tarjeta."
     ],
     "respuestas": [
       { "texto": "Vamos a automatizar el envío.", "efecto": "aceptar:5", "credibilidad": 1 },
@@ -91,8 +95,8 @@
     "expresion": "aliviado",
     "condicion": { "tipo": "accion_elegida", "accionId": 5 },
     "lineas": [
-      "Ya se están mandando las tarjetas automático. Bien.",
-      "Eso lo sentimos todos los días en CrOP."
+      "Las tarjetas ya se envían automáticamente. Muy bien.",
+      "En CrOP lo notamos todos los días."
     ],
     "respuestas": []
   },
@@ -103,7 +107,7 @@
     "fase": "apertura",
     "expresion": "tranquilo",
     "lineas": [
-      "Yo nomás reporto. Los expedientes que rehago cada día bajaron."
+      "Solo para informar: bajaron los expedientes que tenemos que rehacer cada día."
     ],
     "respuestas": [
       { "texto": "¿Cuánto bajaron?", "efecto": "abrir_laptop", "credibilidad": 0 },
@@ -118,8 +122,8 @@
     "expresion": "satisfecho",
     "condicion": { "tipo": "accion_elegida", "accionId": 1 },
     "lineas": [
-      "El checklist está funcionando. Los incompletos bajaron un montón.",
-      "Ya casi no me regresan expedientes por documentos faltantes."
+      "El checklist está funcionando. Los expedientes incompletos bajaron mucho.",
+      "Ya casi no nos regresan expedientes por documentos faltantes."
     ],
     "respuestas": []
   },
@@ -131,8 +135,8 @@
     "expresion": "preocupado",
     "condicion": { "tipo": "ninguna_accion_de", "acciones": [1, 4, 5] },
     "lineas": [
-      "Director... los atorados siguen ahí. Y los errores también.",
-      "Nomás digo."
+      "Director, los expedientes sin tarjeta siguen ahí, y los errores también.",
+      "Solo quería mencionarlo."
     ],
     "respuestas": []
   },
@@ -155,8 +159,8 @@
     "expresion": "contento",
     "condicion": { "tipo": "multiples_acciones", "acciones": [1, 4, 5], "minimo": 2 },
     "lineas": [
-      "Se nota. En CrOP estamos procesando diferente.",
-      "Gracias por escuchar, director."
+      "Se nota la diferencia. En CrOP estamos trabajando de otra manera.",
+      "Gracias por escucharnos, Director."
     ],
     "respuestas": []
   },
@@ -168,7 +172,7 @@
     "expresion": "resignado",
     "condicion": { "tipo": "multiples_acciones", "acciones": [1, 4, 5], "minimo": 0, "maximo": 1 },
     "lineas": [
-      "Pues ahí seguimos con lo mismo."
+      "Seguimos con los mismos problemas."
     ],
     "respuestas": []
   },
@@ -180,12 +184,13 @@
     "expresion": "timido",
     "condicion": { "tipo": "pide_consejo" },
     "lineas": [
-      "Yo... el checklist, cambiar el buró al principio, y mandar las tarjetas automático.",
-      "Son treinta y cinco unidades. Perdón si estoy hablando de más."
+      "Yo haría tres cosas: el checklist, consultar el buró al principio y enviar las tarjetas automáticamente.",
+      "Las tres juntas cuestan 35 unidades. Perdón si hablo de más."
     ],
+    "pendiente": "Recomendación de Diego: checklist en sucursales, buró al inicio y envío automático de tarjetas (35 unidades en total).",
     "respuestas": [
-      { "texto": "No, está bien. Lo considero.", "efecto": "postergar", "credibilidad": 1 },
-      { "texto": "Hazlo todo.", "efecto": "aceptar_multiple:1,4,5", "credibilidad": 2 }
+      { "texto": "No, está bien. Lo voy a considerar.", "efecto": "postergar", "credibilidad": 1 },
+      { "texto": "Hagamos las tres.", "efecto": "aceptar_multiple:1,4,5", "credibilidad": 2 }
     ]
   },
   {
@@ -208,7 +213,7 @@
     "expresion": "resignado",
     "condicion": { "tipo": "postergado" },
     "lineas": [
-      "Bueno. Si necesitan algo de CrOP, ahí estoy."
+      "Está bien. Si necesitan algo de CrOP, aquí estoy."
     ],
     "respuestas": []
   }

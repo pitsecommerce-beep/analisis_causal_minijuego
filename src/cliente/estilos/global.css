@@ -1367,3 +1367,65 @@ input[type='checkbox'].casilla {
   .sala-dialogo-texto { font-size: 16px; }
   .sala-equipo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* --- Lista de pendientes --- */
+.pendientes-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 800;
+  background: rgba(15, 43, 74, 0.35);
+  display: flex;
+  justify-content: flex-end;
+}
+.pendientes-panel {
+  width: min(400px, 100%);
+  height: 100%;
+  overflow-y: auto;
+  background: var(--color-superficie);
+  box-shadow: -8px 0 24px rgba(15, 43, 74, 0.18);
+  padding: 20px;
+}
+.pendientes-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.pendientes-encabezado h3 { font-size: 18px; color: var(--color-primario); margin: 0 0 4px; }
+.pendientes-encabezado p { font-size: 13px; color: var(--color-texto-secundario); margin: 0; }
+.pendientes-vacio { font-size: 14px; color: var(--color-texto-secundario); line-height: 1.6; }
+.pendientes-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.pendientes-lista li {
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  padding: 12px;
+  background: var(--color-fondo);
+}
+.pendientes-lista label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.pendientes-lista input { margin-top: 3px; }
+.pendientes-texto { display: block; font-size: 14px; line-height: 1.5; color: var(--color-texto); }
+.pendientes-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--color-texto-secundario);
+}
+.pendientes-lista li.resuelto .pendientes-texto { text-decoration: line-through; color: var(--color-texto-secundario); }
+.pendientes-contador {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #f2c14e;
+  color: #0f2b4a;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+@media (max-width: 640px) {
+  .ocultar-movil { display: none; }
+}

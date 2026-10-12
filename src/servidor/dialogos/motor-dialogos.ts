@@ -20,6 +20,8 @@ export interface NodoDialogo {
   fase: string;
   expresion: string;
   lineas: string[];
+  // Nota que se agrega a la Lista de Pendientes del jugador al escuchar el nodo
+  pendiente?: string;
   afirmacion?: Afirmacion;
   condicion?: CondicionNodo;
   respuestas: RespuestaDialogo[];

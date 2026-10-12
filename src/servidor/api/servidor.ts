@@ -724,6 +724,7 @@ app.get('/api/partida/dialogos', autenticarJugador, async (req, res) => {
         fase: 'apertura',
         expresion: apertura.expresion,
         lineas: apertura.lineas,
+        pendiente: apertura.pendiente ?? null,
         afirmacion: apertura.afirmacion ?? null,
         respuestas: respuestas.map(r => ({
           texto: r.texto,
@@ -743,6 +744,7 @@ app.get('/api/partida/dialogos', autenticarJugador, async (req, res) => {
             fase: 'segundo',
             expresion: segundo.expresion,
             lineas: segundo.lineas,
+            pendiente: segundo.pendiente ?? null,
             afirmacion: segundo.afirmacion ?? null,
             respuestas: filtrarRespuestas(segundo.respuestas, estadoDialogo).map(r => ({
               texto: r.texto, efecto: r.efecto, credibilidad: r.credibilidad,
@@ -757,6 +759,7 @@ app.get('/api/partida/dialogos', autenticarJugador, async (req, res) => {
             fase: 'tercero',
             expresion: tercero.expresion,
             lineas: tercero.lineas,
+            pendiente: tercero.pendiente ?? null,
             afirmacion: tercero.afirmacion ?? null,
             respuestas: filtrarRespuestas(tercero.respuestas, estadoDialogo).map(r => ({
               texto: r.texto, efecto: r.efecto, credibilidad: r.credibilidad,
@@ -774,6 +777,7 @@ app.get('/api/partida/dialogos', autenticarJugador, async (req, res) => {
             fase: 'reaccion',
             expresion: r.expresion,
             lineas: r.lineas,
+            pendiente: r.pendiente ?? null,
             respuestas: [],
           });
         }
@@ -868,7 +872,7 @@ app.post('/api/partida/respuesta', autenticarJugador, sesionActiva, async (req, 
 
     await actualizarPartida(jugador.id, estado, serializarDialogo(estadoDialogo));
 
-    let siguienteNodo = null;
+    let siguienteNodo: Record<string, unknown> | null = null;
     if (efecto === 'refutar' && nodoId && personaje) {
       const nodos = dialogos[personaje as string];
       if (nodos) {
@@ -884,12 +888,32 @@ app.post('/api/partida/respuesta', autenticarJugador, sesionActiva, async (req, 
               fase: 'refutado',
               expresion: refutado.expresion,
               lineas: refutado.lineas,
+              pendiente: refutado.pendiente ?? null,
               respuestas: filtrarRespuestas(refutado.respuestas, estadoDialogo).map(r => ({
                 texto: r.texto, efecto: r.efecto, credibilidad: r.credibilidad,
               })),
             };
           }
         }
+      }
+    }
+
+    // "¿Qué propones?" abre la recomendación de esa persona
+    if (efecto.startsWith('pedir_consejo:')) {
+      const quien = efecto.slice('pedir_consejo:'.length);
+      const consejo = dialogos[quien]?.find(n => n.fase === 'consejo');
+      if (consejo) {
+        siguienteNodo = {
+          nodoId: consejo.id,
+          personaje: quien,
+          fase: 'consejo',
+          expresion: consejo.expresion,
+          lineas: consejo.lineas,
+          pendiente: consejo.pendiente ?? null,
+          respuestas: filtrarRespuestas(consejo.respuestas, estadoDialogo).map(r => ({
+            texto: r.texto, efecto: r.efecto, credibilidad: r.credibilidad,
+          })),
+        };
       }
     }
 

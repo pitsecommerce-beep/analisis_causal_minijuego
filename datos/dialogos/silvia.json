@@ -6,14 +6,15 @@
     "fase": "apertura",
     "expresion": "entusiasta",
     "lineas": [
-      "A mí lo que me preocupa es la gente. El error de captura es el más frecuente de todos, con diferencia.",
-      "Déjame armar un programa para las dieciocho sucursales, yo lo coordino."
+      "Lo que me preocupa es la gente. El error de captura es, por mucho, el más frecuente.",
+      "Déjame organizar una capacitación para las 18 sucursales. Yo la coordino."
     ],
+    "pendiente": "Validar: Silvia dice que el error de captura es el más frecuente y propone capacitar a las 18 sucursales. Revisar en qué sucursales se concentran.",
     "afirmacion": { "id": "error_captura_frecuente", "verificable": true, "veredicto": "cierta" },
     "respuestas": [
-      { "texto": "Déjame revisar dónde se concentran.", "efecto": "abrir_laptop", "credibilidad": 0 },
+      { "texto": "Déjame revisar dónde se concentran los errores.", "efecto": "abrir_laptop", "credibilidad": 0 },
       { "texto": "Sí, capacita a todas.", "efecto": "aceptar:3", "credibilidad": 1 },
-      { "texto": "Silvia, tres sucursales concentran el cuarenta por ciento de los errores. No necesitamos las dieciocho.", "requiere": "verifico:error_captura_frecuente", "efecto": "refutar", "credibilidad": 2 },
+      { "texto": "Silvia, tres sucursales concentran el 40% de los errores. No hace falta capacitar a las 18.", "requiere": "verifico:error_captura_frecuente", "efecto": "refutar", "credibilidad": 2 },
       { "texto": "Déjame pensarlo.", "efecto": "postergar", "credibilidad": -1 }
     ]
   },
@@ -25,12 +26,12 @@
     "expresion": "dudosa",
     "condicion": { "tipo": "refutado", "afirmacion": "error_captura_frecuente" },
     "lineas": [
-      "Pero es que si nomás capacitas a tres, las demás quince siguen igual.",
-      "¿No sería mejor cubrir a todos?"
+      "Pero si solo capacitas a tres, las otras 15 siguen igual.",
+      "¿No sería mejor capacitar a todas?"
     ],
     "respuestas": [
-      { "texto": "El presupuesto no da para todas. Y el impacto está en esas tres.", "efecto": "contraargumentar", "credibilidad": 1 },
-      { "texto": "Tienes un punto. Lo pienso.", "efecto": "postergar", "credibilidad": 0 }
+      { "texto": "El presupuesto no alcanza para todas, y el impacto está en esas tres.", "efecto": "contraargumentar", "credibilidad": 1 },
+      { "texto": "Tienes un punto. Lo voy a pensar.", "efecto": "postergar", "credibilidad": 0 }
     ]
   },
   {
@@ -41,8 +42,8 @@
     "expresion": "emocionada",
     "condicion": { "tipo": "aceptaron_su_accion" },
     "lineas": [
-      "Perfecto, yo me encargo de la logística. En un ciclo tenemos a todo mundo entrenado.",
-      "Bueno, en dos. Dieciocho sucursales toman su tiempo."
+      "Perfecto, yo me encargo de la organización. En un ciclo tendremos a todos capacitados.",
+      "Bueno, quizá en dos. Son 18 sucursales."
     ],
     "respuestas": []
   },
@@ -54,8 +55,8 @@
     "expresion": "confundida",
     "condicion": { "tipo": "accion_elegida", "accionId": 2 },
     "lineas": [
-      "Entonces nomás vas a capacitar a unas cuantas. Bueno, algo es algo.",
-      "Espero que hayas escogido bien las sucursales."
+      "Entonces solo vas a capacitar a algunas sucursales. Bueno, algo es algo.",
+      "Espero que hayas elegido bien cuáles."
     ],
     "respuestas": []
   },
@@ -69,8 +70,8 @@
       "¿Cómo van los errores? ¿Ya bajaron con la capacitación?"
     ],
     "respuestas": [
-      { "texto": "Sí, se nota el cambio.", "efecto": "mostrar_resultados", "credibilidad": 1 },
-      { "texto": "Todavía no arranca.", "efecto": "postergar", "credibilidad": 0 }
+      { "texto": "Sí, ya se nota el cambio.", "efecto": "mostrar_resultados", "credibilidad": 1 },
+      { "texto": "Todavía no empieza.", "efecto": "postergar", "credibilidad": 0 }
     ]
   },
   {
@@ -81,12 +82,12 @@
     "expresion": "decepcionada",
     "condicion": { "tipo": "ninguna_accion_de", "acciones": [2, 3] },
     "lineas": [
-      "No capacitamos a nadie. Los errores siguen igual, director.",
-      "¿Me dejas al menos armar algo para el siguiente ciclo?"
+      "No hemos capacitado a nadie y los errores siguen igual, Director.",
+      "¿Me dejas preparar algo para el siguiente ciclo?"
     ],
     "respuestas": [
       { "texto": "El checklist ya está cubriendo eso.", "efecto": "rechazar", "credibilidad": 0 },
-      { "texto": "Sale, arma la capacitación focalizada.", "efecto": "aceptar:2", "credibilidad": 1 }
+      { "texto": "De acuerdo, prepara la capacitación focalizada.", "efecto": "aceptar:2", "credibilidad": 1 }
     ]
   },
   {
@@ -96,7 +97,7 @@
     "fase": "apertura",
     "expresion": "reflexiva",
     "lineas": [
-      "Ya llevamos tres ciclos. ¿Qué tanto movimos los errores?"
+      "Ya van tres ciclos. ¿Cuánto bajaron los errores?"
     ],
     "respuestas": [
       { "texto": "Han bajado bastante.", "efecto": "mostrar_resultados", "credibilidad": 1 },
@@ -111,8 +112,8 @@
     "expresion": "preocupada",
     "condicion": { "tipo": "kpi", "metrica": "erroresPor100", "operador": ">", "valor": 60 },
     "lineas": [
-      "Más de sesenta errores por cada cien solicitudes. Es mucho todavía.",
-      "Sin capacitación esto no baja, director."
+      "Todavía hay más de 60 errores por cada 100 solicitudes. Es mucho.",
+      "Sin capacitación esto no va a bajar, Director."
     ],
     "respuestas": []
   },
@@ -135,8 +136,8 @@
     "expresion": "orgullosa",
     "condicion": { "tipo": "kpi", "metrica": "erroresPor100", "operador": "<", "valor": 50 },
     "lineas": [
-      "Bajamos los errores a menos de cincuenta. Eso es un logro real.",
-      "La gente aprende si le das las herramientas."
+      "Bajamos a menos de 50 errores por cada 100 solicitudes. Es un logro real.",
+      "La gente aprende cuando le das las herramientas."
     ],
     "respuestas": []
   },
@@ -148,7 +149,7 @@
     "expresion": "frustrada",
     "condicion": { "tipo": "kpi", "metrica": "erroresPor100", "operador": ">=", "valor": 50 },
     "lineas": [
-      "Los errores siguen altos. Necesitábamos la capacitación completa."
+      "Los errores siguen altos. Necesitábamos capacitar a todas las sucursales."
     ],
     "respuestas": []
   },
@@ -160,9 +161,10 @@
     "expresion": "entusiasta",
     "condicion": { "tipo": "pide_consejo" },
     "lineas": [
-      "Capacitación general. Cien unidades, sí, pero le llegas a todas las sucursales.",
-      "El error de captura es el que más duele y es el más fácil de corregir con entrenamiento."
+      "Capacitación para todas las sucursales. Cuesta 100 unidades, pero llega a todos.",
+      "El error de captura es el más frecuente y el más fácil de corregir con entrenamiento."
     ],
+    "pendiente": "Recomendación de Silvia: capacitar a las 18 sucursales (100 unidades). Antes, revisar si los errores se concentran en pocas sucursales.",
     "respuestas": [
       { "texto": "Es demasiado caro.", "efecto": "rechazar", "credibilidad": 0 },
       { "texto": "Adelante.", "efecto": "aceptar:3", "credibilidad": 1 }
@@ -176,7 +178,7 @@
     "expresion": "triste",
     "condicion": { "tipo": "vida_perdida" },
     "lineas": [
-      "Ay, director. Esto no se siente bien.",
+      "Director, esto no va bien.",
       "Necesitamos hacer algo pronto."
     ],
     "respuestas": []
@@ -190,7 +192,7 @@
     "condicion": { "tipo": "credibilidad_baja" },
     "lineas": [
       "Director, la gente está perdiendo la confianza.",
-      "Necesitamos un resultado pronto, lo que sea."
+      "Necesitamos un resultado pronto, el que sea."
     ],
     "respuestas": []
   }

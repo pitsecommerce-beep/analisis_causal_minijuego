@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api, EVENTO_SESION_FINALIZADA } from '../api.js';
+import { api, EVENTO_SESION_FINALIZADA, EVENTO_VERIFICACION } from '../api.js';
 import { useSondeo } from '../sondeo.js';
 import { TabDatos } from '../componentes/TabDatos.js';
 import { TabAsesores } from '../componentes/TabAsesores.js';
@@ -13,6 +13,8 @@ import type { NombreIcono } from '../componentes/ui/Iconos.js';
 import { PiePagina } from '../componentes/ui/PiePagina.js';
 import { SalaEspera } from '../componentes/SalaEspera.js';
 import { Onboarding } from '../componentes/Onboarding.js';
+import { Pendientes, estaResuelto } from '../componentes/Pendientes.js';
+import { usePendientes } from '../pendientes.js';
 import type { PasoRecorrido } from '../componentes/Onboarding.js';
 
 type Vista = 'datos' | 'asesores' | 'decisiones';
@@ -43,6 +45,9 @@ export function Juego() {
   const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false);
   const [esperando, setEsperando] = useState(false);
   const [sesionFinalizada, setSesionFinalizada] = useState(false);
+  const [mostrarPendientes, setMostrarPendientes] = useState(false);
+  const [verificadas, setVerificadas] = useState<string[]>([]);
+  const pendientes = usePendientes();
   const [mostrarOnboarding, setMostrarOnboarding] = useState(false);
   const inicioRef = useRef(Date.now());
 
@@ -122,6 +127,18 @@ export function Juego() {
       .catch(() => {});
   }, INTERVALO_LATIDO, !!estado && !sesionFinalizada);
 
+  // Afirmaciones ya validadas con datos: cierran solas sus notas en la Lista de Pendientes
+  useEffect(() => {
+    if (!estado) return;
+    api.datos.verificaciones().then(setVerificadas).catch(() => {});
+    const alVerificar = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail;
+      setVerificadas(prev => prev.includes(id) ? prev : [...prev, id]);
+    };
+    window.addEventListener(EVENTO_VERIFICACION, alVerificar);
+    return () => window.removeEventListener(EVENTO_VERIFICACION, alVerificar);
+  }, [!!estado]);
+
   useEffect(() => {
     const alFinalizar = () => setSesionFinalizada(true);
     window.addEventListener(EVENTO_SESION_FINALIZADA, alFinalizar);
@@ -184,6 +201,12 @@ export function Juego() {
       icono: 'mensajes',
       titulo: 'Sala de Juntas',
       texto: 'Cierras la laptop y te reúnes con tu equipo. Haz clic en cada persona para escuchar su consejo. Algunas afirmaciones son ciertas y otras engañosas: responde con evidencia para convencerlos y ganar credibilidad.',
+    },
+    {
+      objetivo: 'pendientes',
+      icono: 'diagnostico',
+      titulo: 'Lista de pendientes',
+      texto: 'Cuando alguien de tu equipo afirma algo o te recomienda una acción, se anota aquí. Las notas se marcan solas cuando validas la afirmación con datos.',
     },
     {
       objetivo: 'tab-decisiones',
@@ -347,6 +370,7 @@ export function Juego() {
   const credibilidad = estado.credibilidad ?? 50;
   const presupuesto = estado.presupuestoDisponible ?? 0;
   const esTratamiento = infoExp?.grupo === 'tratamiento';
+  const porResolver = pendientes.filter(p => !estaResuelto(p, verificadas)).length;
 
   const credColor = credibilidad >= 60
     ? '#4ade80'
@@ -392,6 +416,26 @@ export function Juego() {
             <span className="barra-estado-valor">${presupuesto}</span>
           </div>
           <div className="barra-estado-item" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={() => setMostrarPendientes(true)}
+              data-tour="pendientes"
+              aria-label={`Lista de pendientes, ${porResolver} sin resolver`}
+              title="Lista de pendientes"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'rgba(255,255,255,0.1)',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.2)',
+                padding: '6px 10px',
+                fontSize: 13,
+              }}
+            >
+              <Icono nombre="diagnostico" tamano={16} />
+              <span className="ocultar-movil">Pendientes</span>
+              {porResolver > 0 && <span className="pendientes-contador">{porResolver}</span>}
+            </button>
             <button
               onClick={() => setMostrarOnboarding(true)}
               data-tour="ayuda"
@@ -478,6 +522,7 @@ export function Juego() {
         </div>
       </main>
       <PiePagina />
+      {mostrarPendientes && <Pendientes pendientes={pendientes} verificadas={verificadas} onCerrar={() => setMostrarPendientes(false)} />}
       {mostrarOnboarding && <Onboarding pasos={pasosRecorrido} onTerminar={terminarOnboarding} />}
     </div>
   );
