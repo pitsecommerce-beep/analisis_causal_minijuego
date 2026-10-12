@@ -45,6 +45,7 @@ export const api = {
   },
   jugador: {
     latido: () => request<{ sesionEstado: string }>('POST', '/jugador/latido'),
+    salir: () => request<{ ok: boolean }>('POST', '/jugador/salir'),
   },
   partida: {
     iniciar: () => request<any>('POST', '/partida/iniciar'),

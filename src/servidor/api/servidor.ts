@@ -10,7 +10,7 @@ import {
   crearSesion, obtenerSesionPorCodigo, obtenerSesionPorId,
   actualizarEstadoSesion, listarSesionesProfesor, eliminarSesiones,
   registrarJugador, contarJugadores, listarJugadoresSesion,
-  obtenerJugadorPorNombre, registrarLatido, renovarTokenJugador,
+  obtenerJugadorPorNombre, registrarLatido, renovarTokenJugador, registrarSalidaJugador,
   crearPartidaDB, obtenerPartida, actualizarPartida,
   listarPartidasSesion, registrarVerificacion, listarVerificaciones,
   actualizarSesionExperimento, asignarGrupoJugador,
@@ -225,7 +225,7 @@ async function reconectarJugador(req: express.Request, res: express.Response): P
     const sesion = await obtenerSesionPorCodigo(String(req.params['codigo']));
     const existente = sesion ? await obtenerJugadorPorNombre(sesion.id, String(req.body.nombre)) : null;
     if (!sesion || !existente || estaConectado(existente.ultima_actividad) !== false) {
-      res.status(409).json({ error: 'Ese nombre ya está en uso en esta sesión. Usa otro nombre.' });
+      res.status(409).json({ error: 'Ese nombre está activo en otro navegador. Si eres tú, cierra esa ventana o espera un par de minutos e inténtalo de nuevo; si no, usa otro nombre.' });
       return;
     }
     const token = await renovarTokenJugador(existente.id);
@@ -256,6 +256,12 @@ app.post('/api/sesion/:codigo/unirse', async (req, res) => {
     }
     if (sesion.estado !== 'abierta' && sesion.estado !== 'en_curso') {
       res.status(400).json({ error: 'La sesión ya no acepta jugadores' });
+      return;
+    }
+
+    // Quien vuelve con su mismo nombre retoma su partida, aunque la sesión esté llena
+    if (await obtenerJugadorPorNombre(sesion.id, nombre)) {
+      await reconectarJugador(req, res);
       return;
     }
 
@@ -301,6 +307,15 @@ app.post('/api/jugador/latido', autenticarJugador, async (req, res) => {
     if (codigoError(err) !== '42703') console.error(`[${new Date().toISOString()}] Error al registrar latido:`, err);
   }
   res.json({ sesionEstado: jugador.sesionEstado });
+});
+
+app.post('/api/jugador/salir', autenticarJugador, async (req, res) => {
+  try {
+    await registrarSalidaJugador((req as RequestJugador).jugador.id);
+    res.json({ ok: true });
+  } catch (err) {
+    responderError(res, 'Error al salir', err);
+  }
 });
 
 function idParam(req: express.Request): string {

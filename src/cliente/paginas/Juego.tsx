@@ -268,6 +268,8 @@ export function Juego() {
       icono: 'salir',
     });
     if (!ok) return;
+    // Libera el nombre para poder volver a entrar de inmediato; si falla, se libera solo al minuto y medio
+    await api.jugador.salir().catch(() => {});
     localStorage.clear();
     nav('/unirse');
   }

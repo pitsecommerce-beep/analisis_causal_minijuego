@@ -133,6 +133,16 @@ export async function renovarTokenJugador(jugadorId: string): Promise<string> {
   return token;
 }
 
+// Al salir se invalida el token y se marca como desconectado, para que pueda
+// volver a entrar de inmediato con el mismo nombre
+export async function registrarSalidaJugador(jugadorId: string): Promise<void> {
+  const { error } = await sb()
+    .from('jugadores')
+    .update({ token: generarToken(), ultima_actividad: null })
+    .eq('id', jugadorId);
+  if (error) throw error;
+}
+
 export async function contarJugadores(sesionId: string): Promise<number> {
   const { count, error } = await sb()
     .from('jugadores')
