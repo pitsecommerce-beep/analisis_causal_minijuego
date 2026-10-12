@@ -1589,3 +1589,72 @@ input[type='checkbox'].casilla {
 .linea-texto { line-height: 1.45; }
 .linea-evento.tipo-aviso { background: var(--color-advertencia-suave); }
 .linea-evento.tipo-acciones, .linea-evento.tipo-votacion { background: var(--color-fondo); font-weight: 500; }
+
+/* --- Inducción: Ramón de medio cuerpo abajo a la izquierda --- */
+.ramon-escena {
+  position: fixed;
+  left: 24px;
+  right: 24px;
+  bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  pointer-events: none;
+  animation: ramon-entrar 0.35s steps(5) both;
+}
+@keyframes ramon-entrar { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.ramon-medio-cuerpo {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  flex-shrink: 0;
+  filter: drop-shadow(4px 0 0 rgba(11, 22, 38, 0.35));
+}
+.ramon-globo {
+  position: relative;
+  pointer-events: auto;
+  align-self: flex-end;
+  margin-bottom: 120px;
+  flex: 0 1 460px;
+  min-width: 0;
+  background: #fffdf8;
+  color: var(--color-texto);
+  padding: 16px 18px 14px;
+  box-shadow: 0 0 0 3px #0b1626, 6px 6px 0 3px rgba(11, 22, 38, 0.35);
+}
+.ramon-globo::before {
+  content: '';
+  position: absolute;
+  left: -15px;
+  bottom: 28px;
+  border-style: solid;
+  border-width: 9px 15px 9px 0;
+  border-color: transparent #0b1626 transparent transparent;
+}
+.ramon-globo::after {
+  content: '';
+  position: absolute;
+  left: -10px;
+  bottom: 31px;
+  border-style: solid;
+  border-width: 6px 11px 6px 0;
+  border-color: transparent #fffdf8 transparent transparent;
+}
+.ramon-globo-nombre { font-family: 'Pixelify Sans', 'Inter', system-ui, sans-serif; font-size: 15px; font-weight: 600; color: #0f2b4a; }
+.ramon-globo-nombre small { font-family: 'Inter', system-ui, sans-serif; font-weight: 500; font-size: 12px; color: var(--color-texto-secundario); margin-left: 6px; }
+.ramon-globo-titulo { font-size: 17px; font-weight: 700; color: var(--color-primario); margin: 4px 0 0; }
+.ramon-globo-texto { font-size: 14px; line-height: 1.6; color: var(--color-texto); margin: 8px 0 0; min-height: 3.2em; cursor: default; }
+.ramon-cursor { color: #b7791f; animation: ramon-cursor 0.6s steps(2) infinite; margin-left: 1px; }
+@keyframes ramon-cursor { 50% { opacity: 0; } }
+.recorrido-foco-pulso { animation: foco-pulso 1.6s ease-in-out infinite; }
+@keyframes foco-pulso {
+  0%, 100% { outline: 3px solid rgba(242, 193, 78, 0.95); outline-offset: 0; }
+  50% { outline: 3px solid rgba(242, 193, 78, 0.35); outline-offset: 5px; }
+}
+@media (max-width: 640px) {
+  /* En celular el globo va arriba, a todo lo ancho, y Ramón debajo */
+  .ramon-escena { left: 8px; right: 8px; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .ramon-globo { order: -1; align-self: stretch; flex: none; margin: 0 0 0 4px; padding: 12px 14px; }
+  .ramon-globo::before { left: 40px; bottom: -15px; border-width: 15px 9px 0 9px; border-color: #0b1626 transparent transparent transparent; }
+  .ramon-globo::after { left: 43px; bottom: -10px; border-width: 11px 6px 0 6px; border-color: #fffdf8 transparent transparent transparent; }
+  .ramon-globo-texto { font-size: 13px; min-height: 0; }
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
-import { CLAVE_PENDIENTES } from '../pendientes.js';
+import { olvidarPartidaAnterior } from '../pendientes.js';
 import { VistaAcceso } from '../componentes/ui/VistaAcceso.js';
 import { useUI } from '../componentes/ui/Notificaciones.js';
 
@@ -27,7 +27,7 @@ export function Unirse() {
       // Cada participación nueva vuelve a mostrar la inducción al entrar al simulador
       else {
         localStorage.removeItem('onboardingVisto');
-        localStorage.removeItem(CLAVE_PENDIENTES);
+        olvidarPartidaAnterior();
       }
       nav('/juego');
     } catch (err: any) {

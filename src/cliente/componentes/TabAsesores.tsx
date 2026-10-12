@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { api } from '../api.js';
 import { useUI } from './ui/Notificaciones.js';
 import * as P from './sala/pixel.js';
-import { agregarPendiente } from '../pendientes.js';
+import { agregarPendiente, CLAVE_MEMORIA_SALA } from '../pendientes.js';
 
 interface Respuesta { texto: string; efecto: string; credibilidad: number }
 interface Nodo {
@@ -52,7 +52,7 @@ const DURACION_CIERRE = 1100;
 // Breve momento con la laptop abierta antes de cerrarla sola al entrar
 const PAUSA_INTRO = 450;
 const DURACION_APERTURA = 850;
-const CLAVE_MEMORIA = 'salaJuntas:v1';
+const CLAVE_MEMORIA = CLAVE_MEMORIA_SALA;
 
 function leerMemoria(): { vistos: Set<string>; respondidos: Set<string> } {
   try {

@@ -479,6 +479,34 @@ export function dibujarPersonaje(c: Ctx, per: Personaje, est: EstadoPersonaje, b
   return { x0: cx - per.ancho - 3, y0: H - 6, x1: cx + per.ancho + 3, y1: base + 6 };
 }
 
+// --- Medio cuerpo para presentar la inducción ---
+
+export const MEDIO_CUERPO = { ancho: 64, alto: 58 };
+
+/** Medio cuerpo sin silla ni fondo. Con `senala`, levanta el brazo derecho apuntando hacia arriba. */
+export function dibujarMedioCuerpo(c: Ctx, per: Personaje, est: EstadoPersonaje, senala = false) {
+  const cx = 26;
+  const H = 4 + est.respiro;
+  const S = H + 17;
+  const fondo = MEDIO_CUERPO.alto;
+  const [, base, sombra] = per.ropa.tono;
+  const [, pielBase, pielSombra] = per.piel;
+  torso(c, per, cx, S, fondo);
+  // Brazo izquierdo a un costado
+  r(c, cx - per.ancho - 2, S + 4, 3, fondo - S - 4, base);
+  if (senala) {
+    // Hombro, antebrazo en diagonal y mano con el índice extendido
+    r(c, cx + per.ancho - 1, S + 4, 3, 6, sombra);
+    for (let i = 0; i < 10; i++) r(c, cx + per.ancho + i, S + 4 - i, 3, 3, i < 7 ? base : sombra);
+    r(c, cx + per.ancho + 9, S - 9, 4, 4, pielBase);
+    r(c, cx + per.ancho + 12, S - 12, 2, 4, pielBase);
+    p(c, cx + per.ancho + 9, S - 6, pielSombra);
+  } else {
+    r(c, cx + per.ancho - 1, S + 4, 3, fondo - S - 4, sombra);
+  }
+  cabeza(c, per, cx, H, est);
+}
+
 /** Antebrazos y manos sobre la mesa (se dibujan después de la mesa). */
 export function dibujarManos(c: Ctx, per: Personaje, est: EstadoPersonaje) {
   if (!per.sentado || per.id === 'oscar') return;

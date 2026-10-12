@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { NombreIcono } from './ui/Iconos.js';
-import { RetratoBetancourt } from './Betancourt.js';
+import { RamonMedioCuerpo } from './Betancourt.js';
 import type { Animo } from './sala/pixel.js';
 
 export interface PasoRecorrido {
-  // Valor del atributo data-tour del elemento a señalar. Sin objetivo, el paso aparece centrado.
+  // Valor del atributo data-tour del elemento a señalar. Sin objetivo, Ramón solo habla.
   objetivo?: string;
   icono?: NombreIcono;
   // Expresión de Betancourt en este paso
@@ -23,10 +22,9 @@ interface Props {
 }
 
 const MARGEN = 8;
-const ANCHO_GLOBO = 400;
-// Betancourt mueve la boca un momento al empezar cada paso
-const MS_HABLANDO = 1800;
-const SEPARACION = 14;
+// Velocidad de la máquina de escribir: caracteres cada 28 ms, como en la Sala de Juntas
+const CARACTERES_POR_TICK = 2;
+const MS_TICK = 28;
 
 interface Caja { top: number; left: number; width: number; height: number }
 
@@ -39,29 +37,42 @@ function medir(objetivo?: string): Caja | null {
   return { top: r.top - MARGEN, left: r.left - MARGEN, width: r.width + MARGEN * 2, height: r.height + MARGEN * 2 };
 }
 
+function escalaRamon(): number {
+  const w = window.innerWidth;
+  return w < 640 ? 2.5 : w < 1100 ? 4 : 5;
+}
+
+// Inducción presentada por Ramón Betancourt: aparece de medio cuerpo abajo a la izquierda
+// y habla mientras se señalan los elementos de la interfaz
 export function Onboarding({ pasos, onTerminar }: Props) {
   const [indice, setIndice] = useState(0);
   const [caja, setCaja] = useState<Caja | null>(null);
-  const [altoGlobo, setAltoGlobo] = useState(0);
-  const [hablando, setHablando] = useState(true);
-  const globoRef = useRef<HTMLDivElement>(null);
+  const [escritos, setEscritos] = useState(0);
+  const [escala, setEscala] = useState(escalaRamon);
   const paso = pasos[indice]!;
   const esUltimo = indice === pasos.length - 1;
+  const escribiendo = escritos < paso.texto.length;
 
   const ir = useCallback((i: number) => {
     setIndice(Math.max(0, Math.min(i, pasos.length - 1)));
   }, [pasos.length]);
 
   useEffect(() => {
-    setHablando(true);
-    const id = window.setTimeout(() => setHablando(false), MS_HABLANDO);
-    return () => window.clearTimeout(id);
-  }, [indice]);
-
-  useEffect(() => {
     paso.alEntrar?.();
     const el = paso.objetivo ? document.querySelector(`[data-tour="${paso.objetivo}"]`) : null;
     el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [indice]);
+
+  // Máquina de escribir: Ramón mueve la boca mientras aparece el texto
+  useEffect(() => {
+    setEscritos(0);
+    const id = window.setInterval(() => {
+      setEscritos(n => {
+        if (n >= paso.texto.length) { window.clearInterval(id); return n; }
+        return n + CARACTERES_POR_TICK;
+      });
+    }, MS_TICK);
+    return () => window.clearInterval(id);
   }, [indice]);
 
   // El objetivo puede aparecer tarde (datos cargando) o moverse con el scroll, así que se mide de forma continua
@@ -79,73 +90,62 @@ export function Onboarding({ pasos, onTerminar }: Props) {
     return () => window.cancelAnimationFrame(cuadro);
   }, [paso.objetivo]);
 
-  useLayoutEffect(() => {
-    if (globoRef.current) setAltoGlobo(globoRef.current.offsetHeight);
-  }, [indice, caja?.width]);
+  useEffect(() => {
+    const alRedimensionar = () => setEscala(escalaRamon());
+    window.addEventListener('resize', alRedimensionar);
+    return () => window.removeEventListener('resize', alRedimensionar);
+  }, []);
+
+  function siguiente() {
+    // El primer clic termina de mostrar el texto; el segundo avanza
+    if (escribiendo) { setEscritos(paso.texto.length); return; }
+    if (esUltimo) onTerminar(); else ir(indice + 1);
+  }
 
   useEffect(() => {
     function onTecla(e: KeyboardEvent) {
-      if (e.key === 'ArrowRight') ir(indice + 1);
+      if (e.key === 'ArrowRight') siguiente();
       if (e.key === 'ArrowLeft') ir(indice - 1);
       if (e.key === 'Escape') onTerminar();
     }
     window.addEventListener('keydown', onTecla);
     return () => window.removeEventListener('keydown', onTecla);
-  }, [indice, ir, onTerminar]);
-
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const ancho = Math.min(ANCHO_GLOBO, vw - 32);
-  let estiloGlobo: CSSProperties;
-  let flecha: 'arriba' | 'abajo' | null = null;
-  let flechaLeft = 0;
-
-  if (caja) {
-    const cabeAbajo = caja.top + caja.height + SEPARACION + altoGlobo < vh - 16;
-    const top = cabeAbajo ? caja.top + caja.height + SEPARACION : Math.max(16, caja.top - SEPARACION - altoGlobo);
-    const centro = caja.left + caja.width / 2;
-    const left = Math.max(16, Math.min(centro - ancho / 2, vw - ancho - 16));
-    estiloGlobo = { top, left, width: ancho };
-    flecha = cabeAbajo ? 'arriba' : 'abajo';
-    flechaLeft = Math.max(20, Math.min(centro - left, ancho - 20));
-  } else {
-    estiloGlobo = { top: '50%', left: '50%', width: ancho, transform: 'translate(-50%, -50%)' };
-  }
+  }, [indice, escribiendo, ir, onTerminar]);
 
   return (
     <div className="recorrido" role="dialog" aria-modal="true" aria-labelledby="recorrido-titulo">
       <div className="recorrido-bloqueo" />
       {caja
-        ? <div className="recorrido-foco" style={{ top: caja.top, left: caja.left, width: caja.width, height: caja.height }} />
+        ? <div className="recorrido-foco recorrido-foco-pulso" style={{ top: caja.top, left: caja.left, width: caja.width, height: caja.height }} />
         : <div className="recorrido-velo" />}
 
-      <div ref={globoRef} key={indice} className="recorrido-globo" style={estiloGlobo}>
-        {flecha && <span className={`recorrido-flecha recorrido-flecha-${flecha}`} style={{ left: flechaLeft }} />}
-        <div className="recorrido-cabecera">
-          <RetratoBetancourt hablando={hablando} animo={paso.animo ?? 'neutral'} tamano={56} />
-          <div>
-            <div className="betancourt-nombre">Ramón Betancourt <small>a nombre del Consejo</small></div>
-            <h2 id="recorrido-titulo" className="recorrido-titulo">{paso.titulo}</h2>
-          </div>
-        </div>
-        <p className="recorrido-texto">{paso.texto}</p>
-        {paso.puntos && (
-          <ul className="onboarding-puntos">
-            {paso.puntos.map(p => <li key={p}>{p}</li>)}
-          </ul>
-        )}
-        <div className="recorrido-pie">
-          <span className="onboarding-paso">{indice + 1} de {pasos.length}</span>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {!esUltimo && (
-              <button className="enlace enlace-sutil onboarding-saltar" onClick={onTerminar}>Saltar</button>
-            )}
-            {indice > 0 && (
-              <button className="btn-fantasma btn-sm" onClick={() => ir(indice - 1)}>Anterior</button>
-            )}
-            <button className="btn-primario btn-sm" onClick={() => esUltimo ? onTerminar() : ir(indice + 1)} autoFocus>
-              {esUltimo ? 'Comenzar' : 'Siguiente'}
-            </button>
+      <div className="ramon-escena">
+        <RamonMedioCuerpo hablando={escribiendo} animo={paso.animo ?? 'neutral'} senala={!!caja} escala={escala} />
+        <div className="ramon-globo" onClick={() => escribiendo && setEscritos(paso.texto.length)}>
+          <div className="ramon-globo-nombre">Ramón Betancourt <small>a nombre del Consejo</small></div>
+          <h2 id="recorrido-titulo" className="ramon-globo-titulo">{paso.titulo}</h2>
+          <p className="ramon-globo-texto" aria-live="polite">
+            {paso.texto.slice(0, escritos)}
+            {escribiendo && <span className="ramon-cursor" aria-hidden="true">▌</span>}
+          </p>
+          {paso.puntos && !escribiendo && (
+            <ul className="onboarding-puntos">
+              {paso.puntos.map(p => <li key={p}>{p}</li>)}
+            </ul>
+          )}
+          <div className="recorrido-pie">
+            <span className="onboarding-paso">{indice + 1} de {pasos.length}</span>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {!esUltimo && (
+                <button className="enlace enlace-sutil onboarding-saltar" onClick={onTerminar}>Saltar</button>
+              )}
+              {indice > 0 && (
+                <button className="btn-fantasma btn-sm" onClick={() => ir(indice - 1)}>Anterior</button>
+              )}
+              <button className="btn-primario btn-sm" onClick={e => { e.stopPropagation(); siguiente(); }} autoFocus>
+                {esUltimo && !escribiendo ? 'Comenzar' : 'Siguiente'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
