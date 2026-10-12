@@ -21,6 +21,7 @@ import { generarRecomendacion } from '../experimento/asesor-algoritmico.js';
 import { serializarDialogo, deserializarDialogo } from '../db/serializar.js';
 import { autenticarProfesor, autenticarJugador } from './middleware.js';
 import { estaConectado } from './presencia.js';
+import { esCorreoProfesor, MENSAJE_DOMINIO } from './dominio.js';
 import type { RequestProfesor, RequestJugador } from './middleware.js';
 import { crearPartida, elegirAcciones, declararCompromiso, procesarCiclo } from '../motor/ciclos.js';
 import { evaluarPartida, determinarDesenlace } from '../puntuacion/evaluacion.js';
@@ -140,6 +141,10 @@ app.post('/api/profesor/registrar', async (req, res) => {
     res.status(400).json({ error: 'Email y password requeridos' });
     return;
   }
+  if (!esCorreoProfesor(email)) {
+    res.status(403).json({ error: MENSAJE_DOMINIO });
+    return;
+  }
 
   const sb = obtenerSupabase();
   const { data, error } = await sb.auth.admin.createUser({
@@ -160,6 +165,10 @@ app.post('/api/profesor/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     res.status(400).json({ error: 'Email y password requeridos' });
+    return;
+  }
+  if (!esCorreoProfesor(email)) {
+    res.status(403).json({ error: MENSAJE_DOMINIO });
     return;
   }
 
