@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import { api } from '../api.js';
 import { Icono } from './ui/Iconos.js';
 import { useUI } from './ui/Notificaciones.js';
+import { VotacionCiclo } from './VotacionCiclo.js';
 
 interface Props {
   estado: any;
   onEstadoCambio: (estado: any) => void;
+  onIrEspina?: () => void;
 }
 
-export function TabDecisiones({ estado, onEstadoCambio }: Props) {
+export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
   const { avisar, confirmar } = useUI();
   const [acciones, setAcciones] = useState<any[]>([]);
   const [metricas, setMetricas] = useState<any[]>([]);
@@ -18,6 +20,7 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
   const [compromisoDeclarado, setCompromisoDeclarado] = useState(false);
+  const [votando, setVotando] = useState(false);
 
   useEffect(() => {
     Promise.all([api.config.acciones(), api.config.metricas()])
@@ -83,7 +86,13 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
     }
   }
 
-  async function avanzarCiclo() {
+  // Antes de avanzar se votan las causas principales y se escriben los 5 porqués
+  function avanzarCiclo() {
+    setVotando(true);
+  }
+
+  async function confirmarAvance() {
+    setVotando(false);
     const ok = await confirmar({
       titulo: 'Avanzar al siguiente ciclo',
       mensaje: seleccionadas.length > 0
@@ -248,6 +257,10 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
             onClick={avanzarCiclo} disabled={cargando || !compromisoDeclarado}>
             Avanzar al siguiente ciclo
           </button>
+          {votando && (
+            <VotacionCiclo ciclo={estado?.cicloActual ?? 1} onCancelar={() => setVotando(false)} onVotado={confirmarAvance}
+              onIrEspina={() => { setVotando(false); onIrEspina?.(); }} />
+          )}
 
           {estado?.kpis && (
             <div className="tarjeta" style={{ marginTop: 20 }}>

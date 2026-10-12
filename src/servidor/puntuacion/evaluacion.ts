@@ -1,5 +1,6 @@
 import type { EstadoPartida } from '../motor/ciclos.js';
 import type { KPIs } from '../motor/kpis.js';
+import { PREFIJO_SIN_RESPALDO, PREFIJO_SIN_VERIFICAR } from '../../compartido/espina.js';
 
 export interface CausaDeclarada {
   id: string;
@@ -37,6 +38,17 @@ export function evaluarDiagnostico(
   const detalles: string[] = [];
 
   for (const causa of causasDeclaradas) {
+    // Verificada con datos, pero el análisis no respalda ninguna de las causas raíz
+    if (causa.id.startsWith(PREFIJO_SIN_RESPALDO)) {
+      detalles.push(`${causa.nombre} (verificada, sin relación con una causa raíz): 0`);
+      continue;
+    }
+    if (causa.id.startsWith(PREFIJO_SIN_VERIFICAR)) {
+      const penalizacion = config.penalizacionCausaEspuria ?? -40;
+      puntos += penalizacion;
+      detalles.push(`${causa.nombre} (votada sin verificar): ${penalizacion}`);
+      continue;
+    }
     const valor = CAUSAS_REALES[causa.id];
     if (valor != null) {
       puntos += valor;

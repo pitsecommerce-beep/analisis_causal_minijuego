@@ -15,9 +15,11 @@ import { SalaEspera } from '../componentes/SalaEspera.js';
 import { Onboarding } from '../componentes/Onboarding.js';
 import { Pendientes, estaResuelto } from '../componentes/Pendientes.js';
 import { usePendientes } from '../pendientes.js';
+import { TabEspina } from '../componentes/TabEspina.js';
+import { cargarEspina, fijarCicloEspina } from '../espina.js';
 import type { PasoRecorrido } from '../componentes/Onboarding.js';
 
-type Vista = 'datos' | 'asesores' | 'decisiones';
+type Vista = 'datos' | 'asesores' | 'espina' | 'decisiones';
 
 const INTERVALO_ESPERA = 4000;
 const INTERVALO_LATIDO = 15000;
@@ -30,6 +32,7 @@ function onboardingVisto(): boolean {
 const TABS: { id: Vista; label: string; icono: NombreIcono }[] = [
   { id: 'datos', label: 'Datos', icono: 'tabla' },
   { id: 'asesores', label: 'Sala de Juntas', icono: 'mensajes' },
+  { id: 'espina', label: 'Espina de pescado', icono: 'diagnostico' },
   { id: 'decisiones', label: 'Decisiones', icono: 'decisiones' },
 ];
 
@@ -126,6 +129,11 @@ export function Juego() {
       .then(({ sesionEstado }) => { if (sesionEstado === 'finalizada') setSesionFinalizada(true); })
       .catch(() => {});
   }, INTERVALO_LATIDO, !!estado && !sesionFinalizada);
+
+  useEffect(() => {
+    if (estado) cargarEspina();
+  }, [!!estado]);
+  useEffect(() => { fijarCicloEspina(estado?.cicloActual ?? 1); }, [estado?.cicloActual]);
 
   // Afirmaciones ya validadas con datos: cierran solas sus notas en la Lista de Pendientes
   useEffect(() => {
@@ -516,8 +524,9 @@ export function Juego() {
             onAbrirLaptop={() => onCambioVista('datos')}
           />
         )}
+        {vista === 'espina' && <TabEspina />}
         {vista === 'decisiones' && (
-          <TabDecisiones estado={estado} onEstadoCambio={onEstadoCambio} />
+          <TabDecisiones estado={estado} onEstadoCambio={onEstadoCambio} onIrEspina={() => onCambioVista('espina')} />
         )}
         </div>
       </main>

@@ -21,6 +21,8 @@ import { generarRecomendacion } from '../experimento/asesor-algoritmico.js';
 import { serializarDialogo, deserializarDialogo } from '../db/serializar.js';
 import { autenticarProfesor, autenticarJugador } from './middleware.js';
 import { estaConectado } from './presencia.js';
+import { normalizarEspina, validarVotacion, causasDesdeEspina, ESPINA_VACIA } from '../../compartido/espina.js';
+import type { Espina } from '../../compartido/espina.js';
 import { esCorreoProfesor, MENSAJE_DOMINIO } from './dominio.js';
 import type { RequestProfesor, RequestJugador } from './middleware.js';
 import { crearPartida, elegirAcciones, declararCompromiso, procesarCiclo } from '../motor/ciclos.js';
@@ -680,6 +682,11 @@ app.post('/api/partida/avanzar', autenticarJugador, sesionActiva, async (req, re
       res.status(400).json({ error: 'Partida terminada' });
       return;
     }
+    // Cada ciclo se cierra votando las causas principales y escribiendo los 5 porqués
+    if (!espinaDe(estado).votaciones.some(v => v.ciclo === estado.cicloActual)) {
+      res.status(400).json({ error: 'Antes de avanzar, vota tus causas principales y escribe tus 5 porqués.', requiereVotacion: true });
+      return;
+    }
 
     const resultado = procesarCiclo(estado, config.acciones as any, config.eventos);
 
@@ -934,8 +941,60 @@ function calcularCredibilidadRespuesta(efecto: string): number {
   return 0;
 }
 
+// ╔══════════════════════════════════════╗
+// ║     ESPINA DE PESCADO                ║
+// ╚══════════════════════════════════════╝
+
+// La espina vive dentro del estado de la partida (JSONB); el motor conserva las claves extra
+function espinaDe(estado: Record<string, unknown>): Espina {
+  return (estado['espina'] as Espina | undefined) ?? ESPINA_VACIA;
+}
+
+app.get('/api/partida/espina', autenticarJugador, async (req, res) => {
+  try {
+    const partida = await obtenerPartida((req as RequestJugador).jugador.id);
+    if (!partida) { res.status(404).json({ error: 'Partida no encontrada' }); return; }
+    res.json(espinaDe(partida.estado as Record<string, unknown>));
+  } catch (err) {
+    responderError(res, 'Error al leer la espina de pescado', err);
+  }
+});
+
+app.put('/api/partida/espina', autenticarJugador, sesionActiva, async (req, res) => {
+  try {
+    const jugador = (req as RequestJugador).jugador;
+    const partida = await obtenerPartida(jugador.id);
+    if (!partida || partida.fase !== 'jugando') { res.status(400).json({ error: 'Partida no activa' }); return; }
+    const estado = partida.estado as Record<string, unknown>;
+    const espina = normalizarEspina(req.body, await listarVerificaciones(partida.id), espinaDe(estado));
+    estado['espina'] = espina;
+    await actualizarPartida(jugador.id, estado as any, partida.estado_dialogo as any);
+    res.json(espina);
+  } catch (err) {
+    responderError(res, 'Error al guardar la espina de pescado', err);
+  }
+});
+
+app.post('/api/partida/votacion', autenticarJugador, sesionActiva, async (req, res) => {
+  try {
+    const jugador = (req as RequestJugador).jugador;
+    const partida = await obtenerPartida(jugador.id);
+    if (!partida || partida.fase !== 'jugando') { res.status(400).json({ error: 'Partida no activa' }); return; }
+    const estado = partida.estado as Record<string, unknown>;
+    const espina = espinaDe(estado);
+    const r = validarVotacion(espina, req.body?.causas, req.body?.porques);
+    if (!r.ok) { res.status(400).json({ error: r.error }); return; }
+    const ciclo = Number(estado['cicloActual']) || 1;
+    estado['espina'] = { ...espina, votaciones: [...espina.votaciones.filter(v => v.ciclo !== ciclo), { ciclo, ...r.votacion }] };
+    await actualizarPartida(jugador.id, estado as any, partida.estado_dialogo as any);
+    res.json(estado['espina']);
+  } catch (err) {
+    responderError(res, 'Error al guardar la votación', err);
+  }
+});
+
 app.post('/api/partida/cierre', autenticarJugador, async (req, res) => {
-  const { causas, herramientas, consultoGuia, pasosEnOrden } = req.body;
+  const { herramientas, consultoGuia, pasosEnOrden } = req.body;
 
   try {
     const jugador = (req as RequestJugador).jugador;
@@ -960,7 +1019,7 @@ app.post('/api/partida/cierre', autenticarJugador, async (req, res) => {
     const desglose = evaluarPartida(
       estado,
       { ...config.kpisIniciales },
-      causas ?? [],
+      causasDesdeEspina(espinaDe(estado)),
       verificaciones.length,
       refutaciones,
       accionesSinVerificar,

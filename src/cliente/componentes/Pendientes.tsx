@@ -2,11 +2,19 @@ import { useEffect } from 'react';
 import { alternarPendiente } from '../pendientes.js';
 import type { Pendiente } from '../pendientes.js';
 import { Icono } from './ui/Iconos.js';
+import { RAMAS_6M } from '../../compartido/espina.js';
+import type { Rama } from '../../compartido/espina.js';
+import { useEspina, agregarTarjeta } from '../espina.js';
 
 interface Props {
   pendientes: Pendiente[];
   verificadas: string[];
   onCerrar: () => void;
+}
+
+// La nota pasa a la espina como causa posible, sin la instrucción inicial
+function textoCausa(nota: string): string {
+  return nota.replace(/^(Validar|Revisar|Recomendación de [^:]+):\s*/i, '');
 }
 
 export function estaResuelto(p: Pendiente, verificadas: string[]): boolean {
@@ -21,6 +29,8 @@ export function Pendientes({ pendientes, verificadas, onCerrar }: Props) {
     return () => window.removeEventListener('keydown', alTeclear);
   }, [onCerrar]);
 
+  const espina = useEspina();
+  const enEspina = new Set(espina.tarjetas.map(t => t.pendienteId).filter(Boolean));
   const abiertos = pendientes.filter(p => !estaResuelto(p, verificadas));
   const resueltos = pendientes.filter(p => estaResuelto(p, verificadas));
 
@@ -52,9 +62,17 @@ export function Pendientes({ pendientes, verificadas, onCerrar }: Props) {
                     <span className="pendientes-meta">
                       {p.personaje}
                       {validada && <span className="badge badge-exito">Validado con datos</span>}
+                      {enEspina.has(p.id) && <span className="badge badge-info">En la espina</span>}
                     </span>
                   </span>
                 </label>
+                {!enEspina.has(p.id) && (
+                  <select className="pendientes-enviar" value="" aria-label="Enviar a la espina de pescado"
+                    onChange={e => e.target.value && agregarTarjeta({ rama: e.target.value as Rama, texto: textoCausa(p.texto), origen: 'equipo', pendienteId: p.id })}>
+                    <option value="">Enviar a la espina…</option>
+                    {RAMAS_6M.map(r => <option key={r.id} value={r.id}>Rama {r.nombre}</option>)}
+                  </select>
+                )}
               </li>
             );
           })}

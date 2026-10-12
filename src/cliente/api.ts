@@ -1,3 +1,5 @@
+import type { Espina } from '../compartido/espina.js';
+
 const BASE = '/api';
 export const EVENTO_SESION_FINALIZADA = 'sesion-finalizada';
 export const EVENTO_VERIFICACION = 'verificacion-registrada';
@@ -92,10 +94,13 @@ export const api = {
       request<any>('POST', '/partida/compromiso', { metrica, valorPrometido }),
     avanzar: () => request<any>('POST', '/partida/avanzar'),
     dialogos: () => request<any[]>('GET', '/partida/dialogos'),
+    espina: () => request<Espina>('GET', '/partida/espina'),
+    guardarEspina: (espina: Pick<Espina, 'tarjetas' | 'evidencias'>) => request<Espina>('PUT', '/partida/espina', espina),
+    votar: (causas: string[], porques: string[]) => request<Espina>('POST', '/partida/votacion', { causas, porques }),
     respuesta: (nodoId: string, efecto: string, personaje: string) =>
       request<any>('POST', '/partida/respuesta', { nodoId, efecto, personaje }),
-    cierre: (causas: any[], herramientas: string[], consultoGuia: boolean, pasosEnOrden: boolean) =>
-      request<any>('POST', '/partida/cierre', { causas, herramientas, consultoGuia, pasosEnOrden }),
+    cierre: (herramientas: string[], consultoGuia: boolean, pasosEnOrden: boolean) =>
+      request<any>('POST', '/partida/cierre', { herramientas, consultoGuia, pasosEnOrden }),
   },
   datos: {
     solicitudes: () => request<any[]>('GET', '/datos/solicitudes'),

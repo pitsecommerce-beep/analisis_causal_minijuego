@@ -4,17 +4,8 @@ import { api } from '../api.js';
 import { useUI } from '../componentes/ui/Notificaciones.js';
 import { Icono } from '../componentes/ui/Iconos.js';
 import { PiePagina } from '../componentes/ui/PiePagina.js';
-
-const CAUSAS_OPCIONES = [
-  { id: 'ventana_captura_cuello', nombre: 'Ventana de captura como cuello de botella' },
-  { id: 'reproceso_documental', nombre: 'Reproceso documental (errores de captura)' },
-  { id: 'fuga_aprobados_sin_plastico', nombre: 'Fuga de aprobados sin plástico enviado' },
-  { id: 'secuencia_tardia_buro', nombre: 'Secuencia tardía de consulta al buró' },
-  { id: 'saturacion_sucursales', nombre: 'Saturación de sucursales específicas' },
-  { id: 'falta_capacitacion', nombre: 'Falta de capacitación del personal' },
-  { id: 'sistema_lento', nombre: 'Lentitud del sistema informático' },
-  { id: 'politica_credito_restrictiva', nombre: 'Política de crédito demasiado restrictiva' },
-];
+import { useEspina, cargarEspina } from '../espina.js';
+import { ESTADOS, causasDeTarjeta, ultimaVotacion } from '../../compartido/espina.js';
 
 const COLORES_DESENLACE: Record<string, { color: string; bg: string }> = {
   reconversion: { color: '#1a7a4c', bg: '#e6f5ed' },
@@ -37,7 +28,9 @@ export function Resultados() {
   const nav = useNavigate();
   const { avisar, confirmar } = useUI();
   const [fase, setFase] = useState<'cierre' | 'resultado'>('cierre');
-  const [causasSeleccionadas, setCausasSeleccionadas] = useState<string[]>([]);
+  const espina = useEspina();
+  const votacion = ultimaVotacion(espina);
+  const votadas = (votacion?.causas ?? []).map(id => espina.tarjetas.find(t => t.id === id)).filter(t => t != null);
   const [consultoGuia, setConsultoGuia] = useState(false);
   const [pasosEnOrden, setPasosEnOrden] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -50,19 +43,14 @@ export function Resultados() {
   });
 
   useEffect(() => {
-    if (!localStorage.getItem('token')) nav('/unirse');
+    if (!localStorage.getItem('token')) { nav('/unirse'); return; }
+    cargarEspina();
   }, []);
-
-  function toggleCausa(id: string) {
-    setCausasSeleccionadas(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
-  }
 
   async function enviarCierre() {
     const ok = await confirmar({
       titulo: 'Enviar cierre de partida',
-      mensaje: `Declaraste ${causasSeleccionadas.length} causa(s) raíz. Una vez enviado el cierre se calculará tu puntuación final y no podrás modificarlo.`,
+      mensaje: 'Tu diagnóstico se calcula con las causas que votaste en el último ciclo y verificaste con datos. Una vez enviado el cierre se calculará tu puntuación final y no podrás modificarlo.',
       textoConfirmar: 'Enviar y ver resultado',
       tono: 'advertencia',
       icono: 'enviar',
@@ -71,11 +59,7 @@ export function Resultados() {
     setCargando(true);
     setErrorCierre('');
     try {
-      const causas = causasSeleccionadas.map(id => {
-        const c = CAUSAS_OPCIONES.find(x => x.id === id);
-        return { id, nombre: c?.nombre ?? id };
-      });
-      const res = await api.partida.cierre(causas, herramientas, consultoGuia, pasosEnOrden);
+      const res = await api.partida.cierre(herramientas, consultoGuia, pasosEnOrden);
       setResultado(res);
       setFase('resultado');
       avisar('exito', 'Cierre enviado', 'Tu resultado final está listo.');
@@ -121,35 +105,36 @@ export function Resultados() {
           </div>
 
           <div className="tarjeta" style={{ marginBottom: 16 }}>
-            <h4 style={{ marginBottom: 14, fontSize: 15, fontWeight: 600 }}>
-              Selecciona las causas raíz que identificaste
+            <h4 style={{ marginBottom: 6, fontSize: 15, fontWeight: 600 }}>
+              Tu diagnóstico: causas votadas en el ciclo {votacion?.ciclo ?? '-'}
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {CAUSAS_OPCIONES.map(c => {
-                const sel = causasSeleccionadas.includes(c.id);
-                return (
-                  <label key={c.id} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    cursor: 'pointer',
-                    padding: '10px 14px',
-                    borderRadius: 'var(--radio)',
-                    background: sel ? 'var(--color-primario-suave)' : 'transparent',
-                    border: `1px solid ${sel ? 'var(--color-primario-claro)' : 'var(--color-borde)'}`,
-                    transition: 'all 0.15s',
-                  }}>
-                    <input
-                      type="checkbox"
-                      className="casilla"
-                      checked={sel}
-                      onChange={() => toggleCausa(c.id)}
-                    />
-                    <span style={{ fontSize: 14 }}>{c.nombre}</span>
-                  </label>
-                );
-              })}
-            </div>
+            <p className="datos-nota" style={{ marginTop: 0 }}>
+              Vienen de tu espina de pescado. Solo suman las verificadas con datos; las votadas sin verificar restan.
+            </p>
+            {votadas.length === 0 ? (
+              <p style={{ fontSize: 14, color: 'var(--color-texto-secundario)' }}>No votaste causas en tu espina de pescado.</p>
+            ) : (
+              <ul className="votacion-causas">
+                {votadas.map(t => {
+                  const respaldo = causasDeTarjeta(espina, t).length > 0;
+                  return (
+                    <li key={t.id}>
+                      <label style={{ cursor: 'default' }}>
+                        <span>{t.texto}</span>
+                        <span className={`badge ${t.estado === 'verificada' ? 'badge-exito' : 'badge-advertencia'}`}>
+                          {t.estado === 'verificada' && !respaldo ? 'Verificada, sin respaldo de causa raíz' : ESTADOS[t.estado]}
+                        </span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {votacion && (
+              <ol style={{ margin: '14px 0 0', paddingLeft: 20, fontSize: 13, lineHeight: 1.6, color: 'var(--color-texto-secundario)' }}>
+                {votacion.porques.map((p, i) => <li key={i}>{p}</li>)}
+              </ol>
+            )}
           </div>
 
           <div className="tarjeta" style={{ marginBottom: 20 }}>
@@ -183,7 +168,7 @@ export function Resultados() {
           )}
 
           <button className="btn-advertencia" style={{ width: '100%', padding: 16, fontSize: 16, borderRadius: 12 }}
-            onClick={enviarCierre} disabled={cargando || causasSeleccionadas.length === 0}>
+            onClick={enviarCierre} disabled={cargando}>
             {cargando ? 'Evaluando...' : 'Ver mi resultado'}
           </button>
         </div>

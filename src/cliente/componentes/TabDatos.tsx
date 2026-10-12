@@ -4,6 +4,7 @@ import { Icono } from './ui/Iconos.js';
 import type { NombreIcono } from './ui/Iconos.js';
 import { Histograma, Pareto, Corrida, Dispersion, CartaControl } from './Graficos.js';
 import { VistaProceso } from './VistaProceso.js';
+import { useEspina, agregarEvidencia } from '../espina.js';
 import {
   agregarCalculadas, COLUMNAS_CALCULADAS, COLUMNAS_CRUCE_COMENTARIOS, ESTRATOS, cartaControl, contarCategorias, correlacion, cruzar,
   formatoFecha, formatoNumero, histograma, pareto, pares, pivote, resumir, valoresEstrato, valoresNumericos, aNumero,
@@ -26,7 +27,7 @@ const HERRAMIENTAS: { id: IdHerramienta; nombre: string; icono: NombreIcono; ayu
 ];
 
 const MAPA_VERIFICACIONES: Record<string, { columnas: string[]; herramientas: IdHerramienta[] }> = {
-  medianas_iguales: { columnas: ['ventanaCaptura', 'dateFirstInput', 'dateLastInput'], herramientas: ['estadisticas', 'histograma'] },
+  medianas_iguales: { columnas: ['ventanaCaptura', 'dateFirstInput', 'dateLastInput'], herramientas: ['estadisticas', 'histograma', 'carta_control'] },
   errores_captura_interfaz: { columnas: ['comments'], herramientas: ['contar', 'filtro'] },
   trabajo_perdido_buro: { columnas: ['creditBureauRunDate', 'creditBureauResult'], herramientas: ['sumar', 'contar'] },
   error_captura_frecuente: { columnas: ['comments', 'erroresComentario'], herramientas: ['contar', 'pareto'] },
@@ -260,6 +261,8 @@ export function TabDatos({ onHerramientaUsada }: Props) {
           onSecundaria={setColSecundaria}
           filas={datosFiltrados}
           estrato={estratoActivo ? `${estratoActivo.nombre} ${estratoActivo.valor}` : ''}
+          verificacionId={verificacionDe(herramienta, columna.campo, verificaciones)}
+          hoja={hoja}
           filtroVal={filtroVal}
           onFiltro={setFiltroVal}
           onCerrar={cerrarHerramienta}
@@ -321,7 +324,15 @@ export function TabDatos({ onHerramientaUsada }: Props) {
   );
 }
 
-function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, onSecundaria, filas, estrato, filtroVal, onFiltro, onCerrar }: {
+// Verificación registrada que respalda este análisis, para adjuntarla como evidencia
+function verificacionDe(herramienta: IdHerramienta, campo: string, registradas: string[]): string | null {
+  for (const [id, regla] of Object.entries(MAPA_VERIFICACIONES)) {
+    if (registradas.includes(id) && regla.columnas.includes(campo) && regla.herramientas.includes(herramienta)) return id;
+  }
+  return null;
+}
+
+function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, onSecundaria, filas, estrato, verificacionId, hoja, filtroVal, onFiltro, onCerrar }: {
   herramienta: IdHerramienta;
   columna: Columna;
   secundaria: Columna | null;
@@ -329,6 +340,8 @@ function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, 
   onSecundaria: (campo: string) => void;
   filas: Fila[];
   estrato: string;
+  verificacionId: string | null;
+  hoja: string;
   filtroVal: string;
   onFiltro: (v: string) => void;
   onCerrar: () => void;
@@ -341,10 +354,13 @@ function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, 
     || herramienta === 'sumar' || herramienta === 'estadisticas';
 
   let contenido: React.ReactNode;
+  // Cifra principal del resultado, para describir la evidencia en la espina
+  let dato = '';
 
   if (requiereNumero && columna.tipo === 'texto') {
     contenido = <SinDatos texto={`"${columna.nombre}" es una columna de texto. Para ${info.nombre.toLowerCase()} elige una columna numérica o de fechas, o usa Pareto, Contar o Pivote.`} />;
   } else if (herramienta === 'histograma') {
+    if (resumen) dato = `mediana ${fmt(resumen.mediana, esFecha)}, P90 ${fmt(resumen.p90, esFecha)}`;
     contenido = (
       <>
         <Histograma bins={histograma(nums, esFecha)} resumen={resumen} esFecha={esFecha} />
@@ -353,6 +369,7 @@ function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, 
     );
   } else if (herramienta === 'pareto') {
     const barras = pareto(contarCategorias(filas, columna));
+    if (barras[0]) dato = `principal: ${barras[0].etiqueta} (${barras[0].conteo}, ${formatoNumero(barras[0].pct, 1)}%)`;
     contenido = barras.length === 0 ? <SinDatos texto="No hay valores para graficar." /> : (
       <>
         <Leyenda elementos={[{ color: '#2563a8', texto: '% de cada categoría', tipo: 'barra' }, { color: '#b7791f', texto: '% acumulado', tipo: 'linea' }]} />
@@ -362,10 +379,12 @@ function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, 
   } else if (herramienta === 'diagrama_corrida') {
     const ordenadas = [...filas].sort((a, b) => (aNumero(a['dateFirstInput'], 'fecha') ?? 0) - (aNumero(b['dateFirstInput'], 'fecha') ?? 0));
     const serie = valoresNumericos(ordenadas, columna);
+    if (resumen) dato = `mediana ${fmt(resumen.mediana, esFecha)}`;
     contenido = resumen ? <Corrida valores={serie} mediana={resumen.mediana} esFecha={esFecha} /> : <SinDatos texto="No hay valores para graficar." />;
   } else if (herramienta === 'carta_control') {
     const carta = esFecha ? null : cartaControl(filas, columna);
     const fuera = carta?.puntos.filter(p => p.fuera).length ?? 0;
+    if (carta) dato = `media ${formatoNumero(carta.centro)}, ${fuera} ${fuera === 1 ? 'mes fuera' : 'meses fuera'} de control`;
     contenido = !carta ? <SinDatos texto={esFecha ? 'La gráfica de control necesita una columna numérica, no de fechas.' : 'No hay valores por mes para graficar.'} /> : (
       <>
         <CartaControl carta={carta} />
@@ -381,6 +400,7 @@ function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, 
     } else {
       const ps = pares(filas, columna, secundaria);
       const r = correlacion(ps.map(p => p.x), ps.map(p => p.y));
+      dato = `contra ${secundaria.nombre}, r = ${Number.isFinite(r) ? r.toFixed(3) : '-'}`;
       contenido = (
         <>
           <Dispersion puntos={ps} etiquetaX={columna.nombre} etiquetaY={secundaria.nombre} xFecha={esFecha} yFecha={secundaria.tipo === 'fecha'} />
@@ -392,6 +412,7 @@ function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, 
     }
   } else if (herramienta === 'tabla_dinamica') {
     const filasPiv = pivote(filas, columna, secundaria);
+    if (filasPiv[0]) dato = `mayor grupo: ${filasPiv[0].grupo} (${filasPiv[0].conteo}, ${formatoNumero(filasPiv[0].pct, 1)}%)`;
     contenido = (
       <div className="datos-pivote">
         <table className="datos">
@@ -421,6 +442,7 @@ function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, 
   } else if (herramienta === 'contar') {
     const cats = contarCategorias(filas, columna);
     const total = cats.reduce((s, c) => s + c.conteo, 0);
+    if (cats[0]) dato = `más frecuente: ${cats[0].etiqueta} (${cats[0].conteo} de ${total})`;
     contenido = (
       <>
         <p className="datos-nota" style={{ marginTop: 0 }}>
@@ -441,10 +463,12 @@ function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, 
       </>
     );
   } else if (herramienta === 'sumar') {
+    if (!esFecha) dato = `suma ${formatoNumero(nums.reduce((a, b) => a + b, 0))}`;
     contenido = esFecha
       ? <SinDatos texto="Las fechas no se pueden sumar. Usa Histograma o Estadísticas." />
       : <Cifras cifras={[{ etiqueta: `Suma de ${columna.nombre}`, valor: formatoNumero(nums.reduce((a, b) => a + b, 0)) }, { etiqueta: 'Registros con valor', valor: nums.length.toLocaleString('es-MX') }]} />;
   } else if (herramienta === 'estadisticas') {
+    if (resumen) dato = `media ${fmt(resumen.media, esFecha)}, mediana ${fmt(resumen.mediana, esFecha)}, P90 ${fmt(resumen.p90, esFecha)}`;
     contenido = resumen ? (
       <Cifras cifras={[
         { etiqueta: 'N', valor: resumen.n.toLocaleString('es-MX') },
@@ -458,6 +482,7 @@ function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, 
       ]} />
     ) : <SinDatos texto="La columna no tiene valores." />;
   } else {
+    if (filtroVal) dato = `${filas.length} filas contienen "${filtroVal}"`;
     contenido = (
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         <label className="campo-label" htmlFor="filtro-valor" style={{ margin: 0 }}>Contiene</label>
@@ -488,10 +513,45 @@ function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, 
               {opcionesSecundaria.map(c => <option key={c.campo} value={c.campo}>{c.nombre}</option>)}
             </select>
           )}
+          <AdjuntarEspina resumen={`${info.nombre} de ${columna.nombre}${estrato ? ` (${estrato})` : ''}${dato ? `: ${dato}` : ''}`}
+            herramienta={herramienta} hoja={hoja} columna={columna.campo} estrato={estrato} verificacionId={verificacionId} />
           <button className="aviso-cerrar" onClick={onCerrar} aria-label="Cerrar resultado"><Icono nombre="cerrar" tamano={18} /></button>
         </div>
       </div>
       {contenido}
+    </div>
+  );
+}
+
+// Guarda el resultado como evidencia y, si se elige, lo adjunta a una causa de la espina
+function AdjuntarEspina({ resumen, herramienta, hoja, columna, estrato, verificacionId }: {
+  resumen: string; herramienta: string; hoja: string; columna: string; estrato: string; verificacionId: string | null;
+}) {
+  const espina = useEspina();
+  const [abierto, setAbierto] = useState(false);
+  const [hecho, setHecho] = useState('');
+
+  function adjuntar(tarjetaId?: string) {
+    agregarEvidencia({ herramienta, hoja, columna, resumen, estrato: estrato || null, verificacionId }, tarjetaId);
+    setAbierto(false);
+    setHecho(tarjetaId ? 'Adjuntada a la causa' : 'Guardada como evidencia');
+    window.setTimeout(() => setHecho(''), 2500);
+  }
+
+  return (
+    <div className="adjuntar-espina" data-tour="adjuntar-espina">
+      <button className="btn-fantasma btn-sm" onClick={() => setAbierto(!abierto)} aria-expanded={abierto}>
+        {hecho || 'Adjuntar a la espina'}
+      </button>
+      {abierto && (
+        <div className="adjuntar-espina-menu" role="menu">
+          <p className="datos-nota" style={{ margin: '0 0 6px' }}>{resumen}</p>
+          {espina.tarjetas.map(t => (
+            <button key={t.id} role="menuitem" onClick={() => adjuntar(t.id)}>{t.texto}</button>
+          ))}
+          <button role="menuitem" onClick={() => adjuntar()}>Guardar sin asignar a una causa</button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1472,3 +1472,83 @@ input[type='checkbox'].casilla {
 .proceso-etapa.sin-registro .proceso-numero { background: var(--color-texto-secundario); }
 .proceso-nombre { font-size: 13px; font-weight: 600; line-height: 1.35; }
 .proceso-dato { font-size: 12px; color: var(--color-texto-secundario); }
+
+/* --- Espina de pescado --- */
+.espina-encabezado { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.espina-encabezado h3 { margin: 0 0 4px; font-size: 18px; color: var(--color-primario); }
+.espina-encabezado p { margin: 0; font-size: 13px; color: var(--color-texto-secundario); max-width: 640px; }
+.espina-cuentas { display: flex; gap: 6px; flex-wrap: wrap; }
+.espina-diagrama { display: flex; flex-direction: column; gap: 0; }
+.espina-fila { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.espina-columna-vertebral { display: flex; align-items: center; gap: 0; margin: 12px 0; }
+.espina-linea { flex: 1; height: 4px; background: var(--color-primario); border-radius: 2px; position: relative; }
+.espina-linea::after { content: ''; position: absolute; right: -2px; top: 50%; transform: translateY(-50%); border: 9px solid transparent; border-left: 12px solid var(--color-primario); border-right: 0; }
+.espina-cabeza {
+  margin-left: 12px;
+  max-width: 260px;
+  padding: 10px 14px;
+  background: var(--color-primario);
+  color: #fff;
+  border-radius: var(--radio);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.espina-rama {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 140px;
+}
+.espina-rama header { display: flex; justify-content: space-between; align-items: center; }
+.espina-rama h4 { margin: 0; font-size: 14px; color: var(--color-primario); }
+.espina-rama header span { font-size: 12px; color: var(--color-texto-secundario); }
+.espina-tarjetas { display: flex; flex-direction: column; gap: 8px; }
+.espina-tarjeta { border: 1px solid var(--color-borde); border-left: 4px solid #2563a8; border-radius: 8px; background: var(--color-fondo); }
+.espina-tarjeta.estado-verificada { border-left-color: var(--color-exito); }
+.espina-tarjeta.estado-refutada { border-left-color: var(--color-advertencia); opacity: 0.85; }
+.espina-tarjeta-resumen { width: 100%; background: none; border: 0; padding: 8px 10px; text-align: left; display: flex; flex-direction: column; gap: 6px; color: var(--color-texto); }
+.espina-tarjeta-texto { font-size: 13px; line-height: 1.45; }
+.espina-tarjeta.estado-refutada .espina-tarjeta-texto { text-decoration: line-through; }
+.espina-tarjeta-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 11px; color: var(--color-texto-secundario); }
+.espina-tarjeta-detalle { display: flex; flex-direction: column; gap: 6px; padding: 0 10px 10px; }
+.espina-evidencias { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.espina-evidencias li { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; font-size: 12px; line-height: 1.4; padding: 6px 8px; background: var(--color-superficie); border: 1px solid var(--color-borde); border-radius: 6px; }
+.espina-agregar { background: none; border: 1px dashed var(--color-borde); color: var(--color-texto-secundario); padding: 8px; border-radius: 8px; font-size: 13px; }
+.espina-agregar:hover { border-color: var(--color-primario); color: var(--color-primario); }
+.espina-form { display: flex; flex-direction: column; gap: 6px; }
+.espina-form textarea { width: 100%; font: inherit; font-size: 13px; padding: 8px; border: 1px solid var(--color-borde); border-radius: 8px; resize: vertical; }
+.badge-primario { background: var(--color-primario); color: #fff; }
+@media (max-width: 800px) {
+  .espina-fila { grid-template-columns: 1fr; }
+  .espina-cabeza { max-width: none; }
+}
+.adjuntar-espina { position: relative; }
+.adjuntar-espina-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  width: 320px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  box-shadow: 0 8px 24px rgba(15, 43, 74, 0.15);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.adjuntar-espina-menu button { text-align: left; background: none; border: 0; padding: 8px; border-radius: 6px; font-size: 13px; color: var(--color-texto); }
+.adjuntar-espina-menu button:hover { background: var(--color-fondo); }
+.pendientes-enviar { margin-top: 8px; font-size: 12px; padding: 4px 8px; width: auto; }
+.modal.votacion { max-width: 560px; max-height: 90vh; overflow-y: auto; }
+.votacion-causas { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.votacion-causas label { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.45; padding: 8px 10px; border: 1px solid var(--color-borde); border-radius: 8px; cursor: pointer; }
+.votacion-causas label span:nth-of-type(1) { flex: 1; }
