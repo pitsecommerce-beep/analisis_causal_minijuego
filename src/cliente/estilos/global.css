@@ -1552,3 +1552,40 @@ input[type='checkbox'].casilla {
 .votacion-causas { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .votacion-causas label { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.45; padding: 8px 10px; border: 1px solid var(--color-borde); border-radius: 8px; cursor: pointer; }
 .votacion-causas label span:nth-of-type(1) { flex: 1; }
+
+/* --- Ramón Betancourt (Consejo) --- */
+.betancourt-retrato { image-rendering: pixelated; flex-shrink: 0; box-shadow: 0 0 0 2px #0f2b4a, 0 0 0 4px #f2c14e; border-radius: 2px; }
+.betancourt-aviso { display: flex; align-items: flex-start; gap: 16px; max-width: 560px; width: 100%; }
+.betancourt-globo {
+  position: relative;
+  flex: 1;
+  background: var(--color-superficie);
+  border-radius: var(--radio-lg, 14px);
+  padding: 18px 20px;
+  box-shadow: var(--sombra-elevada, 0 12px 32px rgba(15, 43, 74, 0.25));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.betancourt-globo::before { content: ''; position: absolute; left: -10px; top: 24px; border: 10px solid transparent; border-right-color: var(--color-superficie); border-left: 0; }
+.betancourt-globo p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--color-texto); }
+.betancourt-globo button { align-self: flex-end; }
+.betancourt-nombre { font-weight: 700; color: var(--color-primario); font-size: 15px; }
+.betancourt-nombre small { font-weight: 500; color: var(--color-texto-secundario); margin-left: 6px; font-size: 12px; }
+@media (max-width: 640px) {
+  .betancourt-aviso { flex-direction: column; align-items: center; }
+  .betancourt-globo::before { display: none; }
+}
+.accion-causa { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; cursor: default; }
+.accion-causa select { font-size: 13px; padding: 6px 10px; }
+
+/* --- Línea de tiempo del método (panel del profesor) --- */
+.linea-hitos { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.linea-tiempo { list-style: none; margin: 0; padding: 0; max-height: 360px; overflow-y: auto; border: 1px solid var(--color-borde-sutil, var(--color-borde)); border-radius: var(--radio); }
+.linea-evento { display: grid; grid-template-columns: 96px 30px 1fr; gap: 8px; align-items: baseline; padding: 8px 12px; font-size: 13px; border-bottom: 1px solid var(--color-borde-sutil, var(--color-borde)); }
+.linea-evento:last-child { border-bottom: 0; }
+.linea-hora { font-variant-numeric: tabular-nums; color: var(--color-texto-secundario); font-size: 12px; }
+.linea-ciclo { font-size: 11px; font-weight: 700; color: var(--color-primario); }
+.linea-texto { line-height: 1.45; }
+.linea-evento.tipo-aviso { background: var(--color-advertencia-suave); }
+.linea-evento.tipo-acciones, .linea-evento.tipo-votacion { background: var(--color-fondo); font-weight: 500; }

@@ -8,6 +8,8 @@ import {
 } from '../motor/ciclos.js';
 import { formatearKPIs } from '../motor/kpis.js';
 import { evaluarPartida, determinarDesenlace } from '../puntuacion/evaluacion.js';
+import { HITOS } from '../../compartido/metodo.js';
+import type { Hito } from '../../compartido/metodo.js';
 import type { AccionConfig } from '../motor/acciones.js';
 import config from '../../../config/simulador.json' with { type: 'json' };
 
@@ -178,11 +180,11 @@ async function main() {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const inputGuia = await preguntar('¿Consultaste la guía o nota técnica? (s/n): ');
-    const consultoGuia = inputGuia.trim().toLowerCase() === 's';
-
-    const inputPasos = await preguntar('Seguiste los pasos en orden? (s/n): ');
-    const pasosEnOrden = inputPasos.trim().toLowerCase() === 's';
+    // En consola no hay registro de comportamiento: se pregunta qué hitos del método se cumplieron
+    const hitos = {} as Record<Hito, boolean>;
+    for (const [id, descripcion] of Object.entries(HITOS) as [Hito, string][]) {
+      hitos[id] = (await preguntar(`¿${descripcion}? (s/n): `)).trim().toLowerCase() === 's';
+    }
 
     const desglose = evaluarPartida(
       partida,
@@ -192,8 +194,7 @@ async function main() {
       refutaciones,
       sinVerificar,
       herramientas,
-      consultoGuia,
-      pasosEnOrden,
+      { hitos, capacitoSinEstratificar: false },
       config.puntuacion
     );
 

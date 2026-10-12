@@ -296,6 +296,27 @@ export async function registrarEvento(
   if (error) throw error;
 }
 
+// Eventos del método (telemetría) de una partida, en orden cronológico
+export async function listarEventosPartida(partidaId: string): Promise<{ tipo: string; datos: Record<string, any>; momento: string }[]> {
+  const { data, error } = await sb()
+    .from('telemetria')
+    .select('tipo, datos, created_at')
+    .eq('partida_id', partidaId)
+    .order('created_at');
+  if (error) throw error;
+  return (data ?? []).map(e => ({ tipo: e.tipo, datos: e.datos ?? {}, momento: e.created_at }));
+}
+
+// Estado de las partidas de una sesión, para evaluar el método de cada participante
+export async function listarEstadosPartidasSesion(sesionId: string) {
+  const { data, error } = await sb()
+    .from('partidas')
+    .select('id, jugador_id, estado')
+    .eq('sesion_id', sesionId);
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function obtenerTelemetriaSesion(sesionId: string) {
   const { data, error } = await sb()
     .from('telemetria')

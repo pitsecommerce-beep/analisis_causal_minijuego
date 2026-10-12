@@ -1,6 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { crearPartida, elegirAcciones, declararCompromiso, procesarCiclo } from '../src/servidor/motor/ciclos.js';
 import { evaluarPartida, determinarDesenlace } from '../src/servidor/puntuacion/evaluacion.js';
+import { HITOS } from '../src/compartido/metodo.js';
+import type { Hito } from '../src/compartido/metodo.js';
+
+// Método observado con los primeros n hitos cumplidos
+function metodo(n: number, capacitoSinEstratificar = false) {
+  const ids = Object.keys(HITOS) as Hito[];
+  return { hitos: Object.fromEntries(ids.map((h, i) => [h, i < n])) as Record<Hito, boolean>, capacitoSinEstratificar };
+}
 import type { KPIs } from '../src/servidor/motor/kpis.js';
 import config from '../config/simulador.json' with { type: 'json' };
 
@@ -58,7 +66,7 @@ describe('Desenlaces', () => {
       ],
       5, 3, 0,
       ['histograma', 'pareto', 'diagrama_corrida', 'dispersion'],
-      true, true,
+      metodo(5),
       config.puntuacion
     );
     const desenlace = determinarDesenlace(desglose.total, partida.destituido, config.desenlaces);
@@ -79,7 +87,7 @@ describe('Desenlaces', () => {
       ],
       4, 2, 0,
       ['histograma', 'pareto', 'diagrama_corrida'],
-      true, false,
+      metodo(3),
       config.puntuacion
     );
     const desenlace = determinarDesenlace(desglose.total, partida.destituido, config.desenlaces);
@@ -100,7 +108,7 @@ describe('Desenlaces', () => {
       ],
       3, 1, 1,
       ['pareto', 'histograma'],
-      false, false,
+      metodo(1),
       config.puntuacion
     );
     const desenlace = determinarDesenlace(desglose.total, partida.destituido, config.desenlaces);
@@ -118,7 +126,7 @@ describe('Desenlaces', () => {
       [{ id: 'ventana_captura_cuello', nombre: 'Ventana de captura' }],
       1, 0, 2,
       ['pareto'],
-      false, false,
+      metodo(1),
       config.puntuacion
     );
     const desenlace = determinarDesenlace(desglose.total, partida.destituido, config.desenlaces);

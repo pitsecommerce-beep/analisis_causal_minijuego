@@ -5,6 +5,7 @@ import { useSondeo } from '../sondeo.js';
 import { useUI } from '../componentes/ui/Notificaciones.js';
 import { PiePagina } from '../componentes/ui/PiePagina.js';
 import { VistaAcceso } from '../componentes/ui/VistaAcceso.js';
+import { LineaTiempo } from '../componentes/LineaTiempo.js';
 
 const INTERVALO_REFRESCO = 4000;
 
@@ -593,6 +594,8 @@ function Panel() {
                     </>
                   );
                 })()}
+
+                <LineaTiempo sesionId={detalle.sesion.id} />
 
                 <div style={{ marginTop: 24, borderTop: '1px solid var(--color-borde)', paddingTop: 20 }}>
                   <h4 style={{ marginBottom: 10, fontSize: 14, fontWeight: 600, color: 'var(--color-primario)' }}>

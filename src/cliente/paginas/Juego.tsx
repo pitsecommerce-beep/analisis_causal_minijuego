@@ -17,6 +17,7 @@ import { Pendientes, estaResuelto } from '../componentes/Pendientes.js';
 import { usePendientes } from '../pendientes.js';
 import { TabEspina } from '../componentes/TabEspina.js';
 import { cargarEspina, fijarCicloEspina } from '../espina.js';
+import { registrarEvento } from '../eventos.js';
 import type { PasoRecorrido } from '../componentes/Onboarding.js';
 
 type Vista = 'datos' | 'asesores' | 'espina' | 'decisiones';
@@ -301,6 +302,7 @@ export function Juego() {
 
   function onCambioVista(v: Vista) {
     setVista(v);
+    registrarEvento('vista', { vista: v });
     telemetria('cambio_vista', { vista: v });
   }
 

@@ -19,7 +19,7 @@ const NOMBRES_DIMENSION: Record<string, { nombre: string; color: string }> = {
   diagnostico: { nombre: 'Diagnóstico (causa raíz)', color: '#2563a8' },
   criterio: { nombre: 'Criterio (evidencia)', color: '#7c3aed' },
   impacto: { nombre: 'Impacto (mejora KPIs)', color: '#059669' },
-  metodo: { nombre: 'Método (herramientas)', color: '#0891b2' },
+  metodo: { nombre: 'Método (hitos de Bohn)', color: '#0891b2' },
   compromisos: { nombre: 'Compromisos', color: '#c8922a' },
   penalizaciones: { nombre: 'Penalizaciones', color: '#c0392b' },
 };
@@ -31,16 +31,10 @@ export function Resultados() {
   const espina = useEspina();
   const votacion = ultimaVotacion(espina);
   const votadas = (votacion?.causas ?? []).map(id => espina.tarjetas.find(t => t.id === id)).filter(t => t != null);
-  const [consultoGuia, setConsultoGuia] = useState(false);
-  const [pasosEnOrden, setPasosEnOrden] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [resultado, setResultado] = useState<any>(null);
   const [errorCierre, setErrorCierre] = useState('');
-  const [herramientas] = useState<string[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem('herramientasUsadas') ?? '[]');
-    } catch { return []; }
-  });
+
 
   useEffect(() => {
     if (!localStorage.getItem('token')) { nav('/unirse'); return; }
@@ -59,7 +53,7 @@ export function Resultados() {
     setCargando(true);
     setErrorCierre('');
     try {
-      const res = await api.partida.cierre(herramientas, consultoGuia, pasosEnOrden);
+      const res = await api.partida.cierre();
       setResultado(res);
       setFase('resultado');
       avisar('exito', 'Cierre enviado', 'Tu resultado final está listo.');
@@ -137,29 +131,9 @@ export function Resultados() {
             )}
           </div>
 
-          <div className="tarjeta" style={{ marginBottom: 20 }}>
-            <h4 style={{ marginBottom: 14, fontSize: 15, fontWeight: 600 }}>
-              Reflexión metodológica
-            </h4>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={consultoGuia}
-                onChange={e => setConsultoGuia(e.target.checked)}
-                style={{ width: 16, height: 16, accentColor: 'var(--color-primario)' }}
-              />
-              <span style={{ fontSize: 14 }}>Consulté la guía o nota técnica durante el análisis</span>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={pasosEnOrden}
-                onChange={e => setPasosEnOrden(e.target.checked)}
-                style={{ width: 16, height: 16, accentColor: 'var(--color-primario)' }}
-              />
-              <span style={{ fontSize: 14 }}>Seguí los pasos del método en orden</span>
-            </label>
-          </div>
+          <p className="datos-nota" style={{ marginBottom: 20 }}>
+            Tu método se evalúa con lo que hiciste durante el juego: qué revisaste primero, qué analizaste, cómo estratificaste y si tus acciones se apoyaron en causas verificadas.
+          </p>
 
           {errorCierre && (
             <div className="alerta-error" role="alert" style={{ marginBottom: 12 }}>

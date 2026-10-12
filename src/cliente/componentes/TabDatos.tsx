@@ -5,6 +5,7 @@ import type { NombreIcono } from './ui/Iconos.js';
 import { Histograma, Pareto, Corrida, Dispersion, CartaControl } from './Graficos.js';
 import { VistaProceso } from './VistaProceso.js';
 import { useEspina, agregarEvidencia } from '../espina.js';
+import { registrarEvento } from '../eventos.js';
 import {
   agregarCalculadas, COLUMNAS_CALCULADAS, COLUMNAS_CRUCE_COMENTARIOS, ESTRATOS, cartaControl, contarCategorias, correlacion, cruzar,
   formatoFecha, formatoNumero, histograma, pareto, pares, pivote, resumir, valoresEstrato, valoresNumericos, aNumero,
@@ -120,6 +121,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
 
   function cambiarTab(t: 'solicitudes' | 'comentarios' | 'proceso') {
     setTab(t);
+    registrarEvento('vista', { vista: t });
     setColSeleccionada('');
     setColSecundaria('');
     setHerramienta(null);
@@ -130,6 +132,22 @@ export function TabDatos({ onHerramientaUsada }: Props) {
     setEstratoCampo('');
     setEstratoValor('');
   }
+
+  // Cada análisis que el participante ve (herramienta, columnas, estrato y filtro) queda registrado.
+  // Se espera un momento para no registrar cada tecla del filtro.
+  useEffect(() => {
+    if (!herramienta || !colSeleccionada || tab === 'proceso') return;
+    const id = window.setTimeout(() => registrarEvento('analisis', {
+      hoja,
+      herramienta,
+      columna: colSeleccionada,
+      columnaNombre: columna?.nombre ?? colSeleccionada,
+      secundaria: colSecundaria || null,
+      estrato: estratoActivo ? { campo: estratoActivo.campo, nombre: estratoActivo.nombre, valor: estratoActivo.valor } : null,
+      filtro: filtroCol && filtroVal ? { columna: filtroCol, valor: filtroVal } : null,
+    }), 700);
+    return () => window.clearTimeout(id);
+  }, [herramienta, colSeleccionada, colSecundaria, estratoCampo, estratoValor, filtroCol, filtroVal, tab]);
 
   function ordenar(campo: string) {
     if (ordenCol === campo) setOrdenAsc(!ordenAsc);
@@ -247,7 +265,8 @@ export function TabDatos({ onHerramientaUsada }: Props) {
       </div>
 
       {tab === 'proceso' && (
-        <VistaProceso filas={datosFiltrados} estrato={estratoActivo ? `${estratoActivo.nombre} ${estratoActivo.valor}` : ''} />
+        <VistaProceso filas={datosFiltrados} estrato={estratoActivo ? `${estratoActivo.nombre} ${estratoActivo.valor}` : ''}
+          onEtapa={etapa => registrarEvento('proceso_etapa', { etapa, estrato: estratoActivo ? { campo: estratoActivo.campo, nombre: estratoActivo.nombre, valor: estratoActivo.valor } : null })} />
       )}
 
       {tab !== 'proceso' && aviso && <div className="datos-aviso" role="status"><Icono nombre="info" tamano={16} />{aviso}</div>}

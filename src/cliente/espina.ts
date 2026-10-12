@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from './api.js';
+import { registrarEvento } from './eventos.js';
 import { ESPINA_VACIA } from '../compartido/espina.js';
 import type { Espina, Evidencia, Origen, Rama, Tarjeta } from '../compartido/espina.js';
 
@@ -52,6 +53,7 @@ export function agregarTarjeta(datos: { rama: Rama; texto: string; origen: Orige
   const id = nuevoId();
   const t: Tarjeta = { id, rama: datos.rama, texto: datos.texto.trim(), origen: datos.origen, estado: 'hipotesis', evidencias: [], pendienteId: datos.pendienteId ?? null, ciclo, creada: new Date().toISOString() };
   cambiar({ ...actual, tarjetas: [...actual.tarjetas, t] });
+  registrarEvento('espina_tarjeta', { rama: t.rama, origen: t.origen });
   return id;
 }
 
@@ -75,6 +77,7 @@ export function eliminarTarjeta(id: string) {
 export function agregarEvidencia(datos: Omit<Evidencia, 'id' | 'ciclo' | 'creada'>, tarjetaId?: string): string {
   const id = nuevoId();
   const ev: Evidencia = { ...datos, id, ciclo, creada: new Date().toISOString() };
+  registrarEvento('evidencia', { herramienta: datos.herramienta, columna: datos.columna, verificacionId: datos.verificacionId, adjuntada: !!tarjetaId });
   cambiar({
     ...actual,
     evidencias: [...actual.evidencias, ev],
