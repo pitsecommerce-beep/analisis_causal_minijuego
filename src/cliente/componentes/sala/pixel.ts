@@ -334,9 +334,10 @@ function cabeza(c: Ctx, per: Personaje, cx: number, H: number, est: EstadoPerson
   }
 }
 
-function torso(c: Ctx, per: Personaje, cx: number, S: number, fondo: number) {
+// `anchoCuerpo` menor que per.ancho dibuja solo el pecho; `conBrazos` marca los brazos pegados al cuerpo
+function torso(c: Ctx, per: Personaje, cx: number, S: number, fondo: number, anchoCuerpo = per.ancho, conBrazos = true) {
   const [luz, base, sombra] = per.ropa.tono;
-  const a = per.ancho;
+  const a = anchoCuerpo;
   for (let y = S; y < fondo; y++) {
     const f = y - S;
     const media = f === 0 ? a - 5 : f === 1 ? a - 2 : f === 2 ? a - 1 : a;
@@ -344,7 +345,7 @@ function torso(c: Ctx, per: Personaje, cx: number, S: number, fondo: number) {
     r(c, x0, y, media * 2, 1, base);
     r(c, x0, y, 2, 1, luz);
     r(c, cx + media - 2, y, 2, 1, sombra);
-    if (f >= 6) {
+    if (conBrazos && f >= 6) {
       p(c, cx - a + 5, y, sombra);
       p(c, cx + a - 6, y, sombra);
     }
@@ -512,8 +513,9 @@ function brazos(c: Ctx, per: Personaje, cx: number, S: number, fondo: number, ge
   const tono = per.ropa.tono;
   const piel = per.piel;
   const a = per.ancho;
-  const izq = cx - a - 3;
-  const der = cx + a - 1;
+  // Ocupan el mismo lugar que los brazos que el torso normal trae pegados al cuerpo
+  const izq = cx - a;
+  const der = cx + a - 4;
 
   // Antebrazo izquierdo al frente, a la altura del cinturón; `alza` lo sube unos píxeles
   const frenteIzq = (alza: number) => {
@@ -530,6 +532,10 @@ function brazos(c: Ctx, per: Personaje, cx: number, S: number, fondo: number, ge
     r(c, cx + 6, codo, 1, 4, PUNO);
     mano(c, cx + 2, codo, 4, 4, piel);
   };
+
+  // Hombros redondeados sobre la parte alta de cada brazo
+  r(c, izq + 1, S + 2, 3, 1, tono[0]);
+  r(c, der, S + 2, 3, 1, tono[1]);
 
   if (gesto === 'reposo') {
     manga(c, izq, S + 3, 4, fondo - S - 3, tono);
@@ -563,8 +569,8 @@ export function dibujarMedioCuerpo(c: Ctx, per: Personaje, est: EstadoPersonaje,
   const H = 6 + est.respiro;
   const S = H + 17;
   const fondo = MEDIO_CUERPO.alto;
-  torso(c, per, cx, S, fondo);
-  // Los brazos al frente se dibujan sobre el torso; a los costados, también por fuera de él
+  // Solo el pecho: los brazos se dibujan aparte para poder moverlos
+  torso(c, per, cx, S, fondo, per.ancho - 4, false);
   brazos(c, per, cx, S, fondo, gesto, cuadro);
   cabeza(c, per, cx, H, est);
 }
@@ -901,7 +907,6 @@ function pantallaHoja(): HTMLCanvasElement {
   r(c, 0, 0, 216, 112, '#f8f9fb');
   r(c, 0, 0, 216, 9, '#0f2b4a');
   r(c, 4, 3, 30, 3, '#c8922a');
-  r(c, 180, 3, 30, 3, '#3d6a99');
   r(c, 0, 9, 216, 7, '#e8f0fa');
   for (let i = 0; i < 6; i++) r(c, 4 + i * 22, 11, 14, 2, '#6b7a90');
   for (let y = 16; y < 112; y += 6) {

@@ -1430,48 +1430,24 @@ input[type='checkbox'].casilla {
   .ocultar-movil { display: none; }
 }
 
-/* --- Vista del proceso (Anexo 1) --- */
-.proceso-flujo {
-  list-style: none;
-  margin: 0 0 16px;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
-  counter-reset: etapa;
-}
-.proceso-etapa {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 12px;
-  text-align: left;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
-  color: var(--color-texto);
-}
-.proceso-etapa:hover { border-color: var(--color-primario); }
-.proceso-etapa.activa { border-color: var(--color-primario); box-shadow: 0 0 0 2px rgba(15, 43, 74, 0.15); }
-.proceso-etapa.sin-registro { background: var(--color-fondo); }
-.proceso-numero {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--color-primario);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.proceso-etapa.sin-registro .proceso-numero { background: var(--color-texto-secundario); }
-.proceso-nombre { font-size: 13px; font-weight: 600; line-height: 1.35; }
-.proceso-dato { font-size: 12px; color: var(--color-texto-secundario); }
+/* --- Vista del proceso --- */
+.proceso-lienzo { padding: 0; overflow-x: auto; margin-bottom: 16px; }
+.proceso-diagrama { display: block; width: 100%; min-width: 860px; height: auto; font-family: inherit; }
+.proceso-carril { fill: var(--color-superficie); }
+.proceso-carril.par { fill: var(--color-fondo); }
+.proceso-divisor { stroke: var(--color-borde); stroke-width: 1; }
+.proceso-actor { font-size: 13px; font-weight: 700; fill: var(--color-primario); }
+.proceso-flecha { fill: none; stroke: #8a9bb3; stroke-width: 2; }
+.proceso-punta { fill: #8a9bb3; }
+.proceso-nodo { cursor: pointer; outline: none; }
+.proceso-caja { fill: #ffffff; stroke: #2563a8; stroke-width: 2; transition: fill 0.15s; }
+.proceso-texto { font-size: 11.5px; font-weight: 600; fill: var(--color-texto); pointer-events: none; }
+.proceso-dato { font-size: 10.5px; fill: #2563a8; font-weight: 600; pointer-events: none; }
+.proceso-nodo:hover .proceso-caja, .proceso-nodo:focus-visible .proceso-caja { fill: #eef4fb; }
+.proceso-nodo.sin-registro .proceso-caja { fill: var(--color-fondo); stroke: #a3adbb; stroke-dasharray: 5 4; }
+.proceso-nodo.sin-registro .proceso-dato { fill: var(--color-texto-secundario); font-weight: 500; }
+.proceso-nodo.activa .proceso-caja { fill: var(--color-primario); stroke: var(--color-primario); stroke-dasharray: none; }
+.proceso-nodo.activa .proceso-texto, .proceso-nodo.activa .proceso-dato { fill: #ffffff; }
 
 /* --- Espina de pescado --- */
 .espina-encabezado { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
