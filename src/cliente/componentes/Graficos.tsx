@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { BarraPareto, Contenedor, Resumen } from '../analisis.js';
+import type { BarraPareto, CartaControl as DatosCarta, Contenedor, Resumen } from '../analisis.js';
 import { formatoFecha, formatoMes, formatoNumero } from '../analisis.js';
 
 // Paleta validada (light): azul para la serie, ocre para referencias
 const COLOR_SERIE = '#2563a8';
 const COLOR_REFERENCIA = '#b7791f';
+const COLOR_FUERA = '#c0392b';
 const ALTO = 320;
 const M = { top: 32, right: 20, bottom: 56, left: 56 };
 
@@ -217,6 +218,52 @@ export function Corrida({ valores, mediana, esFecha }: { valores: number[]; medi
         )}
         <rect x={M.left} y={M.top} width={iw} height={ih} fill="transparent" onMouseMove={mover} />
         <text x={M.left + iw / 2} y={ALTO - 16} className="grafico-eje" textAnchor="middle">Orden de captura (registro)</text>
+      </svg>
+    </Marco>
+  );
+}
+
+// ── Gráfica de control ──
+
+export function CartaControl({ carta }: { carta: DatosCarta }) {
+  const { ref, ancho } = useAncho();
+  const [tip, setTip] = useState<Tip | null>(null);
+  const ps = carta.puntos;
+  if (ps.length === 0) return null;
+  const iw = ancho - M.left - M.right;
+  const ih = ALTO - M.top - M.bottom;
+  let min = Infinity, max = -Infinity;
+  for (const p of ps) { min = Math.min(min, p.media, p.lci); max = Math.max(max, p.media, p.lcs); }
+  const ty = ticks(min, max);
+  const y0 = Math.min(min, ty[0] ?? min);
+  const y1 = Math.max(max, ty[ty.length - 1] ?? max);
+  const paso = iw / ps.length;
+  const sx = (i: number) => M.left + paso * (i + 0.5);
+  const sy = (v: number) => M.top + ih - ((v - y0) / (y1 - y0 || 1)) * ih;
+  // Los límites cambian con el tamaño de cada mes, por eso se dibujan como escalones
+  const escalon = (k: 'lcs' | 'lci') => ps.map((p, i) => `${i === 0 ? 'M' : 'L'}${(M.left + paso * i).toFixed(1)},${sy(p[k]).toFixed(1)} L${(M.left + paso * (i + 1)).toFixed(1)},${sy(p[k]).toFixed(1)}`).join(' ');
+  const linea = ps.map((p, i) => `${i === 0 ? 'M' : 'L'}${sx(i).toFixed(1)},${sy(p.media).toFixed(1)}`).join(' ');
+  const cadaCuanto = Math.max(1, Math.ceil(ps.length / Math.max(1, Math.floor(iw / 64))));
+
+  return (
+    <Marco refDiv={ref} tip={tip}>
+      <svg width={ancho} height={ALTO} onMouseLeave={() => setTip(null)}>
+        <EjeY valores={ty} escala={sy} ancho={ancho} formato={v => formatoNumero(v)} />
+        <path d={escalon('lcs')} fill="none" stroke={COLOR_FUERA} strokeWidth={1.5} strokeDasharray="4 4" />
+        <path d={escalon('lci')} fill="none" stroke={COLOR_FUERA} strokeWidth={1.5} strokeDasharray="4 4" />
+        <line x1={M.left} x2={ancho - M.right} y1={sy(carta.centro)} y2={sy(carta.centro)} stroke={COLOR_REFERENCIA} strokeWidth={2} />
+        <path d={linea} fill="none" stroke={COLOR_SERIE} strokeWidth={1.5} strokeLinejoin="round" />
+        {ps.map((p, i) => (
+          <circle key={p.mes} cx={sx(i)} cy={sy(p.media)} r={p.fuera ? 6 : 4} fill={p.fuera ? COLOR_FUERA : COLOR_SERIE} stroke="#fff" strokeWidth={2}
+            onMouseEnter={() => setTip({ x: sx(i), y: sy(p.media) - 10, contenido: <><strong>{p.mes}</strong><br />Media: {formatoNumero(p.media)} · n = {p.n}<br />Límites: {formatoNumero(p.lci)} a {formatoNumero(p.lcs)}{p.fuera && <><br /><strong>Fuera de control</strong></>}</> })} />
+        ))}
+        {ps.map((p, i) => i % cadaCuanto === 0 && (
+          <text key={p.mes} x={sx(i)} y={M.top + ih + 18} className="grafico-eje" textAnchor="middle">{p.mes}</text>
+        ))}
+        <text x={ancho - M.right} y={M.top - 10} className="grafico-referencia" textAnchor="end">
+          <tspan fill={COLOR_REFERENCIA}>— </tspan>Media general: {formatoNumero(carta.centro)}   <tspan fill={COLOR_FUERA}>- - </tspan>Límites ±3σ
+        </text>
+        <text x={M.left + iw / 2} y={ALTO - 12} className="grafico-eje" textAnchor="middle">Mes</text>
       </svg>
     </Marco>
   );

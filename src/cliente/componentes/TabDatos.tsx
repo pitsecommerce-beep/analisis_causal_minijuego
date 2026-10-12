@@ -2,19 +2,20 @@ import { useState, useEffect, useMemo } from 'react';
 import { api, EVENTO_VERIFICACION } from '../api.js';
 import { Icono } from './ui/Iconos.js';
 import type { NombreIcono } from './ui/Iconos.js';
-import { Histograma, Pareto, Corrida, Dispersion } from './Graficos.js';
+import { Histograma, Pareto, Corrida, Dispersion, CartaControl } from './Graficos.js';
 import {
-  agregarCalculadas, COLUMNAS_CALCULADAS, contarCategorias, correlacion, formatoFecha, formatoNumero,
-  histograma, pareto, pares, pivote, resumir, valoresNumericos, aNumero,
+  agregarCalculadas, COLUMNAS_CALCULADAS, COLUMNAS_CRUCE_COMENTARIOS, ESTRATOS, cartaControl, contarCategorias, correlacion, cruzar,
+  formatoFecha, formatoNumero, histograma, pareto, pares, pivote, resumir, valoresEstrato, valoresNumericos, aNumero,
 } from '../analisis.js';
 import type { Columna, Fila } from '../analisis.js';
 
-type IdHerramienta = 'histograma' | 'pareto' | 'diagrama_corrida' | 'dispersion' | 'tabla_dinamica' | 'filtro' | 'contar' | 'sumar' | 'estadisticas';
+export type IdHerramienta = 'histograma' | 'pareto' | 'diagrama_corrida' | 'carta_control' | 'dispersion' | 'tabla_dinamica' | 'filtro' | 'contar' | 'sumar' | 'estadisticas';
 
 const HERRAMIENTAS: { id: IdHerramienta; nombre: string; icono: NombreIcono; ayuda: string }[] = [
   { id: 'histograma', nombre: 'Histograma', icono: 'histograma', ayuda: 'Distribución de una columna numérica o de fechas' },
   { id: 'pareto', nombre: 'Pareto', icono: 'pareto', ayuda: 'Categorías más frecuentes y su porcentaje acumulado' },
   { id: 'diagrama_corrida', nombre: 'Corrida', icono: 'corrida', ayuda: 'Valores en orden de captura contra su mediana' },
+  { id: 'carta_control', nombre: 'Control', icono: 'grafica', ayuda: 'Media por mes con límites de control a 3 sigmas' },
   { id: 'dispersion', nombre: 'Dispersión', icono: 'dispersion', ayuda: 'Relación entre dos columnas numéricas' },
   { id: 'tabla_dinamica', nombre: 'Pivote', icono: 'tabla', ayuda: 'Agrupa por la columna y resume otra' },
   { id: 'filtro', nombre: 'Filtrar', icono: 'filtro', ayuda: 'Muestra solo las filas que contienen un texto' },
@@ -31,6 +32,7 @@ const MAPA_VERIFICACIONES: Record<string, { columnas: string[]; herramientas: Id
   atorados_sin_plastico: { columnas: ['lastStatus', 'datePlasticSent'], herramientas: ['contar', 'filtro'] },
   concentracion_sucursales: { columnas: ['branchNum', 'comments'], herramientas: ['pareto', 'tabla_dinamica'] },
   secuencia_buro: { columnas: ['creditBureauRunDate', 'dateDocsSent'], herramientas: ['sumar', 'filtro'] },
+  quejas_reproceso_documental: { columnas: ['categoriaPrimaria', 'categoriaQueja'], herramientas: ['pareto', 'contar'] },
 };
 
 const FILAS_POR_PAGINA = 300;
@@ -58,6 +60,8 @@ export function TabDatos({ onHerramientaUsada }: Props) {
   const [verificaciones, setVerificaciones] = useState<string[]>([]);
   const [herramientasUsadas, setHerramientasUsadas] = useState<Set<string>>(new Set());
   const [limite, setLimite] = useState(FILAS_POR_PAGINA);
+  const [estratoCampo, setEstratoCampo] = useState('');
+  const [estratoValor, setEstratoValor] = useState('');
 
   useEffect(() => {
     async function cargar() {
@@ -68,10 +72,11 @@ export function TabDatos({ onHerramientaUsada }: Props) {
           api.datos.columnas(),
           api.datos.verificaciones(),
         ]);
-        setSolicitudes(agregarCalculadas(sol));
-        setComentarios(com);
+        const cruce = cruzar(agregarCalculadas(sol), com);
+        setSolicitudes(cruce.solicitudes);
+        setComentarios(cruce.comentarios);
         setColsSolicitudes([...(cols.solicitudes ?? []), ...COLUMNAS_CALCULADAS]);
-        setColsComentarios(cols.comentarios ?? []);
+        setColsComentarios([...(cols.comentarios ?? []), ...COLUMNAS_CRUCE_COMENTARIOS]);
         setVerificaciones(verifs);
       } catch (err: any) {
         setErrorCarga(err.message || 'No se pudieron cargar los datos');
@@ -86,8 +91,13 @@ export function TabDatos({ onHerramientaUsada }: Props) {
   const columna = cols.find(c => c.campo === colSeleccionada) ?? null;
   const numericas = cols.filter(c => c.tipo !== 'texto');
 
+  const estratos = ESTRATOS[tab];
+  const opcionesEstrato = useMemo(() => estratoCampo ? valoresEstrato(filas, estratoCampo) : [], [filas, estratoCampo]);
+  const estratoActivo = estratoCampo && estratoValor ? { campo: estratoCampo, valor: estratoValor, nombre: estratos.find(e => e.campo === estratoCampo)?.nombre ?? estratoCampo } : null;
+
   const datosFiltrados = useMemo(() => {
     let datos = filas;
+    if (estratoActivo) datos = datos.filter(r => String(r[estratoActivo.campo] ?? '') === estratoActivo.valor);
     if (filtroCol && filtroVal) {
       const lower = filtroVal.toLowerCase();
       datos = datos.filter(r => String(r[filtroCol] ?? '').toLowerCase().includes(lower));
@@ -102,7 +112,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
       });
     }
     return datos;
-  }, [filas, filtroCol, filtroVal, ordenCol, ordenAsc]);
+  }, [filas, filtroCol, filtroVal, ordenCol, ordenAsc, estratoCampo, estratoValor]);
 
   function cambiarTab(t: 'solicitudes' | 'comentarios') {
     setTab(t);
@@ -113,6 +123,8 @@ export function TabDatos({ onHerramientaUsada }: Props) {
     setFiltroVal('');
     setOrdenCol('');
     setLimite(FILAS_POR_PAGINA);
+    setEstratoCampo('');
+    setEstratoValor('');
   }
 
   function ordenar(campo: string) {
@@ -201,6 +213,21 @@ export function TabDatos({ onHerramientaUsada }: Props) {
             {cols.map(c => <option key={c.campo} value={c.campo}>{c.nombre}</option>)}
           </select>
         </div>
+        <div className="datos-columna">
+          <label className="campo-label" htmlFor="estrato-campo">Estratificar por</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select id="estrato-campo" value={estratoCampo} onChange={e => { setEstratoCampo(e.target.value); setEstratoValor(''); }}>
+              <option value="">Sin estratificar</option>
+              {estratos.map(e => <option key={e.campo} value={e.campo}>{e.nombre}</option>)}
+            </select>
+            {estratoCampo && (
+              <select aria-label="Valor del estrato" value={estratoValor} onChange={e => setEstratoValor(e.target.value)}>
+                <option value="">Todos</option>
+                {opcionesEstrato.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            )}
+          </div>
+        </div>
         <div data-tour="herramientas" className="datos-herramientas">
           {HERRAMIENTAS.map(h => (
             <button key={h.id} className={`herramienta-btn ${herramienta === h.id ? 'activa' : ''} ${herramientasUsadas.has(h.id) ? 'usada' : ''}`}
@@ -222,6 +249,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
           opcionesSecundaria={numericas.filter(c => c.campo !== columna.campo)}
           onSecundaria={setColSecundaria}
           filas={datosFiltrados}
+          estrato={estratoActivo ? `${estratoActivo.nombre} ${estratoActivo.valor}` : ''}
           filtroVal={filtroVal}
           onFiltro={setFiltroVal}
           onCerrar={cerrarHerramienta}
@@ -283,13 +311,14 @@ export function TabDatos({ onHerramientaUsada }: Props) {
   );
 }
 
-function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, onSecundaria, filas, filtroVal, onFiltro, onCerrar }: {
+function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, onSecundaria, filas, estrato, filtroVal, onFiltro, onCerrar }: {
   herramienta: IdHerramienta;
   columna: Columna;
   secundaria: Columna | null;
   opcionesSecundaria: Columna[];
   onSecundaria: (campo: string) => void;
   filas: Fila[];
+  estrato: string;
   filtroVal: string;
   onFiltro: (v: string) => void;
   onCerrar: () => void;
@@ -298,7 +327,7 @@ function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, 
   const esFecha = columna.tipo === 'fecha';
   const nums = useMemo(() => valoresNumericos(filas, columna), [filas, columna]);
   const resumen = useMemo(() => resumir(nums), [nums]);
-  const requiereNumero = herramienta === 'histograma' || herramienta === 'diagrama_corrida' || herramienta === 'dispersion'
+  const requiereNumero = herramienta === 'histograma' || herramienta === 'diagrama_corrida' || herramienta === 'carta_control' || herramienta === 'dispersion'
     || herramienta === 'sumar' || herramienta === 'estadisticas';
 
   let contenido: React.ReactNode;
@@ -324,6 +353,18 @@ function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, 
     const ordenadas = [...filas].sort((a, b) => (aNumero(a['dateFirstInput'], 'fecha') ?? 0) - (aNumero(b['dateFirstInput'], 'fecha') ?? 0));
     const serie = valoresNumericos(ordenadas, columna);
     contenido = resumen ? <Corrida valores={serie} mediana={resumen.mediana} esFecha={esFecha} /> : <SinDatos texto="No hay valores para graficar." />;
+  } else if (herramienta === 'carta_control') {
+    const carta = esFecha ? null : cartaControl(filas, columna);
+    const fuera = carta?.puntos.filter(p => p.fuera).length ?? 0;
+    contenido = !carta ? <SinDatos texto={esFecha ? 'La gráfica de control necesita una columna numérica, no de fechas.' : 'No hay valores por mes para graficar.'} /> : (
+      <>
+        <CartaControl carta={carta} />
+        <p className="datos-nota">
+          Media general: <strong>{formatoNumero(carta.centro)}</strong> · Desv. estándar: <strong>{formatoNumero(carta.sigma)}</strong> ·
+          {' '}{fuera === 0 ? 'Todos los meses dentro de los límites.' : <strong>{fuera} {fuera === 1 ? 'mes fuera' : 'meses fuera'} de control.</strong>}
+        </p>
+      </>
+    );
   } else if (herramienta === 'dispersion') {
     if (!secundaria) {
       contenido = <SinDatos texto="Elige la columna del eje vertical." />;
@@ -425,7 +466,7 @@ function PanelResultado({ herramienta, columna, secundaria, opcionesSecundaria, 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           <div className="icono-insignia icono-insignia-primario icono-insignia-sm"><Icono nombre={info.icono} tamano={18} /></div>
           <div style={{ minWidth: 0 }}>
-            <h4 className="datos-resultado-titulo">{info.nombre} de {columna.nombre}</h4>
+            <h4 className="datos-resultado-titulo">{info.nombre} de {columna.nombre}{estrato && ` · ${estrato}`}</h4>
             <p className="datos-nota" style={{ margin: 0 }}>{info.ayuda}</p>
           </div>
         </div>

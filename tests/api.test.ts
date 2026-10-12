@@ -74,3 +74,14 @@ describe('Configuración de verificaciones', () => {
     }
   });
 });
+
+describe('Comentarios de clientes', () => {
+  it('nunca exponen la columna de evidencia de la base R2', async () => {
+    const { cargarComentarios } = await import('../src/servidor/datos/parseo.js');
+    const comentarios = cargarComentarios('datos/R2_ETF_Bank_Comentarios_Clientes.xlsx');
+    expect(comentarios.length).toBe(90);
+    for (const c of comentarios) {
+      expect(Object.keys(c).some(k => k.toLowerCase().includes('evidencia'))).toBe(false);
+    }
+  });
+});
