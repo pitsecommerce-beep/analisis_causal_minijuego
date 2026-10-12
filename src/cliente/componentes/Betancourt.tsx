@@ -47,13 +47,15 @@ export function RamonMedioCuerpo({ hablando = false, animo = 'neutral', senala =
     const cuadro = (t: number) => {
       const e = estadoRef.current;
       c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+      // Gesticula mientras habla; en silencio deja el brazo arriba si está señalando
+      const gesto: P.Gesto = e.senala ? 'senala' : e.hablando ? 'explica' : 'reposo';
       P.dibujarMedioCuerpo(c, RAMON, {
         parpadeo: (t + RAMON.fase * 7) % 4300 < 130,
         habla: e.hablando && Math.floor(t / 110) % 2 === 0,
         animo: e.animo,
         respiro: Math.floor(t / 1500) % 2,
         resaltado: false,
-      }, e.senala);
+      }, gesto, e.hablando ? Math.floor(t / 340) % 2 : e.senala ? Math.floor(t / 1500) % 2 : 0);
       raf = requestAnimationFrame(cuadro);
     };
     raf = requestAnimationFrame(cuadro);

@@ -482,28 +482,90 @@ export function dibujarPersonaje(c: Ctx, per: Personaje, est: EstadoPersonaje, b
 // --- Medio cuerpo para presentar la inducción ---
 
 export const MEDIO_CUERPO = { ancho: 64, alto: 58 };
+export type Gesto = 'reposo' | 'explica' | 'senala';
 
-/** Medio cuerpo sin silla ni fondo. Con `senala`, levanta el brazo derecho apuntando hacia arriba. */
-export function dibujarMedioCuerpo(c: Ctx, per: Personaje, est: EstadoPersonaje, senala = false) {
+/** Bloque de manga con luz arriba e izquierda y sombra abajo y a la derecha, como el resto del sprite. */
+function manga(c: Ctx, x: number, y: number, w: number, h: number, [luz, base, sombra]: Tono) {
+  r(c, x, y, w, h, base);
+  r(c, x, y, w, 1, luz);
+  r(c, x, y, 1, h, luz);
+  r(c, x + w - 1, y + 1, 1, h - 1, sombra);
+  r(c, x + 1, y + h - 1, w - 1, 1, sombra);
+}
+
+/** Mano vista de frente: palma con brillo y sombra, como las manos sobre la mesa. */
+function mano(c: Ctx, x: number, y: number, w: number, h: number, [luz, base, sombra]: Tono) {
+  r(c, x, y, w, h, base);
+  p(c, x, y, luz);
+  r(c, x, y + h - 1, w, 1, sombra);
+}
+
+const PUNO = '#f1ede4';
+
+/**
+ * Brazos del medio cuerpo. `cuadro` alterna la animación mientras habla:
+ * - reposo: los dos brazos a los costados
+ * - explica: antebrazos al frente; las manos suben y bajan por turnos
+ * - senala: el brazo derecho apunta hacia arriba y el izquierdo acompaña al frente
+ */
+function brazos(c: Ctx, per: Personaje, cx: number, S: number, fondo: number, gesto: Gesto, cuadro: number) {
+  const tono = per.ropa.tono;
+  const piel = per.piel;
+  const a = per.ancho;
+  const izq = cx - a - 3;
+  const der = cx + a - 1;
+
+  // Antebrazo izquierdo al frente, a la altura del cinturón; `alza` lo sube unos píxeles
+  const frenteIzq = (alza: number) => {
+    const codo = S + 15 - alza;
+    manga(c, izq, S + 3, 4, codo - S, tono);
+    manga(c, izq, codo, cx - 7 - izq, 4, tono);
+    r(c, cx - 7, codo, 1, 4, PUNO);
+    mano(c, cx - 6, codo, 4, 4, piel);
+  };
+  const frenteDer = (alza: number) => {
+    const codo = S + 15 - alza;
+    manga(c, der, S + 3, 4, codo - S, tono);
+    manga(c, cx + 7, codo, der + 4 - (cx + 7), 4, tono);
+    r(c, cx + 6, codo, 1, 4, PUNO);
+    mano(c, cx + 2, codo, 4, 4, piel);
+  };
+
+  if (gesto === 'reposo') {
+    manga(c, izq, S + 3, 4, fondo - S - 3, tono);
+    manga(c, der, S + 3, 4, fondo - S - 3, tono);
+    return;
+  }
+
+  if (gesto === 'explica') {
+    frenteIzq(cuadro === 1 ? 3 : 0);
+    frenteDer(cuadro === 1 ? 0 : 3);
+    return;
+  }
+
+  // Señala: brazo derecho en escuadra, con el índice hacia arriba; se mece un píxel al hablar
+  frenteIzq(cuadro === 1 ? 2 : 0);
+  const alto = cuadro === 1 ? 1 : 0;
+  const hombroY = S + 3;
+  manga(c, der, hombroY, 9, 4, tono);
+  const fx = der + 5;
+  const puntaY = S - 10 - alto;
+  manga(c, fx, puntaY, 4, hombroY - puntaY + 4, tono);
+  r(c, fx, puntaY - 1, 4, 1, PUNO);
+  mano(c, fx, puntaY - 4, 4, 3, piel);
+  r(c, fx + 1, puntaY - 7, 2, 3, piel[1]);
+  p(c, fx + 1, puntaY - 7, piel[0]);
+}
+
+/** Medio cuerpo sin silla ni fondo, para hablarle de frente al participante. */
+export function dibujarMedioCuerpo(c: Ctx, per: Personaje, est: EstadoPersonaje, gesto: Gesto = 'reposo', cuadro = 0) {
   const cx = 26;
-  const H = 4 + est.respiro;
+  const H = 6 + est.respiro;
   const S = H + 17;
   const fondo = MEDIO_CUERPO.alto;
-  const [, base, sombra] = per.ropa.tono;
-  const [, pielBase, pielSombra] = per.piel;
   torso(c, per, cx, S, fondo);
-  // Brazo izquierdo a un costado
-  r(c, cx - per.ancho - 2, S + 4, 3, fondo - S - 4, base);
-  if (senala) {
-    // Hombro, antebrazo en diagonal y mano con el índice extendido
-    r(c, cx + per.ancho - 1, S + 4, 3, 6, sombra);
-    for (let i = 0; i < 10; i++) r(c, cx + per.ancho + i, S + 4 - i, 3, 3, i < 7 ? base : sombra);
-    r(c, cx + per.ancho + 9, S - 9, 4, 4, pielBase);
-    r(c, cx + per.ancho + 12, S - 12, 2, 4, pielBase);
-    p(c, cx + per.ancho + 9, S - 6, pielSombra);
-  } else {
-    r(c, cx + per.ancho - 1, S + 4, 3, fondo - S - 4, sombra);
-  }
+  // Los brazos al frente se dibujan sobre el torso; a los costados, también por fuera de él
+  brazos(c, per, cx, S, fondo, gesto, cuadro);
   cabeza(c, per, cx, H, est);
 }
 

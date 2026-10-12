@@ -49,6 +49,8 @@ export function Onboarding({ pasos, onTerminar }: Props) {
   const [caja, setCaja] = useState<Caja | null>(null);
   const [escritos, setEscritos] = useState(0);
   const [escala, setEscala] = useState(escalaRamon);
+  // Al cambiar de paso, Ramón baja el brazo y lo vuelve a levantar hacia el nuevo elemento
+  const [brazoArriba, setBrazoArriba] = useState(false);
   const paso = pasos[indice]!;
   const esUltimo = indice === pasos.length - 1;
   const escribiendo = escritos < paso.texto.length;
@@ -61,6 +63,12 @@ export function Onboarding({ pasos, onTerminar }: Props) {
     paso.alEntrar?.();
     const el = paso.objetivo ? document.querySelector(`[data-tour="${paso.objetivo}"]`) : null;
     el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [indice]);
+
+  useEffect(() => {
+    setBrazoArriba(false);
+    const id = window.setTimeout(() => setBrazoArriba(true), 350);
+    return () => window.clearTimeout(id);
   }, [indice]);
 
   // Máquina de escribir: Ramón mueve la boca mientras aparece el texto
@@ -120,7 +128,7 @@ export function Onboarding({ pasos, onTerminar }: Props) {
         : <div className="recorrido-velo" />}
 
       <div className="ramon-escena">
-        <RamonMedioCuerpo hablando={escribiendo} animo={paso.animo ?? 'neutral'} senala={!!caja} escala={escala} />
+        <RamonMedioCuerpo hablando={escribiendo} animo={paso.animo ?? 'neutral'} senala={!!caja && brazoArriba} escala={escala} />
         <div className="ramon-globo" onClick={() => escribiendo && setEscritos(paso.texto.length)}>
           <div className="ramon-globo-nombre">Ramón Betancourt <small>a nombre del Consejo</small></div>
           <h2 id="recorrido-titulo" className="ramon-globo-titulo">{paso.titulo}</h2>
