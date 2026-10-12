@@ -907,7 +907,6 @@ function pantallaHoja(): HTMLCanvasElement {
   r(c, 0, 0, 216, 112, '#f8f9fb');
   r(c, 0, 0, 216, 9, '#0f2b4a');
   r(c, 4, 3, 30, 3, '#c8922a');
-  r(c, 180, 3, 30, 3, '#3d6a99');
   r(c, 0, 9, 216, 7, '#e8f0fa');
   for (let i = 0; i < 6; i++) r(c, 4 + i * 22, 11, 14, 2, '#6b7a90');
   for (let y = 16; y < 112; y += 6) {
