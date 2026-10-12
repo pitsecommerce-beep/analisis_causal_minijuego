@@ -1,9 +1,9 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { obtenerSupabase } from '../db/supabase.js';
 import {
@@ -28,30 +28,34 @@ import { crearEstadoDialogo, obtenerNodosCiclo, filtrarRespuestas, evaluarCondic
 import type { NodoDialogo } from '../dialogos/motor-dialogos.js';
 import { cargarTodo } from '../datos/cargador.js';
 import type { DatosCargados } from '../datos/cargador.js';
+import { RAIZ } from '../raiz.js';
 import config from '../../../config/simulador.json' with { type: 'json' };
 import verificacionesConfig from '../../../config/verificaciones.json' with { type: 'json' };
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
+app.use(compression());
 app.use(cors());
 app.use(express.json());
 
-const clientePath = path.resolve(__dirname, '../../../dist/cliente');
+const clientePath = path.join(RAIZ, 'dist', 'cliente');
 if (fs.existsSync(clientePath)) {
-  app.use(express.static(clientePath));
+  // Vite pone un hash en el nombre de los assets, así que pueden guardarse en caché indefinidamente
+  app.use('/assets', express.static(path.join(clientePath, 'assets'), { immutable: true, maxAge: '1y' }));
+  app.use(express.static(clientePath, { index: false }));
 }
 
 // --- Datos cargados al inicio ---
 
 let datosJuego!: DatosCargados;
+// Lo que ven los jugadores no cambia durante la vida del proceso: se arma una sola vez
+let datosPublicos!: ReturnType<typeof datosParaJugador>;
 const dialogos: Record<string, NodoDialogo[]> = {};
 
 function cargarDatosInicio() {
   datosJuego = cargarTodo();
+  datosPublicos = datosParaJugador(datosJuego);
 
-  const dirDialogos = path.resolve(__dirname, '../../../datos/dialogos');
+  const dirDialogos = path.join(RAIZ, 'datos', 'dialogos');
   const personajes = ['bernardo', 'oscar', 'paulina', 'silvia', 'diego', 'ramon'];
   for (const p of personajes) {
     dialogos[p] = JSON.parse(fs.readFileSync(path.join(dirDialogos, `${p}.json`), 'utf-8'));
@@ -395,11 +399,11 @@ app.delete('/api/profesor/sesion/:id', autenticarProfesor, async (req, res) => {
 // ╚══════════════════════════════════════╝
 
 app.get('/api/datos/solicitudes', autenticarJugador, (_req, res) => {
-  res.json(datosParaJugador(datosJuego).solicitudes);
+  res.json(datosPublicos.solicitudes);
 });
 
 app.get('/api/datos/comentarios', autenticarJugador, (_req, res) => {
-  res.json(datosParaJugador(datosJuego).comentarios);
+  res.json(datosPublicos.comentarios);
 });
 
 app.get('/api/datos/columnas', autenticarJugador, (_req, res) => {
@@ -1080,7 +1084,7 @@ app.get('/api/profesor/sesion/:id/exportar', async (req, res) => {
 
 if (fs.existsSync(clientePath)) {
   app.get(/^\/(?!api\/).*/, (_req, res) => {
-    res.sendFile(path.join(clientePath, 'index.html'));
+    res.sendFile(path.join(clientePath, 'index.html'), { headers: { 'Cache-Control': 'no-cache' } });
   });
 }
 
