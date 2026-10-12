@@ -376,9 +376,12 @@ function Panel() {
         boxShadow: '0 2px 8px rgba(15, 43, 74, 0.2)',
       }}>
         <div className="contenedor" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-          <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700 }}>Panel del Profesor</h1>
-            <p style={{ fontSize: 12, opacity: 0.6 }}>Director de Operaciones · ETF Bank</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <img src="/favicon.png" alt="IPADE" width={40} height={40} style={{ flexShrink: 0 }} />
+            <div>
+              <h1 style={{ fontSize: 20, fontWeight: 700 }}>Panel del Profesor</h1>
+              <p style={{ fontSize: 12, opacity: 0.6 }}>Director de Operaciones · ETF Bank</p>
+            </div>
           </div>
           <button
             onClick={cerrarSesion}

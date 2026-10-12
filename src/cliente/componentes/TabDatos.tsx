@@ -120,6 +120,19 @@ export function TabDatos({ onHerramientaUsada }: Props) {
     else { setOrdenCol(campo); setOrdenAsc(true); }
   }
 
+  function cerrarHerramienta() {
+    setHerramienta(null);
+    if (herramienta === 'filtro') { setFiltroCol(''); setFiltroVal(''); }
+  }
+
+  // Doble clic sobre la columna ya seleccionada la deselecciona y cierra la herramienta abierta
+  function alternarColumna(campo: string) {
+    if (colSeleccionada !== campo) { elegirColumna(campo); return; }
+    setColSeleccionada('');
+    setAviso('');
+    cerrarHerramienta();
+  }
+
   function elegirColumna(campo: string) {
     setColSeleccionada(campo);
     setAviso('');
@@ -210,7 +223,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
           filas={datosFiltrados}
           filtroVal={filtroVal}
           onFiltro={setFiltroVal}
-          onCerrar={() => { setHerramienta(null); if (herramienta === 'filtro') { setFiltroCol(''); setFiltroVal(''); } }}
+          onCerrar={cerrarHerramienta}
         />
       )}
 
@@ -229,8 +242,10 @@ export function TabDatos({ onHerramientaUsada }: Props) {
                 {cols.map(c => (
                   <th key={c.campo}
                     onClick={() => ordenar(c.campo)}
-                    onDoubleClick={() => elegirColumna(c.campo)}
-                    title="Clic para ordenar. Doble clic para analizar esta columna."
+                    onDoubleClick={() => alternarColumna(c.campo)}
+                    title={colSeleccionada === c.campo
+                      ? 'Clic para ordenar. Doble clic para quitar la selección.'
+                      : 'Clic para ordenar. Doble clic para analizar esta columna.'}
                     className={colSeleccionada === c.campo ? 'seleccionada' : ''}>
                     {c.nombre}
                     {ordenCol === c.campo ? (ordenAsc ? ' ▲' : ' ▼') : ''}

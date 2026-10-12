@@ -1164,42 +1164,6 @@ input[type='checkbox'].casilla {
   image-rendering: crisp-edges;
   touch-action: manipulation;
 }
-.sala-boton {
-  font-family: var(--sala-fuente);
-  font-size: 16px;
-  font-weight: 600;
-  padding: 10px 18px;
-  color: var(--sala-tinta);
-  background: var(--sala-ambar);
-  border: 0;
-  border-radius: 0;
-  box-shadow: 0 0 0 2px var(--sala-tinta), 0 0 0 4px var(--sala-borde), 4px 4px 0 4px rgba(0, 0, 0, 0.35);
-}
-.sala-boton:hover { background: #ffd46b; }
-.sala-intro {
-  position: absolute;
-  left: 50%;
-  top: 6%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-align: center;
-  font-family: var(--sala-fuente);
-  color: #f4efe4;
-  text-shadow: 0 2px 0 #000;
-  width: max-content;
-  max-width: 92%;
-}
-.sala-intro p { font-size: 15px; margin: 0; }
-.sala-tecla {
-  font-size: 11px;
-  padding: 2px 6px;
-  border: 1px solid rgba(244, 239, 228, 0.5);
-  color: rgba(244, 239, 228, 0.8);
-  text-shadow: none;
-}
 .sala-rotulo {
   position: absolute;
   left: 1.5%;
@@ -1391,10 +1355,6 @@ input[type='checkbox'].casilla {
   .sala-escena { overflow: visible; }
   .sala-globo { display: none; }
   .sala-rotulo span { display: none; }
-  .sala-intro p { display: none; }
-  .sala-intro { top: 4%; }
-  .sala-boton { font-size: 13px; padding: 6px 10px; }
-  .sala-tecla { display: none; }
   .sala-dialogo {
     position: fixed;
     left: 12px;

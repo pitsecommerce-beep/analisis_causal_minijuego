@@ -23,6 +23,8 @@ export function Unirse() {
       localStorage.setItem('nombreJugador', nombre.trim());
       localStorage.setItem('sesionNombre', res.sesion.nombre);
       if (res.reconectado) avisar('info', 'Retomaste tu partida', 'Continuarás donde te quedaste.');
+      // Cada participación nueva vuelve a mostrar la inducción al entrar al simulador
+      else localStorage.removeItem('onboardingVisto');
       nav('/juego');
     } catch (err: any) {
       setError(err.message);
