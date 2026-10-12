@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { Icono } from './ui/Iconos.js';
 import type { NombreIcono } from './ui/Iconos.js';
+import { RetratoBetancourt } from './Betancourt.js';
+import type { Animo } from './sala/pixel.js';
 
 export interface PasoRecorrido {
   // Valor del atributo data-tour del elemento a señalar. Sin objetivo, el paso aparece centrado.
   objetivo?: string;
-  icono: NombreIcono;
+  icono?: NombreIcono;
+  // Expresión de Betancourt en este paso
+  animo?: Animo;
   titulo: string;
   texto: string;
   puntos?: string[];
@@ -20,7 +23,9 @@ interface Props {
 }
 
 const MARGEN = 8;
-const ANCHO_GLOBO = 340;
+const ANCHO_GLOBO = 400;
+// Betancourt mueve la boca un momento al empezar cada paso
+const MS_HABLANDO = 1800;
 const SEPARACION = 14;
 
 interface Caja { top: number; left: number; width: number; height: number }
@@ -38,6 +43,7 @@ export function Onboarding({ pasos, onTerminar }: Props) {
   const [indice, setIndice] = useState(0);
   const [caja, setCaja] = useState<Caja | null>(null);
   const [altoGlobo, setAltoGlobo] = useState(0);
+  const [hablando, setHablando] = useState(true);
   const globoRef = useRef<HTMLDivElement>(null);
   const paso = pasos[indice]!;
   const esUltimo = indice === pasos.length - 1;
@@ -45,6 +51,12 @@ export function Onboarding({ pasos, onTerminar }: Props) {
   const ir = useCallback((i: number) => {
     setIndice(Math.max(0, Math.min(i, pasos.length - 1)));
   }, [pasos.length]);
+
+  useEffect(() => {
+    setHablando(true);
+    const id = window.setTimeout(() => setHablando(false), MS_HABLANDO);
+    return () => window.clearTimeout(id);
+  }, [indice]);
 
   useEffect(() => {
     paso.alEntrar?.();
@@ -110,10 +122,11 @@ export function Onboarding({ pasos, onTerminar }: Props) {
       <div ref={globoRef} key={indice} className="recorrido-globo" style={estiloGlobo}>
         {flecha && <span className={`recorrido-flecha recorrido-flecha-${flecha}`} style={{ left: flechaLeft }} />}
         <div className="recorrido-cabecera">
-          <div className="icono-insignia icono-insignia-primario icono-insignia-sm">
-            <Icono nombre={paso.icono} tamano={18} />
+          <RetratoBetancourt hablando={hablando} animo={paso.animo ?? 'neutral'} tamano={56} />
+          <div>
+            <div className="betancourt-nombre">Ramón Betancourt <small>a nombre del Consejo</small></div>
+            <h2 id="recorrido-titulo" className="recorrido-titulo">{paso.titulo}</h2>
           </div>
-          <h2 id="recorrido-titulo" className="recorrido-titulo">{paso.titulo}</h2>
         </div>
         <p className="recorrido-texto">{paso.texto}</p>
         {paso.puntos && (

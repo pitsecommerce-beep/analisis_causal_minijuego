@@ -222,7 +222,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
         <button className={`tab ${tab === 'solicitudes' ? 'activo' : ''}`} onClick={() => cambiarTab('solicitudes')}>
           Solicitudes ({solicitudes.length})
         </button>
-        <button className={`tab ${tab === 'comentarios' ? 'activo' : ''}`} onClick={() => cambiarTab('comentarios')}>
+        <button data-tour="tab-comentarios" className={`tab ${tab === 'comentarios' ? 'activo' : ''}`} onClick={() => cambiarTab('comentarios')}>
           Comentarios ({comentarios.length})
         </button>
         <button data-tour="tab-proceso" className={`tab ${tab === 'proceso' ? 'activo' : ''}`} onClick={() => cambiarTab('proceso')}>
