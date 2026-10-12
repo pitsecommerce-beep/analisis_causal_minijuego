@@ -5,7 +5,7 @@ import compression from 'compression';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { obtenerSupabase } from '../db/supabase.js';
+import { obtenerSupabase, obtenerSupabaseAuth } from '../db/supabase.js';
 import {
   crearSesion, obtenerSesionPorCodigo, obtenerSesionPorId,
   actualizarEstadoSesion, listarSesionesProfesor, eliminarSesiones,
@@ -172,8 +172,7 @@ app.post('/api/profesor/login', async (req, res) => {
     return;
   }
 
-  const sb = obtenerSupabase();
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  const { data, error } = await obtenerSupabaseAuth().auth.signInWithPassword({ email, password });
 
   if (error) {
     res.status(401).json({ error: error.message });
@@ -182,9 +181,31 @@ app.post('/api/profesor/login', async (req, res) => {
 
   res.json({
     token: data.session.access_token,
+    refreshToken: data.session.refresh_token,
     profesorId: data.user.id,
     email: data.user.email,
   });
+});
+
+// El token de acceso de Supabase dura una hora; el panel lo renueva con el refresh token
+app.post('/api/profesor/refrescar', async (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) {
+    res.status(400).json({ error: 'refreshToken requerido' });
+    return;
+  }
+
+  const { data, error } = await obtenerSupabaseAuth().auth.refreshSession({ refresh_token: refreshToken });
+  if (error || !data.session || !data.user) {
+    res.status(401).json({ error: 'Tu sesión expiró. Vuelve a iniciar sesión.' });
+    return;
+  }
+  if (!esCorreoProfesor(data.user.email)) {
+    res.status(403).json({ error: MENSAJE_DOMINIO });
+    return;
+  }
+
+  res.json({ token: data.session.access_token, refreshToken: data.session.refresh_token });
 });
 
 // ╔══════════════════════════════════════╗

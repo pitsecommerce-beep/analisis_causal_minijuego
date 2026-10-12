@@ -8,12 +8,44 @@ function headers(): Record<string, string> {
   return h;
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+// Renueva el token del profesor una sola vez aunque varias peticiones fallen a la vez
+let renovacion: Promise<boolean> | null = null;
+
+function renovarTokenProfesor(): Promise<boolean> {
+  const refreshToken = localStorage.getItem('refreshToken');
+  if (!refreshToken || localStorage.getItem('tipoAuth') !== 'profesor') return Promise.resolve(false);
+  renovacion ??= fetch(`${BASE}/profesor/refrescar`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+  })
+    .then(async res => {
+      if (!res.ok) return false;
+      const data = await res.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      return true;
+    })
+    .catch(() => false)
+    .finally(() => { renovacion = null; });
+  return renovacion;
+}
+
+async function request<T>(method: string, path: string, body?: unknown, reintento = false): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method,
     headers: headers(),
     body: body ? JSON.stringify(body) : null,
   });
+  const esAcceso = path === '/profesor/login' || path === '/profesor/registrar';
+  if (res.status === 401 && !reintento && !esAcceso && localStorage.getItem('tipoAuth') === 'profesor') {
+    if (await renovarTokenProfesor()) return request<T>(method, path, body, true);
+    // Sin forma de renovar: se pide iniciar sesión de nuevo
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    window.location.assign('/profesor');
+    throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
+  }
   let data: any = null;
   try {
     data = await res.json();
@@ -31,7 +63,7 @@ export const api = {
     registrar: (email: string, password: string) =>
       request<{ id: string }>('POST', '/profesor/registrar', { email, password }),
     login: (email: string, password: string) =>
-      request<{ token: string; profesorId: string }>('POST', '/profesor/login', { email, password }),
+      request<{ token: string; refreshToken: string; profesorId: string }>('POST', '/profesor/login', { email, password }),
     sesiones: () => request<any[]>('GET', '/profesor/sesiones'),
     sesion: (id: string) => request<any>('GET', `/profesor/sesion/${id}`),
     iniciarSesion: (id: string) => request<any>('POST', `/profesor/sesion/${id}/iniciar`),
