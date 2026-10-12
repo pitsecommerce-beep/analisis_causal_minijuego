@@ -19,8 +19,9 @@ const ETIQUETAS_ESTADO: Record<string, { texto: string; clase: string }> = {
   finalizada: { texto: 'Finalizada', clase: 'badge-advertencia' },
 };
 
-function guardarSesionProfesor(token: string) {
+function guardarSesionProfesor(token: string, refreshToken: string) {
   localStorage.setItem('token', token);
+  localStorage.setItem('refreshToken', refreshToken);
   localStorage.setItem('tipoAuth', 'profesor');
 }
 
@@ -37,7 +38,7 @@ function Login() {
     setCargando(true);
     try {
       const res = await api.profesor.login(email.trim(), password);
-      guardarSesionProfesor(res.token);
+      guardarSesionProfesor(res.token, res.refreshToken);
       nav('/profesor/panel');
     } catch (err: any) {
       setError(err.message);
@@ -94,7 +95,7 @@ function Registro() {
     try {
       await api.profesor.registrar(email.trim(), password);
       const res = await api.profesor.login(email.trim(), password);
-      guardarSesionProfesor(res.token);
+      guardarSesionProfesor(res.token, res.refreshToken);
       avisar('exito', 'Cuenta creada', 'Te damos la bienvenida al panel del profesor.');
       nav('/profesor/panel');
     } catch (err: any) {
