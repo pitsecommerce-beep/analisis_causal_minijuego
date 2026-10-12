@@ -10,6 +10,16 @@ export interface Pendiente {
 }
 
 export const CLAVE_PENDIENTES = 'pendientes:v1';
+// Conversaciones vistas y respondidas en la Sala de Juntas (por pestaña)
+export const CLAVE_MEMORIA_SALA = 'salaJuntas:v1';
+
+// Lo que el navegador recuerda de una partida no debe pasar a la siguiente participación
+export function olvidarPartidaAnterior() {
+  try {
+    localStorage.removeItem(CLAVE_PENDIENTES);
+    sessionStorage.removeItem(CLAVE_MEMORIA_SALA);
+  } catch { /* sin almacenamiento */ }
+}
 const EVENTO = 'pendientes-cambio';
 
 function leer(): Pendiente[] {
