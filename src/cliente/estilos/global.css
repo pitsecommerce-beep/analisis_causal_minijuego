@@ -1131,3 +1131,279 @@ input[type='checkbox'].casilla {
   .modal-acciones button { width: 100%; }
   .pie-pagina-contenido { flex-direction: column; text-align: center; }
 }
+
+/* ── Sala de Juntas (minijuego pixel art) ── */
+
+.sala {
+  --sala-tinta: #0b1626;
+  --sala-panel: #13284a;
+  --sala-borde: #e9dcb8;
+  --sala-ambar: #f2c14e;
+  --sala-fuente: 'Pixelify Sans', 'Inter', system-ui, sans-serif;
+}
+.sala-marco {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  background: var(--sala-tinta);
+  border-radius: var(--radio-lg);
+  padding: 0;
+  overflow: hidden;
+  box-shadow: var(--sombra-lg);
+}
+.sala-escena {
+  position: relative;
+  max-width: 100%;
+  user-select: none;
+}
+.sala-lienzo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  touch-action: manipulation;
+}
+.sala-boton {
+  font-family: var(--sala-fuente);
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px 18px;
+  color: var(--sala-tinta);
+  background: var(--sala-ambar);
+  border: 0;
+  border-radius: 0;
+  box-shadow: 0 0 0 2px var(--sala-tinta), 0 0 0 4px var(--sala-borde), 4px 4px 0 4px rgba(0, 0, 0, 0.35);
+}
+.sala-boton:hover { background: #ffd46b; }
+.sala-intro {
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  font-family: var(--sala-fuente);
+  color: #f4efe4;
+  text-shadow: 0 2px 0 #000;
+  width: max-content;
+  max-width: 92%;
+}
+.sala-intro p { font-size: 15px; margin: 0; }
+.sala-tecla {
+  font-size: 11px;
+  padding: 2px 6px;
+  border: 1px solid rgba(244, 239, 228, 0.5);
+  color: rgba(244, 239, 228, 0.8);
+  text-shadow: none;
+}
+.sala-rotulo {
+  position: absolute;
+  left: 1.5%;
+  top: 2.5%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  font-family: var(--sala-fuente);
+  background: rgba(11, 22, 38, 0.82);
+  color: #f4efe4;
+  box-shadow: 0 0 0 2px var(--sala-borde);
+  pointer-events: none;
+}
+.sala-rotulo strong { font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sala-ambar); }
+.sala-rotulo span { font-size: 12px; opacity: 0.85; }
+.sala-globo {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 22px));
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: max-content;
+  max-width: 240px;
+  padding: 8px 10px;
+  font-family: var(--sala-fuente);
+  background: #f6f1e4;
+  color: var(--sala-tinta);
+  box-shadow: 0 0 0 2px var(--sala-tinta), 3px 3px 0 2px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 2;
+}
+.sala-globo strong { font-size: 14px; }
+.sala-globo small { font-size: 11px; color: #5b6a80; }
+.sala-globo span { font-size: 13px; line-height: 1.35; margin-top: 2px; }
+.sala-globo-laptop { transform: translate(-50%, calc(-100% - 8px)); }
+.sala-dialogo {
+  position: absolute;
+  left: 2%;
+  right: 2%;
+  bottom: 3%;
+  display: flex;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--sala-panel);
+  color: #f4efe4;
+  box-shadow: 0 0 0 2px var(--sala-tinta), 0 0 0 4px var(--sala-borde), 0 0 0 6px var(--sala-tinta), 6px 6px 0 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  animation: sala-entrar 0.18s steps(3) both;
+  max-height: 62%;
+}
+@keyframes sala-entrar { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sala-retrato {
+  flex-shrink: 0;
+  width: 112px;
+  height: 112px;
+  image-rendering: pixelated;
+  box-shadow: 0 0 0 2px var(--sala-borde);
+  align-self: flex-start;
+}
+.sala-dialogo-cuerpo {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+.sala-dialogo-nombre {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--sala-fuente);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--sala-ambar);
+  padding-right: 28px;
+}
+.sala-dialogo-nombre small { font-size: 12px; font-weight: 400; color: #a9b8cc; }
+.sala-cerrar {
+  position: absolute;
+  top: -4px;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  color: #a9b8cc;
+  background: transparent;
+  border: 0;
+}
+.sala-cerrar:hover { color: #fff; }
+.sala-dialogo-texto {
+  margin: 0;
+  font-family: var(--sala-fuente);
+  font-size: 17px;
+  line-height: 1.45;
+  min-height: 2.9em;
+}
+.sala-dialogo-texto.jugador { color: #cfe1f2; font-style: italic; }
+.sala-oculto { visibility: hidden; }
+.sala-puntos { animation: sala-parpadeo 0.8s steps(2) infinite; margin-left: 4px; }
+.sala-continuar {
+  position: absolute;
+  right: 4px;
+  bottom: 0;
+  color: var(--sala-ambar);
+  font-size: 12px;
+  animation: sala-parpadeo 0.8s steps(2) infinite;
+}
+@keyframes sala-parpadeo { 50% { opacity: 0; } }
+.sala-pista {
+  align-self: flex-start;
+  font-family: var(--sala-fuente);
+  font-size: 12px;
+  padding: 2px 8px;
+  color: var(--sala-tinta);
+  background: #9cc3ea;
+}
+.sala-opciones { display: flex; flex-direction: column; gap: 6px; cursor: default; }
+.sala-opcion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 7px 10px;
+  font-family: var(--sala-fuente);
+  font-size: 15px;
+  color: #f4efe4;
+  background: rgba(255, 255, 255, 0.06);
+  border: 0;
+  border-radius: 0;
+  box-shadow: inset 0 0 0 1px rgba(233, 220, 184, 0.25);
+  transition: none;
+}
+.sala-opcion:hover, .sala-opcion:focus-visible {
+  background: rgba(242, 193, 78, 0.16);
+  box-shadow: inset 0 0 0 2px var(--sala-ambar);
+  outline: none;
+}
+.sala-opcion:hover .sala-opcion-num { background: var(--sala-ambar); color: var(--sala-tinta); }
+.sala-opcion-num {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: rgba(233, 220, 184, 0.18);
+}
+.sala-opcion-texto { flex: 1; }
+.sala-opcion-cred { font-size: 12px; font-weight: 700; }
+.sala-opcion-cred.pos { color: #7fdca4; }
+.sala-opcion-cred.neg { color: #ff8f80; }
+.sala-equipo {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+.sala-miembro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  text-align: left;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  font-family: var(--sala-fuente);
+}
+.sala-miembro:hover:not(:disabled), .sala-miembro.activo { border-color: var(--color-acento); background: var(--color-acento-suave); }
+.sala-miembro:disabled { opacity: 0.55; }
+.sala-miembro-nombre { font-size: 14px; font-weight: 600; color: var(--color-primario); }
+.sala-miembro-rol { font-size: 11px; color: var(--color-texto-terciario); }
+.sala-marca { font-size: 11px; font-weight: 600; margin-top: 2px; }
+.sala-marca.pendiente { color: var(--color-acento); }
+.sala-marca.nuevo { color: var(--color-info); }
+
+@media (max-width: 900px) {
+  .sala-equipo { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .sala-marco { border-radius: var(--radio); }
+  .sala-escena { overflow: visible; }
+  .sala-globo { display: none; }
+  .sala-rotulo span { display: none; }
+  .sala-intro p { display: none; }
+  .sala-intro { top: 4%; }
+  .sala-boton { font-size: 13px; padding: 6px 10px; }
+  .sala-tecla { display: none; }
+  .sala-dialogo {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    max-height: 70vh;
+    z-index: 50;
+  }
+  .sala-retrato { width: 64px; height: 64px; }
+  .sala-dialogo-texto { font-size: 16px; }
+  .sala-equipo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

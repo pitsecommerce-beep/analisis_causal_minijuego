@@ -173,7 +173,7 @@ export function Juego() {
       objetivo: 'tab-asesores',
       icono: 'mensajes',
       titulo: 'Sala de Juntas',
-      texto: 'Tu equipo opina sobre el problema. Algunas afirmaciones son ciertas y otras engañosas. Responde con evidencia para convencerlos y ganar credibilidad.',
+      texto: 'Cierras la laptop y te reúnes con tu equipo. Haz clic en cada persona para escuchar su consejo. Algunas afirmaciones son ciertas y otras engañosas: responde con evidencia para convencerlos y ganar credibilidad.',
     },
     {
       objetivo: 'tab-decisiones',
@@ -450,6 +450,7 @@ export function Juego() {
           <TabAsesores
             onCredibilidadCambio={onCredibilidadCambio}
             onRecargar={recargarEstado}
+            onAbrirLaptop={() => onCambioVista('datos')}
           />
         )}
         {vista === 'decisiones' && (
