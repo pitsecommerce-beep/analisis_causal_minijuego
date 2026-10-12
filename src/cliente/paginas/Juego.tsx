@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../api.js';
+import { api, EVENTO_SESION_FINALIZADA } from '../api.js';
 import { useSondeo } from '../sondeo.js';
 import { TabDatos } from '../componentes/TabDatos.js';
 import { TabAsesores } from '../componentes/TabAsesores.js';
@@ -42,6 +42,7 @@ export function Juego() {
   const [infoExp, setInfoExp] = useState<{ modoExperimento: boolean; grupo: string | null; consentimiento: boolean } | null>(null);
   const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false);
   const [esperando, setEsperando] = useState(false);
+  const [sesionFinalizada, setSesionFinalizada] = useState(false);
   const [mostrarOnboarding, setMostrarOnboarding] = useState(false);
   const inicioRef = useRef(Date.now());
 
@@ -84,7 +85,13 @@ export function Juego() {
         return;
       }
       if (sesionEstado === 'finalizada') {
-        setError('Esta sesión ya terminó. Pide a tu profesor el código de una sesión activa.');
+        // Si ya tenía partida, se muestra el cierre con su avance; si no, la sesión no está disponible
+        try {
+          setEstado(await api.partida.iniciar());
+          setSesionFinalizada(true);
+        } catch {
+          setError('Esta sesión ya terminó. Pide a tu profesor el código de una sesión activa.');
+        }
         setCargando(false);
         return;
       }
@@ -109,7 +116,17 @@ export function Juego() {
   }, INTERVALO_ESPERA, esperando);
 
   // Latido durante la partida para que el profesor vea a la persona como conectada
-  useSondeo(() => { api.jugador.latido().catch(() => {}); }, INTERVALO_LATIDO, !!estado);
+  useSondeo(() => {
+    api.jugador.latido()
+      .then(({ sesionEstado }) => { if (sesionEstado === 'finalizada') setSesionFinalizada(true); })
+      .catch(() => {});
+  }, INTERVALO_LATIDO, !!estado && !sesionFinalizada);
+
+  useEffect(() => {
+    const alFinalizar = () => setSesionFinalizada(true);
+    window.addEventListener(EVENTO_SESION_FINALIZADA, alFinalizar);
+    return () => window.removeEventListener(EVENTO_SESION_FINALIZADA, alFinalizar);
+  }, []);
 
   const pasosRecorrido: PasoRecorrido[] = [
     {
@@ -318,6 +335,10 @@ export function Juego() {
 
   if (!estado) return null;
 
+  if (sesionFinalizada) {
+    return <CierreSesion estado={estado} onResultados={() => nav('/resultados')} onSalir={async () => { await api.jugador.salir().catch(() => {}); localStorage.clear(); nav('/unirse'); }} />;
+  }
+
   const ciclo = estado.cicloActual ?? 1;
   const vidas = estado.vidas ?? 3;
   const credibilidad = estado.credibilidad ?? 50;
@@ -455,6 +476,54 @@ export function Juego() {
       </main>
       <PiePagina />
       {mostrarOnboarding && <Onboarding pasos={pasosRecorrido} onTerminar={terminarOnboarding} />}
+    </div>
+  );
+}
+
+// Pantalla que reemplaza al juego cuando el profesor finaliza la sesión
+function CierreSesion({ estado, onResultados, onSalir }: { estado: any; onResultados: () => void; onSalir: () => void }) {
+  const yaEvaluada = estado.fase === 'finalizada';
+  const completoCiclos = !!estado.terminada;
+  const datos = [
+    { etiqueta: 'Ciclo alcanzado', valor: `${estado.cicloActual ?? 1} / 4` },
+    { etiqueta: 'Vidas', valor: String(estado.vidas ?? 0) },
+    { etiqueta: 'Credibilidad', valor: `${estado.credibilidad ?? 0}%` },
+    { etiqueta: 'Presupuesto restante', valor: `$${estado.presupuestoDisponible ?? 0}` },
+  ];
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'var(--color-fondo)' }}>
+      <div className="tarjeta" style={{ maxWidth: 480, width: '100%', textAlign: 'center' }}>
+        <div className="icono-insignia icono-insignia-advertencia icono-insignia-lg" style={{ marginBottom: 16 }}>
+          <Icono nombre="finalizar" tamano={26} grosor={1.8} />
+        </div>
+        <h3 style={{ color: 'var(--color-texto)', marginBottom: 8 }}>Tu profesor finalizó la sesión</h3>
+        <p style={{ color: 'var(--color-texto-secundario)', marginBottom: 20, fontSize: 14, lineHeight: 1.6 }}>
+          {yaEvaluada
+            ? 'Tu partida ya fue evaluada. Puedes consultar tus resultados.'
+            : completoCiclos
+              ? 'Completaste los cuatro ciclos. Declara tus causas raíz para recibir tu evaluación.'
+              : 'Ya no es posible seguir jugando. Así quedó tu partida:'}
+        </p>
+        {!yaEvaluada && !completoCiclos && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20, textAlign: 'left' }}>
+            {datos.map(d => (
+              <div key={d.etiqueta} style={{ padding: '10px 12px', borderRadius: 'var(--radio)', background: 'var(--color-fondo)' }}>
+                <div style={{ fontSize: 12, color: 'var(--color-texto-secundario)' }}>{d.etiqueta}</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-texto)' }}>{d.valor}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+          {(yaEvaluada || completoCiclos) && (
+            <button className="btn-primario" onClick={onResultados}>
+              {yaEvaluada ? 'Ver resultados' : 'Declarar causas'}
+            </button>
+          )}
+          <button className="btn-fantasma" onClick={onSalir}>Salir</button>
+        </div>
+      </div>
     </div>
   );
 }
