@@ -154,15 +154,15 @@ export function Juego() {
     return () => window.removeEventListener(EVENTO_SESION_FINALIZADA, alFinalizar);
   }, []);
 
-  // Inducción: Ramón Betancourt presenta el encargo a nombre del consejo y señala la interfaz
+  // Inducción: Ramón Betancourt recibe al nuevo director a prueba y señala la interfaz
   const pasosRecorrido: PasoRecorrido[] = [
     {
-      titulo: 'El encargo del consejo',
-      texto: 'Bienvenido(a), Director(a). Soy Ramón Betancourt y hablo a nombre del consejo de ETF Bank. Te contratamos como consultor(a): entregamos las tarjetas de crédito demasiado tarde y las quejas crecen.',
+      titulo: 'Tu periodo de prueba',
+      texto: 'Bienvenido(a), Director(a). Soy Ramón Betancourt y hablo a nombre del consejo de ETF Bank. Llegas como nuevo(a) Director(a) de Operaciones en medio de una crisis: entregamos las tarjetas de crédito demasiado tarde y las quejas no paran de crecer. Estás a prueba, y el consejo quiere ver qué propones.',
       puntos: [
         'Encuentra las causas raíz con datos, siguiendo el método de Bohn.',
-        'Corrígelas con acciones sustentadas, en 4 ciclos.',
-        'Rinde cuentas al consejo en cada ciclo.',
+        'Propón y ejecuta acciones sustentadas, en 4 ciclos.',
+        'Rinde cuentas al consejo en cada ciclo: de tus resultados depende que te quedes en el puesto.',
       ],
       alEntrar: () => setVista('datos'),
     },
@@ -246,7 +246,7 @@ export function Juego() {
     {
       titulo: 'Cómo te evaluaremos',
       animo: 'feliz',
-      texto: 'El consejo no mide intenciones. Evaluaremos tu diagnóstico con las causas que verificaste y votaste, el impacto en los KPIs y tu método: si escuchaste al cliente primero, definiste el problema con un Pareto, planteaste hipótesis antes de actuar, estratificaste y decidiste con causas probadas. Éxito, Director(a).',
+      texto: 'El consejo no mide intenciones. Al final de tu periodo de prueba evaluaremos tu diagnóstico con las causas que verificaste y votaste, el impacto en los KPIs y tu método: si escuchaste al cliente primero, definiste el problema con un Pareto, planteaste hipótesis antes de actuar, estratificaste y decidiste con causas probadas. Éxito, Director(a).',
     },
   ];
 
