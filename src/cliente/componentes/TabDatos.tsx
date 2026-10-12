@@ -226,7 +226,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
           Comentarios ({comentarios.length})
         </button>
         <button data-tour="tab-proceso" className={`tab ${tab === 'proceso' ? 'activo' : ''}`} onClick={() => cambiarTab('proceso')}>
-          Proceso (Anexo 1)
+          Proceso
         </button>
       </div>
 

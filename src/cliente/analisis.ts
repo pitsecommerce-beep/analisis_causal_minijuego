@@ -348,26 +348,37 @@ export function formatoNumero(n: number, decimales = 2): string {
 
 // ── Vista del proceso (Anexo 1) ──
 
+export type ActorProceso = 'cliente' | 'sucursal' | 'crop';
+
 export interface EtapaProceso {
   id: string;
   nombre: string;
+  // Rótulo corto para el diagrama; \n separa renglones
+  corto: string;
+  actor: ActorProceso;
   // Fechas de la base que delimitan la etapa; sin ellas la etapa no tiene registro de tiempo
   desde?: string;
   hasta?: string;
   nota?: string;
 }
 
+export const ACTORES_PROCESO: { id: ActorProceso; nombre: string }[] = [
+  { id: 'cliente', nombre: 'Cliente' },
+  { id: 'sucursal', nombre: 'Sucursal' },
+  { id: 'crop', nombre: 'Back office\n(CrOP)' },
+];
+
 export const ETAPAS_PROCESO: EtapaProceso[] = [
-  { id: 'visita', nombre: 'El cliente visita la sucursal' },
-  { id: 'documentos', nombre: 'Entrega sus documentos' },
-  { id: 'captura', nombre: 'El ejecutivo captura en C.R.A.S.S.', desde: 'dateFirstInput', hasta: 'dateLastInput' },
-  { id: 'envio', nombre: 'Envía los documentos a CrOP', desde: 'dateLastInput', hasta: 'dateDocsReceived', nota: 'Incluye el traslado hasta que CrOP los recibe.' },
-  { id: 'revision', nombre: 'CrOP revisa el expediente', desde: 'dateDocsReceived', hasta: 'creditBureauRunDate', nota: 'Termina cuando se consulta el buró de crédito.' },
-  { id: 'buro', nombre: 'Consulta al buró de crédito', nota: 'La consulta no tiene duración propia en la base; su espera queda dentro de la revisión de CrOP.' },
-  { id: 'score', nombre: 'Revisa el score interno ETF Bank', desde: 'creditBureauRunDate', hasta: 'etfbScoreDate' },
-  { id: 'linea', nombre: 'Define la línea de crédito', nota: 'La base no registra la fecha en que se define la línea.' },
-  { id: 'tarjeta', nombre: 'Envía la tarjeta', desde: 'etfbScoreDate', hasta: 'datePlasticSent' },
-  { id: 'recibe', nombre: 'El cliente recibe su tarjeta' },
+  { id: 'visita', nombre: 'El cliente visita la sucursal', corto: 'Visita la\nsucursal', actor: 'cliente' },
+  { id: 'documentos', nombre: 'Entrega sus documentos', corto: 'Entrega\ndocumentos', actor: 'cliente' },
+  { id: 'captura', nombre: 'El ejecutivo captura en C.R.A.S.S.', corto: 'Captura en\nC.R.A.S.S.', actor: 'sucursal', desde: 'dateFirstInput', hasta: 'dateLastInput' },
+  { id: 'envio', nombre: 'Envía los documentos a CrOP', corto: 'Envía\na CrOP', actor: 'sucursal', desde: 'dateLastInput', hasta: 'dateDocsReceived', nota: 'Incluye el traslado hasta que CrOP los recibe.' },
+  { id: 'revision', nombre: 'CrOP revisa el expediente', corto: 'Revisa el\nexpediente', actor: 'crop', desde: 'dateDocsReceived', hasta: 'creditBureauRunDate', nota: 'Termina cuando se consulta el buró de crédito.' },
+  { id: 'buro', nombre: 'Consulta al buró de crédito', corto: 'Consulta\nal buró', actor: 'crop', nota: 'La consulta no tiene duración propia en la base; su espera queda dentro de la revisión de CrOP.' },
+  { id: 'score', nombre: 'Revisa el score interno ETF Bank', corto: 'Revisa el\nscore', actor: 'crop', desde: 'creditBureauRunDate', hasta: 'etfbScoreDate' },
+  { id: 'linea', nombre: 'Define la línea de crédito', corto: 'Define\nla línea', actor: 'crop', nota: 'La base no registra la fecha en que se define la línea.' },
+  { id: 'tarjeta', nombre: 'Envía la tarjeta', corto: 'Envía la\ntarjeta', actor: 'crop', desde: 'etfbScoreDate', hasta: 'datePlasticSent' },
+  { id: 'recibe', nombre: 'El cliente recibe su tarjeta', corto: 'Recibe su\ntarjeta', actor: 'cliente' },
 ];
 
 // Días que tarda cada solicitud en una etapa; solo cuenta registros con ambas fechas
