@@ -1,5 +1,8 @@
 import type { EstadoPartida } from '../motor/ciclos.js';
 import type { KPIs } from '../motor/kpis.js';
+import { PREFIJO_SIN_RESPALDO, PREFIJO_SIN_VERIFICAR } from '../../compartido/espina.js';
+import { HITOS } from '../../compartido/metodo.js';
+import type { Hito, Hitos } from '../../compartido/metodo.js';
 
 export interface CausaDeclarada {
   id: string;
@@ -37,6 +40,17 @@ export function evaluarDiagnostico(
   const detalles: string[] = [];
 
   for (const causa of causasDeclaradas) {
+    // Verificada con datos, pero el análisis no respalda ninguna de las causas raíz
+    if (causa.id.startsWith(PREFIJO_SIN_RESPALDO)) {
+      detalles.push(`${causa.nombre} (verificada, sin relación con una causa raíz): 0`);
+      continue;
+    }
+    if (causa.id.startsWith(PREFIJO_SIN_VERIFICAR)) {
+      const penalizacion = config.penalizacionCausaEspuria ?? -40;
+      puntos += penalizacion;
+      detalles.push(`${causa.nombre} (votada sin verificar): ${penalizacion}`);
+      continue;
+    }
     const valor = CAUSAS_REALES[causa.id];
     if (valor != null) {
       puntos += valor;
@@ -110,10 +124,15 @@ export function evaluarImpacto(
   return { puntos: Math.min(250, puntos), detalles };
 }
 
+export interface MetodoObservado {
+  hitos: Hitos;
+  capacitoSinEstratificar: boolean;
+}
+
+// El método se mide por lo que el participante hizo, no por lo que declara
 export function evaluarMetodo(
   herramientasUsadas: string[],
-  consultoGuia: boolean,
-  pasosEnOrden: boolean,
+  hitos: Hitos,
   config: Record<string, number>
 ): { puntos: number; detalles: string[] } {
   const detalles: string[] = [];
@@ -131,22 +150,20 @@ export function evaluarMetodo(
 
   const usadasValidas = herramientasUsadas.filter((h) => HERRAMIENTAS_BOHN.includes(h));
   const ptsHerramientas = Math.min(
-    config.maxHerramientas ?? 100,
-    usadasValidas.length * (config.herramientaBohn ?? 25)
+    config.maxHerramientas ?? 30,
+    usadasValidas.length * (config.herramientaBohn ?? 6)
   );
   puntos += ptsHerramientas;
   detalles.push(`${usadasValidas.length} herramientas de Bohn: +${ptsHerramientas}`);
 
-  if (consultoGuia) {
-    const ptsGuia = config.consultaGuia ?? 20;
-    puntos += ptsGuia;
-    detalles.push(`Consultó la guía o nota técnica: +${ptsGuia}`);
-  }
-
-  if (pasosEnOrden) {
-    const ptsPasos = config.pasosEnOrden ?? 30;
-    puntos += ptsPasos;
-    detalles.push(`Pasos en orden: +${ptsPasos}`);
+  const ptsHito = config.hito ?? 24;
+  for (const [id, descripcion] of Object.entries(HITOS) as [Hito, string][]) {
+    if (hitos[id]) {
+      puntos += ptsHito;
+      detalles.push(`${descripcion}: +${ptsHito}`);
+    } else {
+      detalles.push(`${descripcion}: no observado`);
+    }
   }
 
   return { puntos: Math.min(150, puntos), detalles };
@@ -173,9 +190,19 @@ export function evaluarCompromisos(partida: EstadoPartida): { puntos: number; de
   return { puntos, detalles };
 }
 
-export function calcularPenalizaciones(partida: EstadoPartida): { puntos: number; detalles: string[] } {
+export function calcularPenalizaciones(
+  partida: EstadoPartida,
+  capacitoSinEstratificar = false,
+  config: Record<string, number> = {}
+): { puntos: number; detalles: string[] } {
   const detalles: string[] = [];
   let puntos = 0;
+
+  if (capacitoSinEstratificar) {
+    const pen = config.capacitarSinEstratificar ?? -60;
+    puntos += pen;
+    detalles.push(`Capacitó a las 18 sucursales sin estratificar por sucursal: ${pen}`);
+  }
 
   const vidasPerdidas = 3 - partida.vidas;
   if (vidasPerdidas > 0) {
@@ -208,6 +235,7 @@ export interface ConfigPuntuacion {
   criterio?: Record<string, number>;
   impacto?: Record<string, number>;
   metodo?: Record<string, number>;
+  penalizaciones?: Record<string, number>;
 }
 
 export function evaluarPartida(
@@ -218,8 +246,7 @@ export function evaluarPartida(
   refutacionesConDatos: number,
   accionesSinVerificar: number,
   herramientasUsadas: string[],
-  consultoGuia: boolean,
-  pasosEnOrden: boolean,
+  metodo: MetodoObservado,
   configPuntuacion: ConfigPuntuacion
 ): Desglose {
   const diag = evaluarDiagnostico(causasDeclaradas, configPuntuacion.diagnostico ?? {});
@@ -230,9 +257,9 @@ export function evaluarPartida(
     configPuntuacion.criterio ?? {}
   );
   const imp = evaluarImpacto(kpisIniciales, partida.kpis, configPuntuacion.impacto ?? {});
-  const met = evaluarMetodo(herramientasUsadas, consultoGuia, pasosEnOrden, configPuntuacion.metodo ?? {});
+  const met = evaluarMetodo(herramientasUsadas, metodo.hitos, configPuntuacion.metodo ?? {});
   const comp = evaluarCompromisos(partida);
-  const pen = calcularPenalizaciones(partida);
+  const pen = calcularPenalizaciones(partida, metodo.capacitoSinEstratificar, configPuntuacion.penalizaciones ?? {});
 
   const total = Math.max(
     0,

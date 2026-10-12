@@ -42,7 +42,7 @@ const desglose = evaluarPartida(
   ],
   5, 3, 0,
   ['histograma', 'pareto', 'diagrama_corrida', 'dispersion'],
-  true, true,
+  { hitos: { percibir: true, definir: true, hipotesis: true, probar: true, estratificar: true }, capacitoSinEstratificar: false },
   config.puntuacion
 );
 console.log('Desglose:', desglose);

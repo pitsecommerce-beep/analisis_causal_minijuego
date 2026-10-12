@@ -33,10 +33,9 @@
     },
     "metodo": {
       "total": 150,
-      "herramientaBohn": 25,
-      "maxHerramientas": 100,
-      "consultaGuia": 20,
-      "pasosEnOrden": 30
+      "hito": 24,
+      "herramientaBohn": 6,
+      "maxHerramientas": 30
     },
     "compromisos": {
       "total": 50
@@ -44,7 +43,8 @@
     "penalizaciones": {
       "vidaPerdida": -60,
       "destitucion": -100,
-      "presupuestoAgotadoSinEfecto": -80
+      "presupuestoAgotadoSinEfecto": -80,
+      "capacitarSinEstratificar": -60
     }
   },
   "desenlaces": [

@@ -2,13 +2,18 @@ import { useState, useEffect } from 'react';
 import { api } from '../api.js';
 import { Icono } from './ui/Iconos.js';
 import { useUI } from './ui/Notificaciones.js';
+import { VotacionCiclo } from './VotacionCiclo.js';
+import { AvisoBetancourt } from './Betancourt.js';
+import { useEspina } from '../espina.js';
+import { ESTADOS } from '../../compartido/espina.js';
 
 interface Props {
   estado: any;
   onEstadoCambio: (estado: any) => void;
+  onIrEspina?: () => void;
 }
 
-export function TabDecisiones({ estado, onEstadoCambio }: Props) {
+export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
   const { avisar, confirmar } = useUI();
   const [acciones, setAcciones] = useState<any[]>([]);
   const [metricas, setMetricas] = useState<any[]>([]);
@@ -18,6 +23,12 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
   const [compromisoDeclarado, setCompromisoDeclarado] = useState(false);
+  const [votando, setVotando] = useState(false);
+  const [causaPorAccion, setCausaPorAccion] = useState<Record<number, string>>({});
+  const [avisos, setAvisos] = useState<string[]>([]);
+  const espina = useEspina();
+  // Las verificadas primero: son las que sustentan una decisión
+  const causasOrdenadas = [...espina.tarjetas].sort((a, b) => Number(b.estado === 'verificada') - Number(a.estado === 'verificada'));
 
   useEffect(() => {
     Promise.all([api.config.acciones(), api.config.metricas()])
@@ -61,9 +72,11 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
     setError('');
     setCargando(true);
     try {
-      const res = await api.partida.acciones(seleccionadas.map(id => ({ accionId: id })));
+      const res = await api.partida.acciones(seleccionadas.map(id => ({ accionId: id, tarjetaId: causaPorAccion[id] || null })));
       onEstadoCambio(res);
       setSeleccionadas([]);
+      setCausaPorAccion({});
+      if (res?.avisos?.length) setAvisos(res.avisos);
       avisar('exito', 'Acciones confirmadas', `Presupuesto restante: $${res?.presupuestoDisponible ?? presupuesto - costoSeleccion}`);
     } catch (err: any) {
       setError(err.message);
@@ -83,7 +96,13 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
     }
   }
 
-  async function avanzarCiclo() {
+  // Antes de avanzar se votan las causas principales y se escriben los 5 porqués
+  function avanzarCiclo() {
+    setVotando(true);
+  }
+
+  async function confirmarAvance() {
+    setVotando(false);
     const ok = await confirmar({
       titulo: 'Avanzar al siguiente ciclo',
       mensaje: seleccionadas.length > 0
@@ -173,6 +192,16 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
                   {yaElegida && (
                     <span className="badge badge-exito" style={{ marginTop: 8 }}>Ya elegida</span>
                   )}
+                  {sel && (
+                    <div className="accion-causa" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
+                      <label className="campo-label" htmlFor={`causa-${a.id}`}>¿Qué causa de tu espina ataca?</label>
+                      <select id={`causa-${a.id}`} value={causaPorAccion[a.id] ?? ''}
+                        onChange={e => setCausaPorAccion(c => ({ ...c, [a.id]: e.target.value }))}>
+                        <option value="">Ninguna (decisión sin causa ligada)</option>
+                        {causasOrdenadas.map(t => <option key={t.id} value={t.id}>[{ESTADOS[t.estado]}] {t.texto}</option>)}
+                      </select>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -248,6 +277,11 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
             onClick={avanzarCiclo} disabled={cargando || !compromisoDeclarado}>
             Avanzar al siguiente ciclo
           </button>
+          {avisos.length > 0 && <AvisoBetancourt avisos={avisos} onCerrar={() => setAvisos([])} />}
+          {votando && (
+            <VotacionCiclo ciclo={estado?.cicloActual ?? 1} onCancelar={() => setVotando(false)} onVotado={confirmarAvance}
+              onIrEspina={() => { setVotando(false); onIrEspina?.(); }} />
+          )}
 
           {estado?.kpis && (
             <div className="tarjeta" style={{ marginTop: 20 }}>

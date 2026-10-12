@@ -26,7 +26,104 @@ export const EVENTOS_COMENTARIO: { etiqueta: string; patron: RegExp; esError: bo
 export const COLUMNAS_CALCULADAS: Columna[] = [
   { campo: 'ventanaCaptura', nombre: 'Días de captura en sucursal (calculado)', tipo: 'numero', calculada: true },
   { campo: 'erroresComentario', nombre: 'Errores en comentarios (calculado)', tipo: 'numero', calculada: true },
+  { campo: 'mes', nombre: 'Mes de inicio de captura (calculado)', tipo: 'texto', calculada: true },
+  { campo: 'quejas', nombre: 'Quejas del cliente (cruce con comentarios)', tipo: 'numero', calculada: true },
+  { campo: 'categoriaQueja', nombre: 'Categoría de la queja (cruce con comentarios)', tipo: 'texto', calculada: true },
 ];
+
+// Columnas que se agregan a cada comentario a partir de su solicitud (cruce por número de solicitud)
+export const COLUMNAS_CRUCE_COMENTARIOS: Columna[] = [
+  { campo: 'mes', nombre: 'Mes del comentario (calculado)', tipo: 'texto', calculada: true },
+  { campo: 'solicitudVentanaCaptura', nombre: 'Días de captura de la solicitud (cruce)', tipo: 'numero', calculada: true },
+  { campo: 'solicitudErrores', nombre: 'Errores de la solicitud (cruce)', tipo: 'numero', calculada: true },
+  { campo: 'solicitudResultadoBuro', nombre: 'Resultado del buró de la solicitud (cruce)', tipo: 'texto', calculada: true },
+  { campo: 'solicitudUltimoEstatus', nombre: 'Último estatus de la solicitud (cruce)', tipo: 'texto', calculada: true },
+];
+
+// Campos por los que se puede estratificar cualquier análisis
+export const ESTRATOS: Record<'solicitudes' | 'comentarios', { campo: string; nombre: string }[]> = {
+  solicitudes: [
+    { campo: 'branchNum', nombre: 'Sucursal' },
+    { campo: 'state', nombre: 'Estado' },
+    { campo: 'mes', nombre: 'Mes' },
+  ],
+  comentarios: [
+    { campo: 'sucursalNum', nombre: 'Sucursal' },
+    { campo: 'estado', nombre: 'Estado' },
+    { campo: 'mes', nombre: 'Mes' },
+  ],
+};
+
+// Mes en formato AAAA-MM; ordena bien como texto
+export function claveMes(v: unknown): string | null {
+  const t = aNumero(v, 'fecha');
+  if (t == null) return null;
+  const d = new Date(t);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+// Cruza solicitudes y comentarios por número de solicitud, en ambos sentidos
+export function cruzar(solicitudes: Fila[], comentarios: Fila[]): { solicitudes: Fila[]; comentarios: Fila[] } {
+  const porSolicitud = new Map<number, Fila>();
+  for (const s of solicitudes) porSolicitud.set(Number(s['applicationNum']), s);
+  const quejas = new Map<number, Fila[]>();
+  for (const c of comentarios) {
+    const n = Number(c['solicitudNum']);
+    quejas.set(n, [...(quejas.get(n) ?? []), c]);
+  }
+  return {
+    solicitudes: solicitudes.map(s => {
+      const qs = quejas.get(Number(s['applicationNum'])) ?? [];
+      return { ...s, quejas: qs.length, categoriaQueja: qs[0]?.['categoriaPrimaria'] ?? null };
+    }),
+    comentarios: comentarios.map(c => {
+      const s = porSolicitud.get(Number(c['solicitudNum']));
+      return {
+        ...c,
+        mes: claveMes(c['fechaComentario']),
+        solicitudVentanaCaptura: s?.['ventanaCaptura'] ?? null,
+        solicitudErrores: s?.['erroresComentario'] ?? null,
+        solicitudResultadoBuro: s?.['creditBureauResult'] ?? null,
+        solicitudUltimoEstatus: s?.['lastStatus'] ?? null,
+      };
+    }),
+  };
+}
+
+export function valoresEstrato(filas: Fila[], campo: string): string[] {
+  const set = new Set<string>();
+  for (const f of filas) {
+    const v = f[campo];
+    if (v != null && v !== '') set.add(String(v));
+  }
+  return [...set].sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
+}
+
+export interface PuntoControl { mes: string; media: number; n: number; lcs: number; lci: number; fuera: boolean }
+export interface CartaControl { centro: number; sigma: number; puntos: PuntoControl[] }
+
+// Gráfica de control de medias por mes: línea central y límites a 3 sigmas ajustados al tamaño de cada mes
+export function cartaControl(filas: Fila[], col: Columna): CartaControl | null {
+  const grupos = new Map<string, number[]>();
+  const todos: number[] = [];
+  for (const f of filas) {
+    const mes = typeof f['mes'] === 'string' ? f['mes'] : null;
+    const v = aNumero(f[col.campo], col.tipo);
+    if (!mes || v == null) continue;
+    grupos.set(mes, [...(grupos.get(mes) ?? []), v]);
+    todos.push(v);
+  }
+  const r = resumir(todos);
+  if (!r || grupos.size === 0) return null;
+  const puntos = [...grupos.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([mes, vs]) => {
+    const media = vs.reduce((a, b) => a + b, 0) / vs.length;
+    const margen = (3 * r.desviacion) / Math.sqrt(vs.length);
+    const lcs = r.media + margen;
+    const lci = r.media - margen;
+    return { mes, media, n: vs.length, lcs, lci, fuera: media > lcs || media < lci };
+  });
+  return { centro: r.media, sigma: r.desviacion, puntos };
+}
 
 function contarCoincidencias(texto: string, patron: RegExp): number {
   return texto.match(patron)?.length ?? 0;
@@ -45,6 +142,7 @@ export function agregarCalculadas(filas: Fila[]): Fila[] {
       ...f,
       ventanaCaptura: inicio != null && fin != null ? Math.round((fin - inicio) / MS_DIA) : null,
       erroresComentario: errores,
+      mes: claveMes(f['dateFirstInput']),
     };
   });
 }
@@ -246,4 +344,40 @@ export function formatoMes(ms: number | null): string {
 export function formatoNumero(n: number, decimales = 2): string {
   if (!Number.isFinite(n)) return '-';
   return Number.isInteger(n) ? n.toLocaleString('es-MX') : n.toLocaleString('es-MX', { maximumFractionDigits: decimales });
+}
+
+// ── Vista del proceso (Anexo 1) ──
+
+export interface EtapaProceso {
+  id: string;
+  nombre: string;
+  // Fechas de la base que delimitan la etapa; sin ellas la etapa no tiene registro de tiempo
+  desde?: string;
+  hasta?: string;
+  nota?: string;
+}
+
+export const ETAPAS_PROCESO: EtapaProceso[] = [
+  { id: 'visita', nombre: 'El cliente visita la sucursal' },
+  { id: 'documentos', nombre: 'Entrega sus documentos' },
+  { id: 'captura', nombre: 'El ejecutivo captura en C.R.A.S.S.', desde: 'dateFirstInput', hasta: 'dateLastInput' },
+  { id: 'envio', nombre: 'Envía los documentos a CrOP', desde: 'dateLastInput', hasta: 'dateDocsReceived', nota: 'Incluye el traslado hasta que CrOP los recibe.' },
+  { id: 'revision', nombre: 'CrOP revisa el expediente', desde: 'dateDocsReceived', hasta: 'creditBureauRunDate', nota: 'Termina cuando se consulta el buró de crédito.' },
+  { id: 'buro', nombre: 'Consulta al buró de crédito', nota: 'La consulta no tiene duración propia en la base; su espera queda dentro de la revisión de CrOP.' },
+  { id: 'score', nombre: 'Revisa el score interno ETF Bank', desde: 'creditBureauRunDate', hasta: 'etfbScoreDate' },
+  { id: 'linea', nombre: 'Define la línea de crédito', nota: 'La base no registra la fecha en que se define la línea.' },
+  { id: 'tarjeta', nombre: 'Envía la tarjeta', desde: 'etfbScoreDate', hasta: 'datePlasticSent' },
+  { id: 'recibe', nombre: 'El cliente recibe su tarjeta' },
+];
+
+// Días que tarda cada solicitud en una etapa; solo cuenta registros con ambas fechas
+export function duracionesEtapa(filas: Fila[], etapa: EtapaProceso): number[] {
+  if (!etapa.desde || !etapa.hasta) return [];
+  const out: number[] = [];
+  for (const f of filas) {
+    const a = aNumero(f[etapa.desde], 'fecha');
+    const b = aNumero(f[etapa.hasta], 'fecha');
+    if (a != null && b != null) out.push(Math.round((b - a) / MS_DIA));
+  }
+  return out;
 }

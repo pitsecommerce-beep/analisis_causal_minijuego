@@ -1,3 +1,8 @@
+import type { Espina } from '../compartido/espina.js';
+import type { Evento, Hitos } from '../compartido/metodo.js';
+
+export interface LineaParticipante { id: string; nombre: string; eventos: Evento[]; hitos: Hitos }
+
 const BASE = '/api';
 export const EVENTO_SESION_FINALIZADA = 'sesion-finalizada';
 export const EVENTO_VERIFICACION = 'verificacion-registrada';
@@ -67,6 +72,7 @@ export const api = {
       request<{ token: string; refreshToken: string; profesorId: string }>('POST', '/profesor/login', { email, password }),
     sesiones: () => request<any[]>('GET', '/profesor/sesiones'),
     sesion: (id: string) => request<any>('GET', `/profesor/sesion/${id}`),
+    lineaTiempo: (id: string) => request<LineaParticipante[]>('GET', `/profesor/sesion/${id}/linea-tiempo`),
     iniciarSesion: (id: string) => request<any>('POST', `/profesor/sesion/${id}/iniciar`),
     finalizarSesion: (id: string) => request<any>('POST', `/profesor/sesion/${id}/finalizar`),
     eliminarSesion: (id: string) => request<{ ok: boolean; eliminadas: number }>('DELETE', `/profesor/sesion/${id}`),
@@ -79,6 +85,11 @@ export const api = {
     unirse: (codigo: string, nombre: string, email?: string) =>
       request<{ jugadorId: string; token: string; sesion: any; reconectado?: boolean }>('POST', `/sesion/${codigo}/unirse`, { nombre, email }),
   },
+  eventos: {
+    // keepalive: el evento se envía aunque el participante cambie de página
+    registrar: (tipo: string, datos: Record<string, unknown>) =>
+      fetch(`${BASE}/eventos`, { method: 'POST', headers: headers(), body: JSON.stringify({ tipo, datos }), keepalive: true }).catch(() => {}),
+  },
   jugador: {
     latido: () => request<{ sesionEstado: string }>('POST', '/jugador/latido'),
     salir: () => request<{ ok: boolean }>('POST', '/jugador/salir'),
@@ -86,16 +97,18 @@ export const api = {
   partida: {
     iniciar: () => request<any>('POST', '/partida/iniciar'),
     estado: () => request<any>('GET', '/partida'),
-    acciones: (acciones: { accionId: number }[]) =>
+    acciones: (acciones: { accionId: number; tarjetaId?: string | null }[]) =>
       request<any>('POST', '/partida/acciones', { acciones }),
     compromiso: (metrica: string, valorPrometido: number) =>
       request<any>('POST', '/partida/compromiso', { metrica, valorPrometido }),
     avanzar: () => request<any>('POST', '/partida/avanzar'),
     dialogos: () => request<any[]>('GET', '/partida/dialogos'),
+    espina: () => request<Espina>('GET', '/partida/espina'),
+    guardarEspina: (espina: Pick<Espina, 'tarjetas' | 'evidencias'>) => request<Espina>('PUT', '/partida/espina', espina),
+    votar: (causas: string[], porques: string[]) => request<Espina>('POST', '/partida/votacion', { causas, porques }),
     respuesta: (nodoId: string, efecto: string, personaje: string) =>
       request<any>('POST', '/partida/respuesta', { nodoId, efecto, personaje }),
-    cierre: (causas: any[], herramientas: string[], consultoGuia: boolean, pasosEnOrden: boolean) =>
-      request<any>('POST', '/partida/cierre', { causas, herramientas, consultoGuia, pasosEnOrden }),
+    cierre: () => request<any>('POST', '/partida/cierre', {}),
   },
   datos: {
     solicitudes: () => request<any[]>('GET', '/datos/solicitudes'),

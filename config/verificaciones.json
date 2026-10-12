@@ -62,5 +62,14 @@
     ],
     "minCondiciones": 1,
     "refutacion": "Si el buró se corriera antes, se evitarían 6758 días de trabajo en expedientes que van a rebotar."
+  },
+  "quejas_reproceso_documental": {
+    "descripcion": "La queja más frecuente de los clientes es el reproceso documental (42 de 90 comentarios); sumando los errores de captura, explica cerca de 6 de cada 10 quejas",
+    "condiciones": [
+      { "tipo": "grafica", "tipo_grafica": "pareto", "hoja": "comentarios", "columna": "categoriaPrimaria" },
+      { "tipo": "calculo", "funcion": "CONTAR.SI", "hoja": "comentarios", "columna": "categoriaPrimaria" }
+    ],
+    "minCondiciones": 1,
+    "refutacion": "La voz del cliente apunta al reproceso: 42 quejas por reproceso documental y 13 por errores de captura, de 90."
   }
 }

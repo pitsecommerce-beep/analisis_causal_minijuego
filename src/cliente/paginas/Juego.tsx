@@ -15,9 +15,12 @@ import { SalaEspera } from '../componentes/SalaEspera.js';
 import { Onboarding } from '../componentes/Onboarding.js';
 import { Pendientes, estaResuelto } from '../componentes/Pendientes.js';
 import { usePendientes } from '../pendientes.js';
+import { TabEspina } from '../componentes/TabEspina.js';
+import { cargarEspina, fijarCicloEspina } from '../espina.js';
+import { registrarEvento } from '../eventos.js';
 import type { PasoRecorrido } from '../componentes/Onboarding.js';
 
-type Vista = 'datos' | 'asesores' | 'decisiones';
+type Vista = 'datos' | 'asesores' | 'espina' | 'decisiones';
 
 const INTERVALO_ESPERA = 4000;
 const INTERVALO_LATIDO = 15000;
@@ -30,6 +33,7 @@ function onboardingVisto(): boolean {
 const TABS: { id: Vista; label: string; icono: NombreIcono }[] = [
   { id: 'datos', label: 'Datos', icono: 'tabla' },
   { id: 'asesores', label: 'Sala de Juntas', icono: 'mensajes' },
+  { id: 'espina', label: 'Espina de pescado', icono: 'diagnostico' },
   { id: 'decisiones', label: 'Decisiones', icono: 'decisiones' },
 ];
 
@@ -127,6 +131,11 @@ export function Juego() {
       .catch(() => {});
   }, INTERVALO_LATIDO, !!estado && !sesionFinalizada);
 
+  useEffect(() => {
+    if (estado) cargarEspina();
+  }, [!!estado]);
+  useEffect(() => { fijarCicloEspina(estado?.cicloActual ?? 1); }, [estado?.cicloActual]);
+
   // Afirmaciones ya validadas con datos: cierran solas sus notas en la Lista de Pendientes
   useEffect(() => {
     if (!estado) return;
@@ -145,23 +154,27 @@ export function Juego() {
     return () => window.removeEventListener(EVENTO_SESION_FINALIZADA, alFinalizar);
   }, []);
 
+  // Inducción: Ramón Betancourt presenta el encargo a nombre del consejo y señala la interfaz
   const pasosRecorrido: PasoRecorrido[] = [
     {
-      icono: 'diagnostico',
-      titulo: 'Bienvenido(a), Director(a)',
-      texto: 'ETF Bank tarda demasiado en entregar tarjetas de crédito y las quejas crecen. Tu misión es encontrar las causas raíz con datos y corregirlas en 4 ciclos. Te mostramos el simulador en un minuto.',
+      titulo: 'El encargo del consejo',
+      texto: 'Bienvenido(a), Director(a). Soy Ramón Betancourt y hablo a nombre del consejo de ETF Bank. Te contratamos como consultor(a): entregamos las tarjetas de crédito demasiado tarde y las quejas crecen.',
+      puntos: [
+        'Encuentra las causas raíz con datos, siguiendo el método de Bohn.',
+        'Corrígelas con acciones sustentadas, en 4 ciclos.',
+        'Rinde cuentas al consejo en cada ciclo.',
+      ],
       alEntrar: () => setVista('datos'),
     },
     {
       objetivo: 'ciclo',
-      icono: 'reloj',
-      titulo: 'Ciclos',
-      texto: 'La partida tiene 4 ciclos. En cada uno analizas, decides y avanzas. Al terminar el cuarto declaras las causas raíz y recibes tu evaluación.',
+      titulo: 'Tienes 4 ciclos',
+      texto: 'En cada ciclo analizas, decides y cierras votando tus causas principales. Al terminar el cuarto, el consejo evalúa tu diagnóstico.',
     },
     {
       objetivo: 'vidas',
-      icono: 'corazon',
-      titulo: 'Vidas',
+      animo: 'enojado',
+      titulo: 'Tus vidas',
       texto: 'Empiezas con 3. Si las pierdes todas, el consejo te destituye. Pierdes una cuando:',
       puntos: [
         'No tomas ninguna acción en un ciclo.',
@@ -172,58 +185,68 @@ export function Juego() {
     },
     {
       objetivo: 'credibilidad',
-      icono: 'escudo',
-      titulo: 'Credibilidad',
-      texto: 'Es la confianza que el consejo y tu equipo tienen en ti. Sube cuando respondes con evidencia y cumples tus compromisos. Baja cuando respondes sin evidencia, pospones decisiones o incumples lo que prometiste. Si llega a cero pierdes una vida.',
+      titulo: 'Tu credibilidad',
+      texto: 'Es la confianza que el consejo y tu equipo tienen en ti. Sube cuando respondes con evidencia y cumples lo que prometes. Baja cuando respondes sin datos o pospones decisiones.',
     },
     {
       objetivo: 'presupuesto',
-      icono: 'sumar',
-      titulo: 'Presupuesto',
-      texto: 'Es el dinero para toda la partida, no por ciclo. Cada acción tiene un costo y lo que te sobre al final también suma puntos.',
+      titulo: 'El presupuesto',
+      texto: 'Es para toda la partida, no por ciclo. Cada acción cuesta, y lo que no gastes también cuenta a tu favor.',
     },
     {
       objetivo: 'tab-datos',
-      icono: 'tabla',
-      titulo: 'Datos',
-      texto: 'Aquí están las solicitudes de tarjeta y los comentarios de clientes. Es tu fuente de evidencia.',
+      titulo: 'Los datos del proceso',
+      texto: 'Aquí están las 1,500 solicitudes de tarjeta. Es tu fuente de evidencia: no aceptes una afirmación que no puedas comprobar aquí.',
+      alEntrar: () => setVista('datos'),
+    },
+    {
+      objetivo: 'tab-proceso',
+      titulo: 'La vista del proceso',
+      texto: 'Antes de buscar causas, entiende el proceso. Este es el flujo completo, de la sucursal hasta que el cliente recibe su tarjeta. Haz clic en cada etapa para ver cuánto tarda: mediana, media, desviación y percentil 90.',
+      alEntrar: () => setVista('datos'),
+    },
+    {
+      objetivo: 'tab-comentarios',
+      titulo: 'La voz del cliente',
+      texto: 'Estos son los comentarios de clientes, cada uno ligado a su solicitud. Empieza por aquí: un Pareto por categoría te dice de qué se quejan más, y puedes cruzarlos con sus solicitudes.',
       alEntrar: () => setVista('datos'),
     },
     {
       objetivo: 'herramientas',
-      icono: 'histograma',
-      titulo: 'Herramientas de análisis',
-      texto: 'Haz doble clic en el encabezado de una columna para elegirla y luego aplica una herramienta. Verificar con datos te permite refutar afirmaciones en la Sala de Juntas.',
+      titulo: 'Las herramientas de Bohn',
+      texto: 'Histograma, Pareto, corrida, gráfica de control, dispersión y pivote. Usa "Estratificar por" para repetir cualquier análisis por sucursal, estado o mes. Elige una columna, una herramienta y guarda lo que encuentres con "Adjuntar a la espina".',
       alEntrar: () => setVista('datos'),
     },
     {
       objetivo: 'tab-asesores',
-      icono: 'mensajes',
-      titulo: 'Sala de Juntas',
-      texto: 'Cierras la laptop y te reúnes con tu equipo. Haz clic en cada persona para escuchar su consejo. Algunas afirmaciones son ciertas y otras engañosas: responde con evidencia para convencerlos y ganar credibilidad.',
+      titulo: 'Tu equipo',
+      texto: 'En la Sala de Juntas tu equipo te dará su opinión. Algunas afirmaciones son ciertas y otras engañosas. Responde con evidencia para convencerlos.',
     },
     {
       objetivo: 'pendientes',
-      icono: 'diagnostico',
       titulo: 'Lista de pendientes',
-      texto: 'Cuando alguien de tu equipo afirma algo o te recomienda una acción, se anota aquí. Las notas se marcan solas cuando validas la afirmación con datos.',
+      texto: 'Cada afirmación o recomendación de tu equipo queda anotada aquí. Desde esta lista puedes enviarla a tu espina de pescado como causa posible.',
+    },
+    {
+      objetivo: 'tab-espina',
+      titulo: 'La espina de pescado',
+      texto: 'Aquí ordenas tus hipótesis en las 6M: Personal, Método, Máquina, Material, Medición y Entorno. Una causa solo queda verificada cuando le adjuntas una gráfica o cálculo. Al cerrar cada ciclo votarás tus 3 causas principales y escribirás tus 5 porqués.',
     },
     {
       objetivo: 'tab-decisiones',
-      icono: 'decisiones',
-      titulo: 'Decisiones',
-      texto: 'Elige acciones dentro de tu presupuesto, declara a qué métrica te comprometes y avanza al siguiente ciclo. Algunas acciones tardan en surtir efecto.',
+      titulo: 'Las decisiones',
+      texto: 'Elige acciones, liga cada una a la causa que ataca y declara al consejo cuánto vas a mejorar un indicador. Si decides sin una causa verificada, te lo voy a señalar.',
+      animo: 'enojado',
     },
     {
       objetivo: 'ayuda',
-      icono: 'pregunta',
       titulo: '¿Necesitas repasar?',
-      texto: 'Con este botón puedes volver a ver este recorrido cuando quieras.',
+      texto: 'Con este botón vuelvo a explicarte el simulador cuando quieras.',
     },
     {
-      icono: 'exito',
-      titulo: 'Cómo se evalúa',
-      texto: 'Al final se evalúa tu diagnóstico, tu criterio con la evidencia, el impacto en los KPIs y tu método. Consejo: verifica antes de actuar.',
+      titulo: 'Cómo te evaluaremos',
+      animo: 'feliz',
+      texto: 'El consejo no mide intenciones. Evaluaremos tu diagnóstico con las causas que verificaste y votaste, el impacto en los KPIs y tu método: si escuchaste al cliente primero, definiste el problema con un Pareto, planteaste hipótesis antes de actuar, estratificaste y decidiste con causas probadas. Éxito, Director(a).',
     },
   ];
 
@@ -293,6 +316,7 @@ export function Juego() {
 
   function onCambioVista(v: Vista) {
     setVista(v);
+    registrarEvento('vista', { vista: v });
     telemetria('cambio_vista', { vista: v });
   }
 
@@ -516,8 +540,9 @@ export function Juego() {
             onAbrirLaptop={() => onCambioVista('datos')}
           />
         )}
+        {vista === 'espina' && <TabEspina />}
         {vista === 'decisiones' && (
-          <TabDecisiones estado={estado} onEstadoCambio={onEstadoCambio} />
+          <TabDecisiones estado={estado} onEstadoCambio={onEstadoCambio} onIrEspina={() => onCambioVista('espina')} />
         )}
         </div>
       </main>

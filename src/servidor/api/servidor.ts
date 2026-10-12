@@ -15,12 +15,16 @@ import {
   listarPartidasSesion, registrarVerificacion, listarVerificaciones,
   actualizarSesionExperimento, asignarGrupoJugador,
   registrarConsentimiento, registrarEvento,
-  obtenerTelemetriaSesion, obtenerResumenExperimento,
+  obtenerTelemetriaSesion, obtenerResumenExperimento, listarEventosPartida, listarEstadosPartidasSesion,
 } from '../db/consultas.js';
 import { generarRecomendacion } from '../experimento/asesor-algoritmico.js';
 import { serializarDialogo, deserializarDialogo } from '../db/serializar.js';
 import { autenticarProfesor, autenticarJugador } from './middleware.js';
 import { estaConectado } from './presencia.js';
+import { normalizarEspina, validarVotacion, causasDesdeEspina, ESPINA_VACIA } from '../../compartido/espina.js';
+import type { Espina } from '../../compartido/espina.js';
+import { TIPOS_EVENTO, resumirMetodo, evaluarHitos, avisosPorAcciones } from '../../compartido/metodo.js';
+import type { VinculoAccion } from '../../compartido/metodo.js';
 import { esCorreoProfesor, MENSAJE_DOMINIO } from './dominio.js';
 import type { RequestProfesor, RequestJugador } from './middleware.js';
 import { crearPartida, elegirAcciones, declararCompromiso, procesarCiclo } from '../motor/ciclos.js';
@@ -633,9 +637,21 @@ app.post('/api/partida/acciones', autenticarJugador, sesionActiva, async (req, r
       }
     }
 
+    // Cada acción se liga a la causa de la espina que pretende atacar
+    const espina = espinaDe(estado);
+    const vinculos: VinculoAccion[] = acciones.map((a: { accionId: number; tarjetaId?: string }) => {
+      const t = espina.tarjetas.find(x => x.id === a.tarjetaId);
+      return { accionId: a.accionId, tarjetaId: t?.id ?? null, verificada: !!t && t.estado === 'verificada' && t.evidencias.length > 0 };
+    });
+    const previos = await eventosDe(partida.id);
+    const nombres = Object.fromEntries((config.acciones as { id: number; nombre: string }[]).map(a => [a.id, a.nombre]));
+    const avisos = avisosPorAcciones(vinculos, nombres, previos);
+
     await actualizarPartida(jugador.id, estado, serializarDialogo(estadoDialogo));
+    await registrarMetodo(partida.id, jugador, 'acciones', { ciclo: cicloActual, acciones: vinculos });
+    for (const aviso of avisos) await registrarMetodo(partida.id, jugador, 'aviso', { ciclo: cicloActual, texto: aviso });
     const actualizada = await obtenerPartida(jugador.id);
-    res.json(estadoPublico(actualizada!));
+    res.json({ ...estadoPublico(actualizada!), avisos });
   } catch (err) {
     responderError(res, 'Error al elegir acciones', err);
   }
@@ -678,6 +694,11 @@ app.post('/api/partida/avanzar', autenticarJugador, sesionActiva, async (req, re
     const estado = partida.estado as any;
     if (estado.terminada) {
       res.status(400).json({ error: 'Partida terminada' });
+      return;
+    }
+    // Cada ciclo se cierra votando las causas principales y escribiendo los 5 porqués
+    if (!espinaDe(estado).votaciones.some(v => v.ciclo === estado.cicloActual)) {
+      res.status(400).json({ error: 'Antes de avanzar, vota tus causas principales y escribe tus 5 porqués.', requiereVotacion: true });
       return;
     }
 
@@ -934,8 +955,117 @@ function calcularCredibilidadRespuesta(efecto: string): number {
   return 0;
 }
 
+// ╔══════════════════════════════════════╗
+// ║     MÉTODO (EVENTOS)                 ║
+// ╚══════════════════════════════════════╝
+
+// El registro del método no debe interrumpir el juego si la telemetría falla
+async function registrarMetodo(partidaId: string, jugador: RequestJugador['jugador'], tipo: string, datos: Record<string, unknown>) {
+  try {
+    await registrarEvento(partidaId, jugador.id, jugador.sesionId, tipo, datos);
+  } catch (err) {
+    console.error(`[${new Date().toISOString()}] No se registró el evento ${tipo}:`, err);
+  }
+}
+
+async function eventosDe(partidaId: string) {
+  try { return await listarEventosPartida(partidaId); } catch { return []; }
+}
+
+// Eventos que envía el navegador; el ciclo y la hora los pone el servidor
+const EVENTOS_CLIENTE = new Set(['analisis', 'vista', 'proceso_etapa', 'espina_tarjeta', 'evidencia']);
+
+app.post('/api/eventos', autenticarJugador, async (req, res) => {
+  const { tipo, datos } = req.body ?? {};
+  if (!EVENTOS_CLIENTE.has(tipo)) { res.status(400).json({ error: 'Evento no reconocido' }); return; }
+  try {
+    const jugador = (req as RequestJugador).jugador;
+    const partida = await obtenerPartida(jugador.id);
+    if (!partida || partida.fase !== 'jugando' || jugador.sesionEstado === 'finalizada') { res.json({ ok: false }); return; }
+    const texto = JSON.stringify(datos ?? {});
+    if (texto.length > 2000) { res.status(400).json({ error: 'Evento demasiado grande' }); return; }
+    const limpio = JSON.parse(texto);
+    await registrarMetodo(partida.id, jugador, tipo, { ...limpio, ciclo: (partida.estado as any).cicloActual ?? 1 });
+    res.json({ ok: true });
+  } catch {
+    res.json({ ok: false });
+  }
+});
+
+// Línea de tiempo del método por participante, para el panel del profesor
+app.get('/api/profesor/sesion/:id/linea-tiempo', autenticarProfesor, sesionPropia, async (req, res) => {
+  try {
+    const sesionId = idParam(req);
+    const [jugadores, partidas, telemetria] = await Promise.all([
+      listarJugadoresSesion(sesionId), listarEstadosPartidasSesion(sesionId), obtenerTelemetriaSesion(sesionId),
+    ]);
+    const tipos = new Set<string>(TIPOS_EVENTO);
+    res.json(jugadores.map((j: any) => {
+      const partida = partidas.find((p: any) => p.jugador_id === j.id);
+      const eventos = telemetria
+        .filter((e: any) => e.jugador_id === j.id && tipos.has(e.tipo))
+        .map((e: any) => ({ tipo: e.tipo, datos: e.datos ?? {}, momento: e.created_at }));
+      return { id: j.id, nombre: j.nombre, eventos, hitos: evaluarHitos(eventos, espinaDe((partida?.estado ?? {}) as Record<string, unknown>)) };
+    }));
+  } catch (err) {
+    responderError(res, 'Error al obtener la línea de tiempo', err);
+  }
+});
+
+// ╔══════════════════════════════════════╗
+// ║     ESPINA DE PESCADO                ║
+// ╚══════════════════════════════════════╝
+
+// La espina vive dentro del estado de la partida (JSONB); el motor conserva las claves extra
+function espinaDe(estado: Record<string, unknown>): Espina {
+  return (estado['espina'] as Espina | undefined) ?? ESPINA_VACIA;
+}
+
+app.get('/api/partida/espina', autenticarJugador, async (req, res) => {
+  try {
+    const partida = await obtenerPartida((req as RequestJugador).jugador.id);
+    if (!partida) { res.status(404).json({ error: 'Partida no encontrada' }); return; }
+    res.json(espinaDe(partida.estado as Record<string, unknown>));
+  } catch (err) {
+    responderError(res, 'Error al leer la espina de pescado', err);
+  }
+});
+
+app.put('/api/partida/espina', autenticarJugador, sesionActiva, async (req, res) => {
+  try {
+    const jugador = (req as RequestJugador).jugador;
+    const partida = await obtenerPartida(jugador.id);
+    if (!partida || partida.fase !== 'jugando') { res.status(400).json({ error: 'Partida no activa' }); return; }
+    const estado = partida.estado as Record<string, unknown>;
+    const espina = normalizarEspina(req.body, await listarVerificaciones(partida.id), espinaDe(estado));
+    estado['espina'] = espina;
+    await actualizarPartida(jugador.id, estado as any, partida.estado_dialogo as any);
+    res.json(espina);
+  } catch (err) {
+    responderError(res, 'Error al guardar la espina de pescado', err);
+  }
+});
+
+app.post('/api/partida/votacion', autenticarJugador, sesionActiva, async (req, res) => {
+  try {
+    const jugador = (req as RequestJugador).jugador;
+    const partida = await obtenerPartida(jugador.id);
+    if (!partida || partida.fase !== 'jugando') { res.status(400).json({ error: 'Partida no activa' }); return; }
+    const estado = partida.estado as Record<string, unknown>;
+    const espina = espinaDe(estado);
+    const r = validarVotacion(espina, req.body?.causas, req.body?.porques);
+    if (!r.ok) { res.status(400).json({ error: r.error }); return; }
+    const ciclo = Number(estado['cicloActual']) || 1;
+    estado['espina'] = { ...espina, votaciones: [...espina.votaciones.filter(v => v.ciclo !== ciclo), { ciclo, ...r.votacion }] };
+    await actualizarPartida(jugador.id, estado as any, partida.estado_dialogo as any);
+    await registrarMetodo(partida.id, jugador, 'votacion', { ciclo, causas: r.votacion.causas });
+    res.json(estado['espina']);
+  } catch (err) {
+    responderError(res, 'Error al guardar la votación', err);
+  }
+});
+
 app.post('/api/partida/cierre', autenticarJugador, async (req, res) => {
-  const { causas, herramientas, consultoGuia, pasosEnOrden } = req.body;
 
   try {
     const jugador = (req as RequestJugador).jugador;
@@ -955,18 +1085,17 @@ app.post('/api/partida/cierre', autenticarJugador, async (req, res) => {
 
     const verificaciones = await listarVerificaciones(partida.id);
     const refutaciones = estadoDialogo.refutaciones.size;
-    const accionesSinVerificar = 0;
+    const metodo = resumirMetodo(await eventosDe(partida.id), espinaDe(estado));
 
     const desglose = evaluarPartida(
       estado,
       { ...config.kpisIniciales },
-      causas ?? [],
+      causasDesdeEspina(espinaDe(estado)),
       verificaciones.length,
       refutaciones,
-      accionesSinVerificar,
-      herramientas ?? [],
-      consultoGuia ?? false,
-      pasosEnOrden ?? false,
+      metodo.accionesSinVerificar,
+      metodo.herramientas,
+      { hitos: metodo.hitos, capacitoSinEstratificar: metodo.capacitoSinEstratificar },
       config.puntuacion
     );
 
