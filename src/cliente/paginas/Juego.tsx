@@ -248,7 +248,10 @@ export function Juego() {
       });
       localStorage.setItem('herramientasUsadas', JSON.stringify(herramientasUsadas));
       nav('/resultados');
+      return;
     }
+    // Cada ciclo nuevo arranca en la Sala de Juntas, donde el equipo reacciona a lo ocurrido
+    if ((nuevoEstado?.cicloActual ?? 0) > (estado?.cicloActual ?? 0)) onCambioVista('asesores');
   }
 
   function onCredibilidadCambio(cred: number) {
