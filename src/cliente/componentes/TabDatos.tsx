@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { api } from '../api.js';
+import { api, EVENTO_VERIFICACION } from '../api.js';
 import { Icono } from './ui/Iconos.js';
 import type { NombreIcono } from './ui/Iconos.js';
 import { Histograma, Pareto, Corrida, Dispersion } from './Graficos.js';
@@ -161,6 +161,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
         try {
           await api.datos.verificar(verifId, id);
           setVerificaciones(prev => [...prev, verifId]);
+          window.dispatchEvent(new CustomEvent(EVENTO_VERIFICACION, { detail: verifId }));
         } catch { /* la verificación es opcional para el análisis */ }
       }
     }

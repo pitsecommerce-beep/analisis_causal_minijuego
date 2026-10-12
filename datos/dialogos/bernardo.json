@@ -6,15 +6,16 @@
     "fase": "apertura",
     "expresion": "insistiendo",
     "lineas": [
-      "Director, antes de que se nos vaya la junta en esto. Ya medí las dos etapas. Once días la captura, once el back office. Es lo mismo.",
-      "El cuello está en CrOP, no en mis sucursales."
+      "Director, ya medí las dos etapas del proceso: la captura en sucursal tarda 11 días y el back office (CrOP) también 11 días, en mediana.",
+      "Si tardan lo mismo, el problema no está en mis sucursales sino en CrOP."
     ],
+    "pendiente": "Validar: ¿la captura y el back office realmente tardan lo mismo? Bernardo solo comparó las medianas (11 días cada una).",
     "afirmacion": { "id": "medianas_iguales", "verificable": true, "veredicto": "cierta_pero_enganosa" },
     "respuestas": [
-      { "texto": "Déjame verlo yo.", "efecto": "abrir_laptop", "credibilidad": 0 },
-      { "texto": "Está bien, refuerza CrOP.", "efecto": "aceptar:6", "credibilidad": 1 },
-      { "texto": "No me cuadra, ya lo revisé.", "requiere": "verifico:medianas_iguales", "efecto": "refutar", "credibilidad": 2 },
-      { "texto": "Lo dejo para después.", "efecto": "postergar", "credibilidad": -1 }
+      { "texto": "Prefiero revisarlo yo en los datos.", "efecto": "abrir_laptop", "credibilidad": 0 },
+      { "texto": "De acuerdo, reforcemos CrOP.", "efecto": "aceptar:6", "credibilidad": 1 },
+      { "texto": "Ya lo revisé y no cuadra: la mediana es igual, pero la variación no.", "requiere": "verifico:medianas_iguales", "efecto": "refutar", "credibilidad": 2 },
+      { "texto": "Lo vemos después.", "efecto": "postergar", "credibilidad": -1 }
     ]
   },
   {
@@ -25,11 +26,11 @@
     "expresion": "sorprendido",
     "condicion": { "tipo": "refutado", "afirmacion": "medianas_iguales" },
     "lineas": [
-      "A ver, espérate. La mediana dice once y once.",
-      "Si tú sacaste otra cosa, enséñamelo."
+      "Espera. La mediana es de 11 días en las dos etapas.",
+      "Si tus números dicen otra cosa, muéstramelos."
     ],
     "respuestas": [
-      { "texto": "El percentil 90 de captura es 52 días. El de back office es 17.", "requiere": "verifico:medianas_iguales", "efecto": "convencer:bernardo", "credibilidad": 3 },
+      { "texto": "En captura, el 10% más lento tarda 52 días o más. En back office, 17.", "requiere": "verifico:medianas_iguales", "efecto": "convencer:bernardo", "credibilidad": 3 },
       { "texto": "Confía en mí.", "efecto": "insistir_sin_datos", "credibilidad": -1 }
     ]
   },
@@ -41,8 +42,8 @@
     "expresion": "pensativo",
     "condicion": { "tipo": "convencido" },
     "lineas": [
-      "Híjole. No había visto el histograma así.",
-      "Bueno, si la cola está en captura, ahí hay que meterle."
+      "Tienes razón, no lo había visto en el histograma.",
+      "Si los casos más lentos están en captura, ahí es donde hay que actuar."
     ],
     "respuestas": []
   },
@@ -54,7 +55,7 @@
     "expresion": "satisfecho",
     "condicion": { "tipo": "aceptaron_su_accion" },
     "lineas": [
-      "Con dos revisores más en CrOP salimos del hoyo en un ciclo."
+      "Con dos revisores más en CrOP salimos del atraso en un ciclo."
     ],
     "respuestas": []
   },
@@ -65,12 +66,12 @@
     "fase": "apertura",
     "expresion": "defensivo",
     "lineas": [
-      "¿Cómo vamos? Yo sigo pensando que el problema gordo es el back office."
+      "¿Cómo vamos? Yo sigo pensando que el problema principal está en el back office."
     ],
     "respuestas": [
-      { "texto": "Ya tengo datos que dicen otra cosa.", "efecto": "abrir_laptop", "credibilidad": 0 },
-      { "texto": "Tienes razón, meto más gente en CrOP.", "efecto": "aceptar:6", "credibilidad": 1 },
-      { "texto": "Bernardo, la variabilidad está en captura. Ya lo medimos.", "requiere": "verifico:medianas_iguales", "efecto": "refutar", "credibilidad": 2 }
+      { "texto": "Tengo datos que dicen otra cosa.", "efecto": "abrir_laptop", "credibilidad": 0 },
+      { "texto": "Tienes razón, agrego gente en CrOP.", "efecto": "aceptar:6", "credibilidad": 1 },
+      { "texto": "Bernardo, la variación está en captura. Ya lo medimos.", "requiere": "verifico:medianas_iguales", "efecto": "refutar", "credibilidad": 2 }
     ]
   },
   {
@@ -81,12 +82,12 @@
     "expresion": "preocupado",
     "condicion": { "tipo": "kpi", "metrica": "ventanaCapturaMedia", "operador": ">", "valor": 15 },
     "lineas": [
-      "Director, la ventana de captura sigue arriba de quince días.",
-      "Las sucursales no van a aguantar mucho así."
+      "Director, la captura sigue tardando más de 15 días en promedio.",
+      "Las sucursales no van a aguantar mucho tiempo así."
     ],
     "respuestas": [
       { "texto": "Lo sé, estoy trabajando en eso.", "efecto": "postergar", "credibilidad": 0 },
-      { "texto": "¿Qué propones tú?", "efecto": "pedir_consejo:bernardo", "credibilidad": 0 }
+      { "texto": "¿Qué propones?", "efecto": "pedir_consejo:bernardo", "credibilidad": 0 }
     ]
   },
   {
@@ -97,8 +98,8 @@
     "expresion": "aliviado",
     "condicion": { "tipo": "kpi", "metrica": "ventanaCapturaMedia", "operador": "<=", "valor": 15 },
     "lineas": [
-      "Oye, ya bajó la ventana de captura. Eso se siente en las sucursales.",
-      "Van por buen camino."
+      "Ya bajó el tiempo de captura y se nota en las sucursales.",
+      "Vamos por buen camino."
     ],
     "respuestas": []
   },
@@ -109,10 +110,10 @@
     "fase": "apertura",
     "expresion": "campechano",
     "lineas": [
-      "Tercera junta. ¿Ya vamos viendo resultados o seguimos nomás midiendo?"
+      "Tercera junta. ¿Ya hay resultados o seguimos midiendo?"
     ],
     "respuestas": [
-      { "texto": "Los KPI ya se movieron.", "efecto": "mostrar_resultados", "credibilidad": 1 },
+      { "texto": "Los indicadores ya se movieron.", "efecto": "mostrar_resultados", "credibilidad": 1 },
       { "texto": "Todavía falta.", "efecto": "postergar", "credibilidad": 0 }
     ]
   },
@@ -124,8 +125,8 @@
     "expresion": "molesto",
     "condicion": { "tipo": "sin_acciones_nuevas" },
     "lineas": [
-      "Llevamos tres juntas y no hemos hecho nada nuevo.",
-      "El consejo se va a impacientar, te lo digo de buena fe."
+      "Llevamos tres juntas sin tomar ninguna acción nueva.",
+      "Te lo digo de buena fe: el consejo se va a impacientar."
     ],
     "respuestas": []
   },
@@ -136,10 +137,10 @@
     "fase": "apertura",
     "expresion": "serio",
     "lineas": [
-      "Última junta. Aquí se decide si esto sirvió o no."
+      "Última junta. Hoy se ve si lo que hicimos funcionó."
     ],
     "respuestas": [
-      { "texto": "Vamos a ver los números.", "efecto": "abrir_laptop", "credibilidad": 0 }
+      { "texto": "Revisemos los números.", "efecto": "abrir_laptop", "credibilidad": 0 }
     ]
   },
   {
@@ -150,8 +151,8 @@
     "expresion": "contento",
     "condicion": { "tipo": "kpi", "metrica": "ventanaCapturaMedia", "operador": "<", "valor": 12 },
     "lineas": [
-      "Mira, yo al principio no lo veía. Pero los números hablan.",
-      "Buen trabajo, director."
+      "Al principio no lo veía, pero los números lo confirman.",
+      "Buen trabajo, Director."
     ],
     "respuestas": []
   },
@@ -163,8 +164,8 @@
     "expresion": "decepcionado",
     "condicion": { "tipo": "kpi", "metrica": "ventanaCapturaMedia", "operador": ">=", "valor": 12 },
     "lineas": [
-      "Pues no se movió mucho la aguja.",
-      "Yo sigo diciendo que CrOP es el tema."
+      "El tiempo de captura casi no cambió.",
+      "Yo sigo pensando que el problema es CrOP."
     ],
     "respuestas": []
   },
@@ -176,12 +177,13 @@
     "expresion": "campechano",
     "condicion": { "tipo": "pide_consejo" },
     "lineas": [
-      "Yo te diría que le metas dos revisores más a CrOP. Eso baja el back office de volada.",
-      "Y no es caro, director. Treinta y cinco unidades."
+      "Te recomiendo contratar dos revisores más en CrOP. Así baja rápido el tiempo de back office.",
+      "Cuesta 35 unidades de presupuesto."
     ],
+    "pendiente": "Recomendación de Bernardo: contratar dos revisores más en CrOP (35 unidades). Antes, confirmar que el retraso está en back office.",
     "respuestas": [
-      { "texto": "Lo considero.", "efecto": "postergar", "credibilidad": 0 },
-      { "texto": "Sale, hazlo.", "efecto": "aceptar:6", "credibilidad": 1 }
+      { "texto": "Lo voy a considerar.", "efecto": "postergar", "credibilidad": 0 },
+      { "texto": "De acuerdo, hazlo.", "efecto": "aceptar:6", "credibilidad": 1 }
     ]
   },
   {
@@ -192,7 +194,7 @@
     "expresion": "nervioso",
     "condicion": { "tipo": "vida_perdida" },
     "lineas": [
-      "Esto no pinta bien.",
+      "Esto no se ve bien.",
       "El consejo no va a aceptar otra junta sin resultados."
     ],
     "respuestas": []
@@ -205,7 +207,7 @@
     "expresion": "resignado",
     "condicion": { "tipo": "postergado" },
     "lineas": [
-      "Bueno, cuando quieras lo vemos."
+      "Está bien, lo vemos cuando quieras."
     ],
     "respuestas": []
   }

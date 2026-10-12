@@ -1,5 +1,6 @@
 const BASE = '/api';
 export const EVENTO_SESION_FINALIZADA = 'sesion-finalizada';
+export const EVENTO_VERIFICACION = 'verificacion-registrada';
 
 function headers(): Record<string, string> {
   const h: Record<string, string> = { 'Content-Type': 'application/json' };

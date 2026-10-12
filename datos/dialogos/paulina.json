@@ -6,14 +6,15 @@
     "fase": "apertura",
     "expresion": "precisa",
     "lineas": [
-      "Hay un detalle. Los expedientes que el buró rechaza ya traían semanas de trabajo encima.",
-      "Estamos armando expedientes de gente que no califica."
+      "Hay algo importante: los expedientes que el buró rechaza ya llevaban semanas de trabajo.",
+      "Estamos armando expedientes de personas que no califican."
     ],
+    "pendiente": "Validar: Paulina dice que los expedientes rechazados por el buró ya llevaban semanas de trabajo. Revisar cuántos días se pierden.",
     "afirmacion": { "id": "trabajo_perdido_buro", "verificable": true, "veredicto": "cierta" },
     "respuestas": [
       { "texto": "Déjame ver cuántos días se pierden.", "efecto": "abrir_laptop", "credibilidad": 0 },
-      { "texto": "Subamos el umbral del score.", "efecto": "aceptar:8", "credibilidad": 1 },
-      { "texto": "Paulina, el dato es correcto. Pero la solución no es rechazar más gente.", "requiere": "verifico:trabajo_perdido_buro", "efecto": "refutar", "credibilidad": 2 },
+      { "texto": "Subamos el puntaje mínimo del score interno.", "efecto": "aceptar:8", "credibilidad": 1 },
+      { "texto": "Paulina, el dato es correcto. Pero la solución no es rechazar a más gente.", "requiere": "verifico:trabajo_perdido_buro", "efecto": "refutar", "credibilidad": 2 },
       { "texto": "Lo reviso después.", "efecto": "postergar", "credibilidad": -1 }
     ]
   },
@@ -25,10 +26,10 @@
     "expresion": "fria",
     "condicion": { "tipo": "refutado", "afirmacion": "trabajo_perdido_buro" },
     "lineas": [
-      "¿Y entonces qué propones? ¿Seguir gastando recursos en expedientes que van a rebotar?"
+      "¿Entonces qué propones? ¿Seguir gastando recursos en expedientes que se van a rechazar?"
     ],
     "respuestas": [
-      { "texto": "Correr el buró antes de la captura, no después.", "efecto": "contraargumentar", "credibilidad": 2 },
+      { "texto": "Consultar el buró antes de la captura, no después.", "efecto": "contraargumentar", "credibilidad": 2 },
       { "texto": "Ya veré cómo resolverlo.", "efecto": "postergar", "credibilidad": 0 }
     ]
   },
@@ -40,8 +41,8 @@
     "expresion": "satisfecha",
     "condicion": { "tipo": "aceptaron_su_accion" },
     "lineas": [
-      "Con el umbral más alto filtramos antes. Van a bajar los tiempos.",
-      "Y la cartera sale más limpia."
+      "Con un puntaje mínimo más alto filtramos antes y bajan los tiempos.",
+      "Además, la cartera de clientes queda con menos riesgo."
     ],
     "respuestas": []
   },
@@ -52,12 +53,12 @@
     "fase": "apertura",
     "expresion": "seca",
     "lineas": [
-      "¿Ya revisaste lo del buró? Son casi siete mil días-solicitud desperdiciados."
+      "¿Ya revisaste lo del buró? Son casi 7,000 días de trabajo desperdiciados en solicitudes rechazadas."
     ],
     "respuestas": [
-      { "texto": "Sí, tengo los números.", "efecto": "abrir_laptop", "credibilidad": 0 },
+      { "texto": "Sí, ya tengo los números.", "efecto": "abrir_laptop", "credibilidad": 0 },
       { "texto": "Vamos con tu propuesta del score.", "efecto": "aceptar:8", "credibilidad": 1 },
-      { "texto": "Paulina, hay otra forma de atacarlo sin perder conversión.", "requiere": "verifico:trabajo_perdido_buro", "efecto": "refutar", "credibilidad": 2 }
+      { "texto": "Paulina, hay otra forma de resolverlo sin perder clientes.", "requiere": "verifico:trabajo_perdido_buro", "efecto": "refutar", "credibilidad": 2 }
     ]
   },
   {
@@ -68,11 +69,11 @@
     "expresion": "alarmada",
     "condicion": { "tipo": "kpi", "metrica": "conversionPct", "operador": "<", "valor": 40 },
     "lineas": [
-      "Director, la conversión se desplomó. Estamos abajo del cuarenta por ciento.",
-      "Si endurecimos el score, esto es lo que pasa."
+      "Director, la conversión cayó por debajo del 40%.",
+      "Esto es lo que pasa cuando se endurece el score."
     ],
     "respuestas": [
-      { "texto": "Tenemos que revertir eso.", "efecto": "postergar", "credibilidad": 0 }
+      { "texto": "Tenemos que revertirlo.", "efecto": "postergar", "credibilidad": 0 }
     ]
   },
   {
@@ -94,7 +95,7 @@
     "fase": "apertura",
     "expresion": "analitica",
     "lineas": [
-      "Tercer ciclo. ¿Cómo va el trabajo perdido en rechazados?"
+      "Tercer ciclo. ¿Cómo va el trabajo que perdemos en solicitudes rechazadas?"
     ],
     "respuestas": [
       { "texto": "Está bajando.", "efecto": "mostrar_resultados", "credibilidad": 1 },
@@ -109,8 +110,8 @@
     "expresion": "intrigada",
     "condicion": { "tipo": "accion_elegida", "accionId": 4 },
     "lineas": [
-      "Ah, moviste el buró al principio. Eso sí reduce el desperdicio sin tirar la conversión.",
-      "No es lo que yo había propuesto, pero funciona."
+      "Moviste la consulta al buró al principio. Eso reduce el desperdicio sin perder conversión.",
+      "No es lo que yo propuse, pero funciona."
     ],
     "respuestas": []
   },
@@ -121,7 +122,7 @@
     "fase": "apertura",
     "expresion": "evaluando",
     "lineas": [
-      "Última junta. Veamos qué pasó con los números de riesgo."
+      "Última junta. Veamos cómo quedaron los indicadores de riesgo."
     ],
     "respuestas": []
   },
@@ -133,7 +134,7 @@
     "expresion": "reconociendo",
     "condicion": { "tipo": "kpi", "metrica": "conversionPct", "operador": ">=", "valor": 45 },
     "lineas": [
-      "La conversión se mantuvo y bajamos el desperdicio. Correcto."
+      "La conversión se mantuvo y bajó el desperdicio. Bien hecho."
     ],
     "respuestas": []
   },
@@ -145,7 +146,7 @@
     "expresion": "critica",
     "condicion": { "tipo": "kpi", "metrica": "conversionPct", "operador": "<", "valor": 45 },
     "lineas": [
-      "La conversión está por los suelos. Esto no se lo vamos a poder explicar al consejo."
+      "La conversión está muy baja. Esto va a ser difícil de explicar al consejo."
     ],
     "respuestas": []
   },
@@ -157,11 +158,12 @@
     "expresion": "seca",
     "condicion": { "tipo": "pide_consejo" },
     "lineas": [
-      "Sube el umbral del score interno. Cinco unidades. Filtramos antes y el ciclo baja.",
-      "Sí se pierde conversión, pero la cartera queda limpia."
+      "Sube el puntaje mínimo del score interno. Cuesta 5 unidades y filtra antes a quien no califica.",
+      "Se pierden algunos clientes, pero la cartera queda con menos riesgo."
     ],
+    "pendiente": "Recomendación de Paulina: subir el puntaje mínimo del score interno (5 unidades). Ojo: puede bajar la conversión.",
     "respuestas": [
-      { "texto": "No quiero perder conversión.", "efecto": "rechazar", "credibilidad": 0 },
+      { "texto": "No quiero perder clientes.", "efecto": "rechazar", "credibilidad": 0 },
       { "texto": "Hazlo.", "efecto": "aceptar:8", "credibilidad": 1 }
     ]
   },
@@ -185,8 +187,8 @@
     "expresion": "cortante",
     "condicion": { "tipo": "credibilidad_baja" },
     "lineas": [
-      "Director, con todo respeto. Ya van varias juntas sin un plan claro.",
-      "El consejo va a empezar a preguntar."
+      "Director, con todo respeto: llevamos varias juntas sin un plan claro.",
+      "El consejo va a empezar a hacer preguntas."
     ],
     "respuestas": []
   }

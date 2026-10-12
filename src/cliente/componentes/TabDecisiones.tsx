@@ -102,7 +102,7 @@ export function TabDecisiones({ estado, onEstadoCambio }: Props) {
       setCompromisoDeclarado(false);
       setSeleccionadas([]);
       if (!res.estado?.terminada && res.estado?.fase !== 'finalizada') {
-        avisar('info', `Ciclo ${res.estado?.cicloActual ?? ''} iniciado`.trim(), 'Revisa los nuevos datos y la sala de juntas.');
+        avisar('info', `Ciclo ${res.estado?.cicloActual ?? ''} iniciado`.trim(), 'Tu equipo te espera en la Sala de Juntas.');
       }
     } catch (err: any) {
       setError(err.message);

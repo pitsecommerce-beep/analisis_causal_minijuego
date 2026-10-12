@@ -7,7 +7,7 @@
     "expresion": "satisfecho",
     "condicion": { "tipo": "compromiso_cumplido" },
     "lineas": [
-      "Bien. Prometiste y cumpliste.",
+      "Bien. Cumpliste lo que prometiste.",
       "Sigue así."
     ],
     "respuestas": []
@@ -20,7 +20,7 @@
     "expresion": "severo",
     "condicion": { "tipo": "compromiso_no_cumplido" },
     "lineas": [
-      "Prometiste y no cumpliste. Así no funciona esto."
+      "No cumpliste lo que prometiste. Así no podemos trabajar."
     ],
     "respuestas": []
   },
@@ -45,8 +45,8 @@
     "expresion": "amenazante",
     "condicion": { "tipo": "vidas_restantes", "valor": 1 },
     "lineas": [
-      "Es la segunda junta que salimos de aquí sin números.",
-      "No me obligues a buscar reemplazo."
+      "Es la segunda junta que terminamos sin resultados.",
+      "No me obligues a buscar a alguien más."
     ],
     "respuestas": []
   },
@@ -58,8 +58,8 @@
     "expresion": "frio",
     "condicion": { "tipo": "destituido" },
     "lineas": [
-      "Director, esto ya no da para más.",
-      "El consejo decidió buscar a alguien con otro perfil. Gracias por tu tiempo."
+      "Director, ya no podemos continuar así.",
+      "El consejo decidió buscar a otra persona para el puesto. Gracias por tu tiempo."
     ],
     "respuestas": []
   },
@@ -71,8 +71,8 @@
     "expresion": "impresionado",
     "condicion": { "tipo": "desenlace", "valor": "reconversion" },
     "lineas": [
-      "Director, el consejo reconoce el trabajo.",
-      "Los números hablan. Esto es lo que esperábamos cuando te contratamos."
+      "Director, el consejo reconoce tu trabajo.",
+      "Los números lo demuestran. Esto es lo que esperábamos cuando te contratamos."
     ],
     "respuestas": []
   },
@@ -84,8 +84,8 @@
     "expresion": "neutral",
     "condicion": { "tipo": "desenlace", "valor": "buen_trabajo" },
     "lineas": [
-      "Avanzamos. No todo lo que se podía, pero avanzamos.",
-      "Te doy seis meses más. Demuéstrame que va en la dirección correcta."
+      "Avanzamos. No todo lo posible, pero avanzamos.",
+      "Te doy seis meses más para demostrar que vamos en la dirección correcta."
     ],
     "respuestas": []
   },
@@ -97,8 +97,8 @@
     "expresion": "tibio",
     "condicion": { "tipo": "desenlace", "valor": "sobreviviste" },
     "lineas": [
-      "Sobreviviste, pero el consejo no está tranquilo.",
-      "Tienes tres meses para mostrar algo. Después hablamos."
+      "Conservas el puesto, pero el consejo no está tranquilo.",
+      "Tienes tres meses para mostrar resultados. Después hablamos."
     ],
     "respuestas": []
   },
@@ -110,8 +110,8 @@
     "expresion": "decepcionado",
     "condicion": { "tipo": "desenlace", "valor": "en_la_mira" },
     "lineas": [
-      "Francamente, director, esperaba más.",
-      "El consejo te va a estar vigilando de cerca."
+      "Te soy franco, Director: esperaba más.",
+      "El consejo va a seguir de cerca tu trabajo."
     ],
     "respuestas": []
   }

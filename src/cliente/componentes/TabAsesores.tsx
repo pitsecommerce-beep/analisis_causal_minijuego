@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { api } from '../api.js';
 import { useUI } from './ui/Notificaciones.js';
 import * as P from './sala/pixel.js';
+import { agregarPendiente } from '../pendientes.js';
 
 interface Respuesta { texto: string; efecto: string; credibilidad: number }
 interface Nodo {
@@ -10,6 +11,7 @@ interface Nodo {
   fase?: string;
   expresion?: string;
   lineas: string[];
+  pendiente?: string | null;
   afirmacion?: { id: string; verificable?: boolean; veredicto?: string } | null;
   respuestas: Respuesta[];
 }
@@ -298,6 +300,12 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop }: Props) {
       return;
     }
     marcar('vistos', nodoActual.nodoId);
+    if (nodoActual.pendiente && agregarPendiente({
+      id: nodoActual.nodoId,
+      personaje: infoDe(nodoActual.personaje)?.nombre ?? nodoActual.personaje,
+      texto: nodoActual.pendiente,
+      afirmacion: nodoActual.afirmacion?.id ?? null,
+    })) avisar('info', 'Nota agregada a Pendientes', nodoActual.pendiente);
     const debeResponder = !charla.repaso && nodoActual.respuestas.length > 0 && !memoria.respondidos.has(nodoActual.nodoId);
     if (debeResponder) setCharla({ ...charla, modo: 'opciones' });
     else siguienteNodo(charla);
