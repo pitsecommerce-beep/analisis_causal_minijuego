@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
+import { useSondeo } from '../sondeo.js';
 import { useUI } from '../componentes/ui/Notificaciones.js';
 import { PiePagina } from '../componentes/ui/PiePagina.js';
 import { VistaAcceso } from '../componentes/ui/VistaAcceso.js';
@@ -213,13 +214,9 @@ function Panel() {
   }
 
   const detalleId = detalle?.sesion?.id as string | undefined;
-  useEffect(() => {
-    if (!detalleId) return;
-    const id = window.setInterval(() => {
-      if (!document.hidden) refrescarDetalle(detalleId);
-    }, INTERVALO_REFRESCO);
-    return () => window.clearInterval(id);
-  }, [detalleId]);
+  // Una sesión finalizada ya no cambia, así que no se consulta
+  const refrescar = !!detalleId && detalle?.sesion?.estado !== 'finalizada';
+  useSondeo(() => { if (detalleId) refrescarDetalle(detalleId); }, INTERVALO_REFRESCO, refrescar);
 
   async function verDetalle(id: string) {
     try {

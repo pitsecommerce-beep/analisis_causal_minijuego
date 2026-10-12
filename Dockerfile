@@ -10,17 +10,15 @@ RUN npm run build
 
 FROM node:22-slim
 
+ENV NODE_ENV=production
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
-COPY src ./src
-COPY config ./config
-COPY datos ./datos
-COPY supabase ./supabase
+COPY datos/dialogos ./datos/dialogos
 
 EXPOSE 3000
 
-CMD ["node", "--import", "tsx/esm", "src/servidor/api/servidor.ts"]
+CMD ["node", "--max-old-space-size=256", "dist/servidor/servidor.js"]

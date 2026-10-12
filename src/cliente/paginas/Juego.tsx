@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
+import { useSondeo } from '../sondeo.js';
 import { TabDatos } from '../componentes/TabDatos.js';
 import { TabAsesores } from '../componentes/TabAsesores.js';
 import { TabDecisiones } from '../componentes/TabDecisiones.js';
@@ -92,31 +93,23 @@ export function Juego() {
     await iniciar();
   }
 
-  useEffect(() => {
-    if (!esperando) return;
-    const id = window.setInterval(async () => {
-      try {
-        const { sesionEstado } = await api.jugador.latido();
-        if (sesionEstado !== 'abierta') {
-          setEsperando(false);
-          if (sesionEstado === 'en_curso') {
-            avisar('exito', 'La sesión comenzó', 'Mucho éxito, Director(a).');
-            await iniciar();
-          } else {
-            setError('Esta sesión ya terminó. Pide a tu profesor el código de una sesión activa.');
-          }
+  useSondeo(async () => {
+    try {
+      const { sesionEstado } = await api.jugador.latido();
+      if (sesionEstado !== 'abierta') {
+        setEsperando(false);
+        if (sesionEstado === 'en_curso') {
+          avisar('exito', 'La sesión comenzó', 'Mucho éxito, Director(a).');
+          await iniciar();
+        } else {
+          setError('Esta sesión ya terminó. Pide a tu profesor el código de una sesión activa.');
         }
-      } catch { /* reintenta en el siguiente intervalo */ }
-    }, INTERVALO_ESPERA);
-    return () => window.clearInterval(id);
-  }, [esperando]);
+      }
+    } catch { /* reintenta en el siguiente intervalo */ }
+  }, INTERVALO_ESPERA, esperando);
 
   // Latido durante la partida para que el profesor vea a la persona como conectada
-  useEffect(() => {
-    if (!estado) return;
-    const id = window.setInterval(() => { api.jugador.latido().catch(() => {}); }, INTERVALO_LATIDO);
-    return () => window.clearInterval(id);
-  }, [!!estado]);
+  useSondeo(() => { api.jugador.latido().catch(() => {}); }, INTERVALO_LATIDO, !!estado);
 
   const pasosRecorrido: PasoRecorrido[] = [
     {
