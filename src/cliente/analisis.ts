@@ -24,7 +24,7 @@ export const EVENTOS_COMENTARIO: { etiqueta: string; patron: RegExp; esError: bo
 ];
 
 export const COLUMNAS_CALCULADAS: Columna[] = [
-  { campo: 'ventanaCaptura', nombre: 'Días de captura (calculado)', tipo: 'numero', calculada: true },
+  { campo: 'ventanaCaptura', nombre: 'Días de captura en sucursal (calculado)', tipo: 'numero', calculada: true },
   { campo: 'erroresComentario', nombre: 'Errores en comentarios (calculado)', tipo: 'numero', calculada: true },
 ];
 
