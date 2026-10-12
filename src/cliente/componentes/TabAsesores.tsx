@@ -47,6 +47,8 @@ const REPOSO: Record<string, string> = {
 };
 
 const DURACION_CIERRE = 1100;
+// Breve momento con la laptop abierta antes de cerrarla sola al entrar
+const PAUSA_INTRO = 450;
 const DURACION_APERTURA = 850;
 const CLAVE_MEMORIA = 'salaJuntas:v1';
 
@@ -237,8 +239,14 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop }: Props) {
     return () => window.clearTimeout(id);
   }, [fase]);
 
+  // Al entrar a la sala la laptop se cierra sola
+  useEffect(() => {
+    const id = window.setTimeout(cerrarLaptop, PAUSA_INTRO);
+    return () => window.clearTimeout(id);
+  }, []);
+
   function cerrarLaptop() {
-    if (fase !== 'intro') return;
+    if (animRef.current.fase !== 'intro') return;
     animRef.current.inicio = performance.now();
     setFase('cerrando');
   }
@@ -394,23 +402,13 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop }: Props) {
             width={P.ANCHO}
             height={P.ALTO}
             className="sala-lienzo"
-            style={{ cursor: (fase === 'intro' || hover || charla) ? 'pointer' : 'default' }}
+            style={{ cursor: (hover || charla) ? 'pointer' : 'default' }}
             onPointerMove={alMover}
             onPointerLeave={() => setHover(null)}
             onPointerDown={alClic}
             role="img"
             aria-label="Sala de juntas de ETF Bank con tu equipo sentado alrededor de la mesa"
           />
-
-          {fase === 'intro' && (
-            <div className="sala-intro">
-              <p>Estás revisando los datos del proceso.</p>
-              <button className="sala-boton" onClick={cerrarLaptop} autoFocus>
-                Cerrar la laptop y atender a tu equipo
-              </button>
-              <span className="sala-tecla">Enter</span>
-            </div>
-          )}
 
           {fase === 'sala' && !charla && (
             <div className="sala-rotulo">
