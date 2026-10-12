@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  agregarCalculadas, cartaControl, contarCategorias, correlacion, cruzar, histograma, pareto, pivote, resumir, valoresEstrato, valoresNumericos,
+  agregarCalculadas, cartaControl, contarCategorias, correlacion, cruzar, duracionesEtapa, ETAPAS_PROCESO, histograma, pareto, pivote, resumir, valoresEstrato, valoresNumericos,
 } from '../src/cliente/analisis.js';
 import type { Columna } from '../src/cliente/analisis.js';
 
@@ -89,5 +89,19 @@ describe('Cruce, estratos y gráfica de control', () => {
     expect(carta.puntos[0]!.lcs).toBeCloseTo(20 + 30 / Math.sqrt(2));
     expect(carta.puntos[1]!.lci).toBeCloseTo(-10);
     expect(carta.puntos.some(p => p.fuera)).toBe(false);
+  });
+});
+
+describe('Vista del proceso', () => {
+  it('mide cada etapa solo con registros que tienen ambas fechas', () => {
+    const filas = [
+      { dateFirstInput: '2015-01-01T00:00:00.000Z', dateLastInput: '2015-01-11T00:00:00.000Z', creditBureauRunDate: '2015-01-20T00:00:00.000Z', etfbScoreDate: null },
+      { dateFirstInput: '2015-02-01T00:00:00.000Z', dateLastInput: '2015-02-04T00:00:00.000Z', creditBureauRunDate: null, etfbScoreDate: null },
+    ];
+    const etapa = (id: string) => ETAPAS_PROCESO.find(e => e.id === id)!;
+    expect(duracionesEtapa(filas, etapa('captura'))).toEqual([10, 3]);
+    expect(duracionesEtapa(filas, etapa('score'))).toEqual([]);
+    expect(duracionesEtapa(filas, etapa('visita'))).toEqual([]);
+    expect(ETAPAS_PROCESO).toHaveLength(10);
   });
 });

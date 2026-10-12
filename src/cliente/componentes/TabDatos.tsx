@@ -3,6 +3,7 @@ import { api, EVENTO_VERIFICACION } from '../api.js';
 import { Icono } from './ui/Iconos.js';
 import type { NombreIcono } from './ui/Iconos.js';
 import { Histograma, Pareto, Corrida, Dispersion, CartaControl } from './Graficos.js';
+import { VistaProceso } from './VistaProceso.js';
 import {
   agregarCalculadas, COLUMNAS_CALCULADAS, COLUMNAS_CRUCE_COMENTARIOS, ESTRATOS, cartaControl, contarCategorias, correlacion, cruzar,
   formatoFecha, formatoNumero, histograma, pareto, pares, pivote, resumir, valoresEstrato, valoresNumericos, aNumero,
@@ -48,7 +49,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
   const [colsComentarios, setColsComentarios] = useState<Columna[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState('');
-  const [tab, setTab] = useState<'solicitudes' | 'comentarios'>('solicitudes');
+  const [tab, setTab] = useState<'solicitudes' | 'comentarios' | 'proceso'>('solicitudes');
   const [ordenCol, setOrdenCol] = useState('');
   const [ordenAsc, setOrdenAsc] = useState(true);
   const [filtroCol, setFiltroCol] = useState('');
@@ -86,12 +87,14 @@ export function TabDatos({ onHerramientaUsada }: Props) {
     cargar();
   }, []);
 
-  const cols = tab === 'solicitudes' ? colsSolicitudes : colsComentarios;
-  const filas = tab === 'solicitudes' ? solicitudes : comentarios;
+  // La vista del proceso se calcula sobre las solicitudes
+  const hoja = tab === 'comentarios' ? 'comentarios' : 'solicitudes';
+  const cols = hoja === 'solicitudes' ? colsSolicitudes : colsComentarios;
+  const filas = hoja === 'solicitudes' ? solicitudes : comentarios;
   const columna = cols.find(c => c.campo === colSeleccionada) ?? null;
   const numericas = cols.filter(c => c.tipo !== 'texto');
 
-  const estratos = ESTRATOS[tab];
+  const estratos = ESTRATOS[hoja];
   const opcionesEstrato = useMemo(() => estratoCampo ? valoresEstrato(filas, estratoCampo) : [], [filas, estratoCampo]);
   const estratoActivo = estratoCampo && estratoValor ? { campo: estratoCampo, valor: estratoValor, nombre: estratos.find(e => e.campo === estratoCampo)?.nombre ?? estratoCampo } : null;
 
@@ -114,7 +117,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
     return datos;
   }, [filas, filtroCol, filtroVal, ordenCol, ordenAsc, estratoCampo, estratoValor]);
 
-  function cambiarTab(t: 'solicitudes' | 'comentarios') {
+  function cambiarTab(t: 'solicitudes' | 'comentarios' | 'proceso') {
     setTab(t);
     setColSeleccionada('');
     setColSecundaria('');
@@ -203,16 +206,19 @@ export function TabDatos({ onHerramientaUsada }: Props) {
         <button className={`tab ${tab === 'comentarios' ? 'activo' : ''}`} onClick={() => cambiarTab('comentarios')}>
           Comentarios ({comentarios.length})
         </button>
+        <button data-tour="tab-proceso" className={`tab ${tab === 'proceso' ? 'activo' : ''}`} onClick={() => cambiarTab('proceso')}>
+          Proceso (Anexo 1)
+        </button>
       </div>
 
       <div className="datos-controles">
-        <div className="datos-columna">
+        {tab !== 'proceso' && <div className="datos-columna">
           <label className="campo-label" htmlFor="col-analisis">Columna</label>
           <select id="col-analisis" value={colSeleccionada} onChange={e => elegirColumna(e.target.value)}>
             <option value="">Elige una columna...</option>
             {cols.map(c => <option key={c.campo} value={c.campo}>{c.nombre}</option>)}
           </select>
-        </div>
+        </div>}
         <div className="datos-columna">
           <label className="campo-label" htmlFor="estrato-campo">Estratificar por</label>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -228,7 +234,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
             )}
           </div>
         </div>
-        <div data-tour="herramientas" className="datos-herramientas">
+        {tab !== 'proceso' && <div data-tour="herramientas" className="datos-herramientas">
           {HERRAMIENTAS.map(h => (
             <button key={h.id} className={`herramienta-btn ${herramienta === h.id ? 'activa' : ''} ${herramientasUsadas.has(h.id) ? 'usada' : ''}`}
               onClick={() => aplicarHerramienta(h.id)} title={h.ayuda} aria-pressed={herramienta === h.id}>
@@ -236,12 +242,16 @@ export function TabDatos({ onHerramientaUsada }: Props) {
               {h.nombre}
             </button>
           ))}
-        </div>
+        </div>}
       </div>
 
-      {aviso && <div className="datos-aviso" role="status"><Icono nombre="info" tamano={16} />{aviso}</div>}
+      {tab === 'proceso' && (
+        <VistaProceso filas={datosFiltrados} estrato={estratoActivo ? `${estratoActivo.nombre} ${estratoActivo.valor}` : ''} />
+      )}
 
-      {herramienta && columna && (
+      {tab !== 'proceso' && aviso && <div className="datos-aviso" role="status"><Icono nombre="info" tamano={16} />{aviso}</div>}
+
+      {tab !== 'proceso' && herramienta && columna && (
         <PanelResultado
           herramienta={herramienta}
           columna={columna}
@@ -263,7 +273,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
         </div>
       )}
 
-      <div className="tarjeta datos-tabla">
+      {tab !== 'proceso' && <div className="tarjeta datos-tabla">
         <div className="datos-tabla-scroll">
           <table className="datos">
             <thead>
@@ -306,7 +316,7 @@ export function TabDatos({ onHerramientaUsada }: Props) {
             <button className="btn-fantasma btn-sm" onClick={() => setLimite(datosFiltrados.length)}>Mostrar todas</button>
           )}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

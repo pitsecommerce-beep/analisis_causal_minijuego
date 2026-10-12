@@ -345,3 +345,39 @@ export function formatoNumero(n: number, decimales = 2): string {
   if (!Number.isFinite(n)) return '-';
   return Number.isInteger(n) ? n.toLocaleString('es-MX') : n.toLocaleString('es-MX', { maximumFractionDigits: decimales });
 }
+
+// ── Vista del proceso (Anexo 1) ──
+
+export interface EtapaProceso {
+  id: string;
+  nombre: string;
+  // Fechas de la base que delimitan la etapa; sin ellas la etapa no tiene registro de tiempo
+  desde?: string;
+  hasta?: string;
+  nota?: string;
+}
+
+export const ETAPAS_PROCESO: EtapaProceso[] = [
+  { id: 'visita', nombre: 'El cliente visita la sucursal' },
+  { id: 'documentos', nombre: 'Entrega sus documentos' },
+  { id: 'captura', nombre: 'El ejecutivo captura en C.R.A.S.S.', desde: 'dateFirstInput', hasta: 'dateLastInput' },
+  { id: 'envio', nombre: 'Envía los documentos a CrOP', desde: 'dateLastInput', hasta: 'dateDocsReceived', nota: 'Incluye el traslado hasta que CrOP los recibe.' },
+  { id: 'revision', nombre: 'CrOP revisa el expediente', desde: 'dateDocsReceived', hasta: 'creditBureauRunDate', nota: 'Termina cuando se consulta el buró de crédito.' },
+  { id: 'buro', nombre: 'Consulta al buró de crédito', nota: 'La consulta no tiene duración propia en la base; su espera queda dentro de la revisión de CrOP.' },
+  { id: 'score', nombre: 'Revisa el score interno ETF Bank', desde: 'creditBureauRunDate', hasta: 'etfbScoreDate' },
+  { id: 'linea', nombre: 'Define la línea de crédito', nota: 'La base no registra la fecha en que se define la línea.' },
+  { id: 'tarjeta', nombre: 'Envía la tarjeta', desde: 'etfbScoreDate', hasta: 'datePlasticSent' },
+  { id: 'recibe', nombre: 'El cliente recibe su tarjeta' },
+];
+
+// Días que tarda cada solicitud en una etapa; solo cuenta registros con ambas fechas
+export function duracionesEtapa(filas: Fila[], etapa: EtapaProceso): number[] {
+  if (!etapa.desde || !etapa.hasta) return [];
+  const out: number[] = [];
+  for (const f of filas) {
+    const a = aNumero(f[etapa.desde], 'fecha');
+    const b = aNumero(f[etapa.hasta], 'fecha');
+    if (a != null && b != null) out.push(Math.round((b - a) / MS_DIA));
+  }
+  return out;
+}
