@@ -1634,3 +1634,21 @@ input[type='checkbox'].casilla {
   .ramon-globo::after { left: 43px; bottom: -10px; border-width: 11px 6px 0 6px; border-color: #fffdf8 transparent transparent transparent; }
   .ramon-globo-texto { font-size: 13px; min-height: 0; }
 }
+
+/* --- Campo de contraseña con ojo --- */
+.campo-contrasena { position: relative; }
+.campo-contrasena input { padding-right: 44px; }
+.campo-contrasena-ojo {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  padding: 6px;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  color: var(--color-texto-secundario);
+  cursor: pointer;
+}
+.campo-contrasena-ojo:hover, .campo-contrasena-ojo:focus-visible { color: var(--color-primario); background: var(--color-fondo); }
