@@ -41,7 +41,8 @@ export function Juego() {
   const nav = useNavigate();
   const { confirmar, avisar } = useUI();
   const [estado, setEstado] = useState<any>(null);
-  const [vista, setVista] = useState<Vista>('datos');
+  // El simulador recibe al participante en la Sala de Juntas, con su equipo
+  const [vista, setVista] = useState<Vista>('asesores');
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [herramientasUsadas, setHerramientasUsadas] = useState<string[]>([]);
@@ -164,7 +165,7 @@ export function Juego() {
         'Propón y ejecuta acciones sustentadas, en 4 ciclos.',
         'Rinde cuentas al consejo en cada ciclo: de tus resultados depende que te quedes en el puesto.',
       ],
-      alEntrar: () => setVista('datos'),
+      alEntrar: () => setVista('asesores'),
     },
     {
       objetivo: 'ciclo',
@@ -253,6 +254,8 @@ export function Juego() {
   function terminarOnboarding() {
     try { localStorage.setItem(CLAVE_ONBOARDING, '1'); } catch { /* sin almacenamiento */ }
     setMostrarOnboarding(false);
+    // Al terminar la inducción se vuelve a la Sala de Juntas para conocer al equipo
+    setVista('asesores');
   }
 
   async function iniciar() {
