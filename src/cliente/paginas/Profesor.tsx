@@ -5,6 +5,7 @@ import { useSondeo } from '../sondeo.js';
 import { useUI } from '../componentes/ui/Notificaciones.js';
 import { PiePagina } from '../componentes/ui/PiePagina.js';
 import { VistaAcceso } from '../componentes/ui/VistaAcceso.js';
+import { CampoContrasena } from '../componentes/ui/CampoContrasena.js';
 import { LineaTiempo } from '../componentes/LineaTiempo.js';
 
 const INTERVALO_REFRESCO = 4000;
@@ -62,7 +63,7 @@ function Login() {
         </div>
         <div>
           <label className="campo-label" htmlFor="password">Contraseña</label>
-          <input id="password" type="password" autoComplete="current-password" value={password}
+          <CampoContrasena id="password" autoComplete="current-password" value={password}
             onChange={e => setPassword(e.target.value)} required />
         </div>
 
@@ -120,12 +121,12 @@ function Registro() {
         </div>
         <div>
           <label className="campo-label" htmlFor="password">Contraseña</label>
-          <input id="password" type="password" autoComplete="new-password" value={password}
+          <CampoContrasena id="password" autoComplete="new-password" value={password}
             onChange={e => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required minLength={6} />
         </div>
         <div>
           <label className="campo-label" htmlFor="confirmacion">Confirma tu contraseña</label>
-          <input id="confirmacion" type="password" autoComplete="new-password" value={confirmacion}
+          <CampoContrasena id="confirmacion" autoComplete="new-password" value={confirmacion}
             onChange={e => setConfirmacion(e.target.value)} required minLength={6} />
         </div>
 
