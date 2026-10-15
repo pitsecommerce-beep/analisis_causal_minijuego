@@ -1,3 +1,4 @@
+import { useSesion } from '../i18n.js';
 import { useCallback, useEffect, useState } from 'react';
 import type { NombreIcono } from './ui/Iconos.js';
 import { RamonMedioCuerpo } from './Betancourt.js';
@@ -45,6 +46,7 @@ function escalaRamon(): number {
 // Inducción presentada por Ramón Betancourt: aparece de medio cuerpo abajo a la izquierda
 // y habla mientras se señalan los elementos de la interfaz
 export function Onboarding({ pasos, onTerminar }: Props) {
+  const { t } = useSesion();
   const [indice, setIndice] = useState(0);
   const [caja, setCaja] = useState<Caja | null>(null);
   const [escritos, setEscritos] = useState(0);
@@ -130,7 +132,7 @@ export function Onboarding({ pasos, onTerminar }: Props) {
       <div className="ramon-escena">
         <RamonMedioCuerpo hablando={escribiendo} animo={paso.animo ?? 'neutral'} senala={!!caja && brazoArriba} escala={escala} />
         <div className="ramon-globo" onClick={() => escribiendo && setEscritos(paso.texto.length)}>
-          <div className="ramon-globo-nombre">Ramón Betancourt <small>a nombre del Consejo</small></div>
+          <div className="ramon-globo-nombre">{t('ui.onboarding.nombre')} <small>{t('ui.onboarding.rol')}</small></div>
           <h2 id="recorrido-titulo" className="ramon-globo-titulo">{paso.titulo}</h2>
           <p className="ramon-globo-texto" aria-live="polite">
             {paso.texto.slice(0, escritos)}
@@ -145,13 +147,13 @@ export function Onboarding({ pasos, onTerminar }: Props) {
             <span className="onboarding-paso">{indice + 1} de {pasos.length}</span>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {!esUltimo && (
-                <button className="enlace enlace-sutil onboarding-saltar" onClick={onTerminar}>Saltar</button>
+                <button className="enlace enlace-sutil onboarding-saltar" onClick={onTerminar}>{t('ui.onboarding.saltar')}</button>
               )}
               {indice > 0 && (
-                <button className="btn-fantasma btn-sm" onClick={() => ir(indice - 1)}>Anterior</button>
+                <button className="btn-fantasma btn-sm" onClick={() => ir(indice - 1)}>{t('ui.onboarding.anterior')}</button>
               )}
               <button className="btn-primario btn-sm" onClick={e => { e.stopPropagation(); siguiente(); }} autoFocus>
-                {esUltimo && !escribiendo ? 'Comenzar' : 'Siguiente'}
+                {esUltimo && !escribiendo ? t('ui.onboarding.comenzar') : t('ui.onboarding.siguiente')}
               </button>
             </div>
           </div>

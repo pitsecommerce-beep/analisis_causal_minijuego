@@ -1,5 +1,6 @@
 import { parsearErrores } from './parseo.js';
 import type { SolicitudCruda, ErrorParseado } from './parseo.js';
+import type { Vocabulario } from '../../compartido/expediente.js';
 
 export interface SolicitudDerivada extends SolicitudCruda {
   ventanaCaptura: number;
@@ -9,6 +10,7 @@ export interface SolicitudDerivada extends SolicitudCruda {
   erroresCaptura: number;
   erroresIncompletos: number;
   erroresIlegibles: number;
+  erroresOtros: number;
   tieneReproceso: boolean;
   estaAtorado: boolean;
   trabajoPerdido: number | null;
@@ -25,12 +27,13 @@ function formatMes(d: Date): string {
   return `${y}-${m}`;
 }
 
-export function calcularDerivados(solicitudes: SolicitudCruda[]): SolicitudDerivada[] {
+export function calcularDerivados(solicitudes: SolicitudCruda[], vocabulario: Vocabulario = 'R2'): SolicitudDerivada[] {
   return solicitudes.map((s) => {
-    const errores = parsearErrores(s.comments);
+    const errores = parsearErrores(s.comments, vocabulario);
     const erroresCaptura = errores.filter((e) => e.tipo === 'captura').length;
     const erroresIncompletos = errores.filter((e) => e.tipo === 'incompletos').length;
     const erroresIlegibles = errores.filter((e) => e.tipo === 'ilegibles').length;
+    const erroresOtros = errores.filter((e) => e.tipo === 'otros').length;
 
     const ventanaCaptura = diffDias(s.dateFirstInput, s.dateLastInput);
     const cicloTotal = s.datePlasticSent
@@ -52,6 +55,7 @@ export function calcularDerivados(solicitudes: SolicitudCruda[]): SolicitudDeriv
       erroresCaptura,
       erroresIncompletos,
       erroresIlegibles,
+      erroresOtros,
       tieneReproceso: errores.length >= 1,
       estaAtorado,
       trabajoPerdido,
@@ -69,6 +73,7 @@ export interface EstadisticasVerificacion {
   erroresCaptura: number;
   erroresIncompletos: number;
   erroresIlegibles: number;
+  erroresOtros: number;
   casosConError: number;
   intentosMedia: number;
   intentosDesviacion: number;
@@ -83,6 +88,8 @@ export interface EstadisticasVerificacion {
   diasPerdidosRechazados: number;
   top3SucursalesPorErrores: number[];
   pctErroresTop3: number;
+  // Solicitudes donde # of tries no es 1 + errores de la bitácora. No se corrigen: se reportan.
+  filasFueraInvariante: number[];
 }
 
 function mediana(arr: number[]): number {
@@ -128,6 +135,7 @@ export function calcularEstadisticas(datos: SolicitudDerivada[]): EstadisticasVe
   const erroresCaptura = datos.reduce((s, d) => s + d.erroresCaptura, 0);
   const erroresIncompletos = datos.reduce((s, d) => s + d.erroresIncompletos, 0);
   const erroresIlegibles = datos.reduce((s, d) => s + d.erroresIlegibles, 0);
+  const erroresOtros = datos.reduce((s, d) => s + d.erroresOtros, 0);
   const casosConError = datos.filter((d) => d.tieneReproceso).length;
 
   const intentos = datos.map((d) => d.numTries);
@@ -165,6 +173,7 @@ export function calcularEstadisticas(datos: SolicitudDerivada[]): EstadisticasVe
     erroresCaptura,
     erroresIncompletos,
     erroresIlegibles,
+    erroresOtros,
     casosConError,
     intentosMedia: Math.round(media(intentos) * 100) / 100,
     intentosDesviacion: Math.round(desviacion(intentos) * 100) / 100,
@@ -179,5 +188,6 @@ export function calcularEstadisticas(datos: SolicitudDerivada[]): EstadisticasVe
     diasPerdidosRechazados,
     top3SucursalesPorErrores: top3,
     pctErroresTop3: Math.round((erroresTop3 / erroresTotales) * 1000) / 10,
+    filasFueraInvariante: datos.filter((d) => d.numTries !== 1 + d.erroresPorCaso).map((d) => d.applicationNum),
   };
 }

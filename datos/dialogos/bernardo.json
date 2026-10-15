@@ -6,8 +6,8 @@
     "fase": "apertura",
     "expresion": "insistiendo",
     "lineas": [
-      "Director, ya medí las dos etapas del proceso: la captura en sucursal tarda 11 días y el back office (CrOP) también 11 días, en mediana.",
-      "Si tardan lo mismo, el problema no está en mis sucursales sino en CrOP."
+      {"si": "medianas_iguales", "texto": "Director, ya medí las dos etapas del proceso: la captura en sucursal tarda {{med_captura}} días y el back office (CrOP) también {{med_backoffice}} días, en mediana.", "sino": "Director, ya medí las dos etapas del proceso: en mediana, la captura en sucursal tarda {{med_captura}} días y el back office (CrOP), {{med_backoffice}}."},
+      {"si": "medianas_iguales", "texto": "Si tardan lo mismo, el problema no está en mis sucursales sino en CrOP.", "sino": "Antes de culpar a mis sucursales, revisen también lo que pasa en CrOP."}
     ],
     "pendiente": "Validar: ¿la captura y el back office realmente tardan lo mismo? Bernardo solo comparó las medianas (11 días cada una).",
     "afirmacion": { "id": "medianas_iguales", "verificable": true, "veredicto": "cierta_pero_enganosa" },

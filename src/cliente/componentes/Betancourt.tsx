@@ -1,3 +1,4 @@
+import { useSesion } from '../i18n.js';
 import { useEffect, useRef } from 'react';
 import * as P from './sala/pixel.js';
 
@@ -70,6 +71,7 @@ export function RamonMedioCuerpo({ hablando = false, animo = 'neutral', senala =
 
 // Intervención de Betancourt durante el juego cuando el participante decide sin sustento
 export function AvisoBetancourt({ avisos, onCerrar }: { avisos: string[]; onCerrar: () => void }) {
+  const { t } = useSesion();
   useEffect(() => {
     const f = (e: KeyboardEvent) => { if (e.key === 'Escape' || e.key === 'Enter') onCerrar(); };
     window.addEventListener('keydown', f);
@@ -81,9 +83,9 @@ export function AvisoBetancourt({ avisos, onCerrar }: { avisos: string[]; onCerr
       <div className="betancourt-aviso" role="alertdialog" aria-modal="true" aria-labelledby="betancourt-nombre">
         <RetratoBetancourt hablando animo="enojado" />
         <div className="betancourt-globo">
-          <div id="betancourt-nombre" className="betancourt-nombre">Ramón Betancourt <small>Consejo</small></div>
+          <div id="betancourt-nombre" className="betancourt-nombre">{t('ui.onboarding.nombre')} <small>{t('ui.betancourt.rol')}</small></div>
           {avisos.map((a, i) => <p key={i}>{a}</p>)}
-          <button className="btn-primario btn-sm" onClick={onCerrar} autoFocus>Entendido</button>
+          <button className="btn-primario btn-sm" onClick={onCerrar} autoFocus>{t('ui.betancourt.entendido')}</button>
         </div>
       </div>
     </div>

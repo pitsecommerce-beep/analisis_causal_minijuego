@@ -1,0 +1,291 @@
+[
+  {
+    "id": "paulina_c1_apertura",
+    "personaje": "paulina",
+    "ciclo": 1,
+    "fase": "apertura",
+    "expresion": "precisa",
+    "lineas": [
+      "There is something important: the files the bureau rejects already had weeks of work in them.",
+      "We are building files for people who do not qualify."
+    ],
+    "pendiente": "Validate: Paulina says files rejected by the bureau already had weeks of work in them. Check how many days are lost.",
+    "afirmacion": {
+      "id": "trabajo_perdido_buro",
+      "verificable": true,
+      "veredicto": "cierta"
+    },
+    "respuestas": [
+      {
+        "texto": "Let me see how many days are lost.",
+        "efecto": "abrir_laptop",
+        "credibilidad": 0
+      },
+      {
+        "texto": "Let’s raise the minimum internal score.",
+        "efecto": "aceptar:8",
+        "credibilidad": 1
+      },
+      {
+        "texto": "Paulina, the figure is correct. But the solution is not to reject more people.",
+        "requiere": "verifico:trabajo_perdido_buro",
+        "efecto": "refutar",
+        "credibilidad": 2
+      },
+      {
+        "texto": "I will check it later.",
+        "efecto": "postergar",
+        "credibilidad": -1
+      }
+    ]
+  },
+  {
+    "id": "paulina_c1_refutada",
+    "personaje": "paulina",
+    "ciclo": 1,
+    "fase": "refutado",
+    "expresion": "fria",
+    "condicion": {
+      "tipo": "refutado",
+      "afirmacion": "trabajo_perdido_buro"
+    },
+    "lineas": [
+      "Then what do you propose? Keep spending resources on files that will be rejected?"
+    ],
+    "respuestas": [
+      {
+        "texto": "Check the bureau before data entry, not after.",
+        "efecto": "contraargumentar",
+        "credibilidad": 2
+      },
+      {
+        "texto": "I will figure out how to solve it.",
+        "efecto": "postergar",
+        "credibilidad": 0
+      }
+    ]
+  },
+  {
+    "id": "paulina_c1_aceptado",
+    "personaje": "paulina",
+    "ciclo": 1,
+    "fase": "aceptado",
+    "expresion": "satisfecha",
+    "condicion": {
+      "tipo": "aceptaron_su_accion"
+    },
+    "lineas": [
+      "With a higher minimum score we filter earlier and times go down.",
+      "Besides, the customer portfolio carries less risk."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_c2_apertura",
+    "personaje": "paulina",
+    "ciclo": 2,
+    "fase": "apertura",
+    "expresion": "seca",
+    "lineas": [
+      "Did you look into the bureau issue? That is almost 7,000 days of work wasted on rejected applications."
+    ],
+    "respuestas": [
+      {
+        "texto": "Yes, I have the numbers.",
+        "efecto": "abrir_laptop",
+        "credibilidad": 0
+      },
+      {
+        "texto": "Let’s go with your score proposal.",
+        "efecto": "aceptar:8",
+        "credibilidad": 1
+      },
+      {
+        "texto": "Paulina, there is another way to solve it without losing customers.",
+        "requiere": "verifico:trabajo_perdido_buro",
+        "efecto": "refutar",
+        "credibilidad": 2
+      }
+    ]
+  },
+  {
+    "id": "paulina_c2_conversion_cayendo",
+    "personaje": "paulina",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "alarmada",
+    "condicion": {
+      "tipo": "kpi",
+      "metrica": "conversionPct",
+      "operador": "<",
+      "valor": 40
+    },
+    "lineas": [
+      "Director, conversion fell below 40%.",
+      "This is what happens when the score is tightened."
+    ],
+    "respuestas": [
+      {
+        "texto": "We have to reverse it.",
+        "efecto": "postergar",
+        "credibilidad": 0
+      }
+    ]
+  },
+  {
+    "id": "paulina_c2_conversion_bien",
+    "personaje": "paulina",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "neutral",
+    "condicion": {
+      "tipo": "kpi",
+      "metrica": "conversionPct",
+      "operador": ">=",
+      "valor": 40
+    },
+    "lineas": [
+      "Conversion is holding. Good."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_c3_apertura",
+    "personaje": "paulina",
+    "ciclo": 3,
+    "fase": "apertura",
+    "expresion": "analitica",
+    "lineas": [
+      "Third cycle. How is the work we lose on rejected applications going?"
+    ],
+    "respuestas": [
+      {
+        "texto": "It is going down.",
+        "efecto": "mostrar_resultados",
+        "credibilidad": 1
+      },
+      {
+        "texto": "I have not measured it.",
+        "efecto": "postergar",
+        "credibilidad": -1
+      }
+    ]
+  },
+  {
+    "id": "paulina_c3_buro_reordenado",
+    "personaje": "paulina",
+    "ciclo": 3,
+    "fase": "reaccion",
+    "expresion": "intrigada",
+    "condicion": {
+      "tipo": "accion_elegida",
+      "accionId": 4
+    },
+    "lineas": [
+      "You moved the bureau check to the start. That reduces waste without losing conversion.",
+      "It is not what I proposed, but it works."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_c4_apertura",
+    "personaje": "paulina",
+    "ciclo": 4,
+    "fase": "apertura",
+    "expresion": "evaluando",
+    "lineas": [
+      "Last meeting. Let’s see where the risk indicators ended up."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_c4_resultado_bueno",
+    "personaje": "paulina",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "reconociendo",
+    "condicion": {
+      "tipo": "kpi",
+      "metrica": "conversionPct",
+      "operador": ">=",
+      "valor": 45
+    },
+    "lineas": [
+      "Conversion held and waste went down. Well done."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_c4_resultado_malo",
+    "personaje": "paulina",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "critica",
+    "condicion": {
+      "tipo": "kpi",
+      "metrica": "conversionPct",
+      "operador": "<",
+      "valor": 45
+    },
+    "lineas": [
+      "Conversion is very low. This will be hard to explain to the board."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_consejo",
+    "personaje": "paulina",
+    "ciclo": 0,
+    "fase": "consejo",
+    "expresion": "seca",
+    "condicion": {
+      "tipo": "pide_consejo"
+    },
+    "lineas": [
+      "Raise the minimum internal score. It costs 5 units and filters out those who do not qualify earlier.",
+      "Some customers are lost, but the portfolio carries less risk."
+    ],
+    "pendiente": "Paulina’s recommendation: raise the minimum internal score, 5 units. Careful: conversion may drop.",
+    "respuestas": [
+      {
+        "texto": "I do not want to lose customers.",
+        "efecto": "rechazar",
+        "credibilidad": 0
+      },
+      {
+        "texto": "Do it.",
+        "efecto": "aceptar:8",
+        "credibilidad": 1
+      }
+    ]
+  },
+  {
+    "id": "paulina_vida_perdida",
+    "personaje": "paulina",
+    "ciclo": 0,
+    "fase": "vida_perdida",
+    "expresion": "seria",
+    "condicion": {
+      "tipo": "vida_perdida"
+    },
+    "lineas": [
+      "The board measures results, not intentions."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "paulina_credibilidad_baja",
+    "personaje": "paulina",
+    "ciclo": 0,
+    "fase": "credibilidad_baja",
+    "expresion": "cortante",
+    "condicion": {
+      "tipo": "credibilidad_baja"
+    },
+    "lineas": [
+      "Director, with all due respect: we have had several meetings without a clear plan.",
+      "The board is going to start asking questions."
+    ],
+    "respuestas": []
+  }
+]

@@ -1,328 +1,600 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { BarraPareto, CartaControl as DatosCarta, Contenedor, Resumen } from '../analisis.js';
-import { formatoFecha, formatoMes, formatoNumero } from '../analisis.js';
+import { formatoFecha, formatoNumero, localeActual } from '../analisis.js';
+import type {
+  ResultadoPareto, ResultadoComparativo, ResultadoHistograma, ResultadoDispersion, ResultadoCorrida,
+  ResultadoControl, ResultadoCaja, ResultadoPivote, Resultado,
+} from '../constructor.js';
+import { useT } from '../i18n.js';
+import { LARGO_RACHA } from '../constructor.js';
 
-// Paleta validada (light): azul para la serie, ocre para referencias
-const COLOR_SERIE = '#2563a8';
-const COLOR_REFERENCIA = '#b7791f';
-const COLOR_FUERA = '#c0392b';
-const ALTO = 320;
-const M = { top: 32, right: 20, bottom: 56, left: 56 };
+// Paleta sobria que se lee impresa en blanco y negro: barras en gris medio, acumulado en un acento oscuro.
+// Los colores van como atributos (no clases) para que el PNG exportado se vea igual que en pantalla.
+export const PALETA = {
+  barra: '#8a94a3',
+  acento: '#c2410c',
+  referencia: '#1f2937',
+  rejilla: '#e5e8ed',
+  base: '#9aa5b4',
+  texto: '#1b2332',
+  textoSec: '#56637a',
+  superficie: '#ffffff',
+  // Grupos: los tres primeros tonos validados para dispersión; el cuarto, gris para "Otros"
+  grupos: ['#2a78d6', '#eb6834', '#1baf7a', '#9aa1a9'],
+};
+const FUENTE = "Inter, system-ui, -apple-system, 'Segoe UI', sans-serif";
+const ALTO = 340;
+const M = { top: 36, right: 24, bottom: 64, left: 64 };
 
-function useAncho() {
+const txt = (tam = 12, color = PALETA.textoSec, peso = 400) => ({ fontSize: tam, fill: color, fontFamily: FUENTE, fontWeight: peso });
+
+function useAncho(fijo?: number | undefined) {
   const ref = useRef<HTMLDivElement>(null);
-  const [ancho, setAncho] = useState(800);
+  const [ancho, setAncho] = useState(fijo ?? 800);
   useEffect(() => {
-    if (!ref.current) return;
-    const ro = new ResizeObserver(([e]) => { if (e) setAncho(Math.max(320, e.contentRect.width)); });
+    if (fijo || !ref.current) return;
+    const ro = new ResizeObserver(([e]) => { if (e) setAncho(Math.max(300, e.contentRect.width)); });
     ro.observe(ref.current);
     return () => ro.disconnect();
-  }, []);
-  return { ref, ancho };
+  }, [fijo]);
+  return { ref, ancho: fijo ?? ancho };
 }
 
 function ticks(min: number, max: number, n = 5): number[] {
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return [];
   if (min === max) return [min];
   const crudo = (max - min) / n;
   const p = 10 ** Math.floor(Math.log10(crudo));
   const paso = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= crudo) ?? crudo;
   const out: number[] = [];
   const fin = Math.ceil(max / paso - 1e-9) * paso;
-  for (let v = Math.ceil(min / paso) * paso; v <= fin + 1e-9; v += paso) out.push(Number(v.toFixed(10)));
+  for (let v = Math.floor(min / paso + 1e-9) * paso; v <= fin + 1e-9; v += paso) out.push(Number(v.toFixed(10)));
   return out;
 }
 
 interface Tip { x: number; y: number; contenido: ReactNode }
 
-function Marco({ children, tip, alto = ALTO, refDiv }: { children: ReactNode; tip: Tip | null; alto?: number; refDiv: React.RefObject<HTMLDivElement | null> }) {
+function Marco({ children, tip, alto, refDiv }: { children: ReactNode; tip: Tip | null; alto: number; refDiv: React.RefObject<HTMLDivElement | null> }) {
   return (
     <div ref={refDiv} className="grafico" style={{ height: alto }}>
       {children}
-      {tip && (
-        <div className="grafico-tip" style={{ left: tip.x, top: tip.y }}>
-          {tip.contenido}
-        </div>
-      )}
+      {tip && <div className="grafico-tip" style={{ left: tip.x, top: tip.y }}>{tip.contenido}</div>}
     </div>
   );
 }
 
-function EjeY({ valores, escala, ancho, formato }: { valores: number[]; escala: (v: number) => number; ancho: number; formato: (v: number) => string }) {
+function Svg({ ancho, alto, children, onLeave }: { ancho: number; alto: number; children: ReactNode; onLeave?: () => void }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={ancho} height={alto} viewBox={`0 0 ${ancho} ${alto}`} onMouseLeave={onLeave} style={{ fontFamily: FUENTE }}>
+      <rect x={0} y={0} width={ancho} height={alto} fill={PALETA.superficie} />
+      {children}
+    </svg>
+  );
+}
+
+function EjeY({ valores, escala, x1, x2, formato, lado = 'izq' }: { valores: number[]; escala: (v: number) => number; x1: number; x2: number; formato: (v: number) => string; lado?: 'izq' | 'der' }) {
   return (
     <g>
       {valores.map(v => (
         <g key={v}>
-          <line x1={M.left} x2={ancho - M.right} y1={escala(v)} y2={escala(v)} className="grafico-rejilla" />
-          <text x={M.left - 8} y={escala(v)} className="grafico-eje" textAnchor="end" dominantBaseline="middle">{formato(v)}</text>
+          {lado === 'izq' && <line x1={x1} x2={x2} y1={escala(v)} y2={escala(v)} stroke={PALETA.rejilla} strokeWidth={1} />}
+          <text x={lado === 'izq' ? x1 - 8 : x2 + 8} y={escala(v)} {...txt()} textAnchor={lado === 'izq' ? 'end' : 'start'} dominantBaseline="middle">{formato(v)}</text>
         </g>
       ))}
     </g>
   );
 }
 
-function fmtValor(v: number, esFecha: boolean) {
-  return esFecha ? formatoFecha(v) : formatoNumero(v);
+function TituloEje({ x, y, texto, vertical }: { x: number; y: number; texto: string; vertical?: boolean }) {
+  return <text x={x} y={y} {...txt(12, PALETA.textoSec, 500)} textAnchor="middle" transform={vertical ? `rotate(-90 ${x} ${y})` : undefined}>{texto}</text>;
 }
 
-// ── Histograma ──
-
-export function Histograma({ bins, resumen, esFecha }: { bins: Contenedor[]; resumen: Resumen | null; esFecha: boolean }) {
-  const { ref, ancho } = useAncho();
-  const [tip, setTip] = useState<Tip | null>(null);
-  if (bins.length === 0) return null;
-  const maxConteo = Math.max(...bins.map(b => b.conteo));
-  const x0 = bins[0]!.desde;
-  const x1 = bins[bins.length - 1]!.hasta;
-  const iw = ancho - M.left - M.right;
-  const ih = ALTO - M.top - M.bottom;
-  const sx = (v: number) => M.left + ((v - x0) / (x1 - x0 || 1)) * iw;
-  const ty = ticks(0, maxConteo);
-  const topeY = Math.max(maxConteo, ty[ty.length - 1] ?? maxConteo);
-  const sy = (v: number) => M.top + ih - (v / (topeY || 1)) * ih;
-  const pasoEtiqueta = Math.ceil(bins.length / Math.max(2, Math.floor(iw / 70)));
-  const refs = resumen && !esFecha
-    ? [{ v: resumen.mediana, et: 'Mediana' }, { v: resumen.p90, et: 'P90' }]
-    : [];
-
-  return (
-    <Marco refDiv={ref} tip={tip}>
-      <svg width={ancho} height={ALTO} onMouseLeave={() => setTip(null)}>
-        <EjeY valores={ty} escala={sy} ancho={ancho} formato={v => formatoNumero(v)} />
-        {bins.map((b, i) => {
-          const x = sx(b.desde) + 1;
-          const w = Math.max(1, sx(b.hasta) - sx(b.desde) - 2);
-          const y = sy(b.conteo);
-          return (
-            <g key={i}>
-              <path d={barraRedondeada(x, y, w, M.top + ih - y)} fill={COLOR_SERIE} />
-              <rect x={x - 1} y={M.top} width={w + 2} height={ih} fill="transparent"
-                onMouseMove={() => setTip({
-                  x: x + w / 2, y: Math.max(M.top, y - 8),
-                  contenido: <><strong>{b.conteo.toLocaleString('es-MX')} registros</strong><br />{esFecha ? formatoMes(b.desde) : `${formatoNumero(b.desde)} a ${formatoNumero(b.hasta)}`}</>,
-                })} />
-              {i % pasoEtiqueta === 0 && (
-                <text x={esFecha ? x + w / 2 : x} y={ALTO - M.bottom + 18} className="grafico-eje" textAnchor={esFecha ? 'middle' : 'start'}>
-                  {esFecha ? formatoMes(b.desde) : formatoNumero(b.desde)}
-                </text>
-              )}
-            </g>
-          );
-        })}
-        {refs.map((r, i) => (
-          <g key={r.et} pointerEvents="none">
-            <line x1={sx(r.v)} x2={sx(r.v)} y1={M.top - 4} y2={M.top + ih} stroke={COLOR_REFERENCIA} strokeWidth={2} strokeDasharray="5 4" />
-            <text x={sx(r.v)} y={M.top - 10} className="grafico-referencia grafico-referencia-fondo" textAnchor="middle">{r.et}: {formatoNumero(r.v)}</text>
-          </g>
-        ))}
-        <line x1={M.left} x2={ancho - M.right} y1={M.top + ih} y2={M.top + ih} className="grafico-base" />
-      </svg>
-    </Marco>
-  );
-}
-
-function barraRedondeada(x: number, y: number, w: number, h: number) {
+function barra(x: number, y: number, w: number, h: number) {
   if (h <= 0) return '';
   const r = Math.min(4, w / 2, h);
   return `M${x},${y + h} V${y + r} Q${x},${y} ${x + r},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h} Z`;
 }
 
+const fmt = (v: number, esFecha = false, d = 2) => (esFecha ? formatoFecha(v) : formatoNumero(v, d));
+const recortar = (s: string, max: number) => (s.length > max ? `${s.slice(0, Math.max(1, max - 1))}…` : s);
+
+export function Leyenda({ elementos }: { elementos: { color: string; texto: string; tipo: 'barra' | 'linea' | 'punto' | 'discontinua' }[] }) {
+  return (
+    <div className="grafico-leyenda">
+      {elementos.map(e => (
+        <span key={e.texto}>
+          <span className={`grafico-leyenda-marca ${e.tipo}`} style={e.tipo === 'discontinua' ? { borderTopColor: e.color } : { background: e.color }} />
+          {e.texto}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 // ── Pareto ──
 
-export function Pareto({ barras }: { barras: BarraPareto[] }) {
-  const { ref, ancho } = useAncho();
+export function ParetoGrafico({ r, ancho: fijo, alto = ALTO, compacto }: { r: ResultadoPareto; ancho?: number | undefined; alto?: number; compacto?: boolean }) {
+  const t = useT();
+  const { ref, ancho } = useAncho(fijo);
   const [tip, setTip] = useState<Tip | null>(null);
-  if (barras.length === 0) return null;
-  const iw = ancho - M.left - M.right;
-  const ih = ALTO - M.top - M.bottom - 20;
-  const banda = iw / barras.length;
-  const sy = (v: number) => M.top + ih - (v / 100) * ih;
-  const cx = (i: number) => M.left + banda * i + banda / 2;
-  const linea = barras.map((b, i) => `${i === 0 ? 'M' : 'L'}${cx(i)},${sy(b.acumulado)}`).join(' ');
-  const maxCar = Math.max(4, Math.floor(banda / 6.5));
+  if (r.barras.length === 0) return <SinValores />;
+  // El margen inferior crece con la etiqueta más larga, que va inclinada
+  const largo = Math.max(...r.barras.map(b => b.etiqueta.length));
+  const m = { ...M, right: r.aditiva ? 56 : M.right, bottom: 0 };
+  const iw = ancho - m.left - m.right;
+  const banda = iw / r.barras.length;
+  const maxCar = Math.max(6, Math.floor(Math.min(banda * 2, compacto ? 110 : 150) / 6.5));
+  m.bottom = Math.min(compacto ? 90 : 120, 30 + Math.min(largo, maxCar) * 6.5 * 0.6);
+  const ih = alto - m.top - m.bottom;
+  const maxV = Math.max(...r.barras.map(b => b.valor), r.referencia ?? 0);
+  const ty = ticks(0, maxV);
+  const tope = Math.max(maxV, ty[ty.length - 1] ?? maxV) || 1;
+  const sy = (v: number) => m.top + ih - (v / tope) * ih;
+  const sp = (p: number) => m.top + ih - (p / 100) * ih;
+  const cx = (i: number) => m.left + banda * i + banda / 2;
+  const w = Math.max(3, Math.min(64, banda * 0.72));
+  const linea = r.aditiva ? r.barras.map((b, i) => `${i === 0 ? 'M' : 'L'}${cx(i)},${sp(b.acumulado ?? 0)}`).join(' ') : '';
 
   return (
-    <Marco refDiv={ref} tip={tip} alto={ALTO + 20}>
-      <svg width={ancho} height={ALTO + 20} onMouseLeave={() => setTip(null)}>
-        <EjeY valores={[0, 20, 40, 60, 80, 100]} escala={sy} ancho={ancho} formato={v => `${v}%`} />
-        <line x1={M.left} x2={ancho - M.right} y1={sy(80)} y2={sy(80)} stroke={COLOR_REFERENCIA} strokeWidth={1} strokeDasharray="3 4" opacity={0.6} />
-        {barras.map((b, i) => {
-          const w = Math.max(2, banda * 0.7);
-          const x = cx(i) - w / 2;
-          const y = sy(b.pct);
-          const etiqueta = b.etiqueta.length > maxCar ? `${b.etiqueta.slice(0, maxCar - 1)}…` : b.etiqueta;
-          return (
-            <g key={b.etiqueta}>
-              <path d={barraRedondeada(x, y, w, M.top + ih - y)} fill={COLOR_SERIE} />
-              <rect x={cx(i) - banda / 2} y={M.top} width={banda} height={ih} fill="transparent"
-                onMouseMove={() => setTip({
-                  x: cx(i), y: Math.max(M.top, Math.min(y, sy(b.acumulado)) - 8),
-                  contenido: <><strong>{b.etiqueta}</strong><br />{b.conteo.toLocaleString('es-MX')} ({formatoNumero(b.pct, 1)}%)<br />Acumulado: {formatoNumero(b.acumulado, 1)}%</>,
-                })} />
-              <text x={cx(i)} y={M.top + ih + 16} className="grafico-eje" textAnchor="end"
-                transform={`rotate(-30 ${cx(i)} ${M.top + ih + 16})`}>{etiqueta}</text>
+    <>
+      {!compacto && (
+        <Leyenda elementos={[
+          { color: PALETA.barra, texto: r.etiquetaValor, tipo: 'barra' },
+          ...(r.aditiva ? [{ color: PALETA.acento, texto: t('graficos.acumulado'), tipo: 'linea' as const }] : []),
+          ...(r.referencia != null ? [{ color: PALETA.referencia, texto: `${t('graficos.referenciaGeneral')}: ${fmt(r.referencia)}`, tipo: 'discontinua' as const }] : []),
+        ]} />
+      )}
+      <Marco refDiv={ref} tip={tip} alto={alto}>
+        <Svg ancho={ancho} alto={alto} onLeave={() => setTip(null)}>
+          <EjeY valores={ty} escala={sy} x1={m.left} x2={ancho - m.right} formato={v => formatoNumero(v)} />
+          {r.aditiva && <EjeY valores={[0, 20, 40, 60, 80, 100]} escala={sp} x1={m.left} x2={ancho - m.right} formato={v => `${v}%`} lado="der" />}
+          {r.linea80 && (
+            <g>
+              <line x1={m.left} x2={ancho - m.right} y1={sp(80)} y2={sp(80)} stroke={PALETA.acento} strokeWidth={1} strokeDasharray="2 4" />
+              <text x={ancho - m.right - 4} y={sp(80) - 5} {...txt(11, PALETA.acento, 600)} textAnchor="end">80%</text>
             </g>
-          );
-        })}
-        <path d={linea} fill="none" stroke={COLOR_REFERENCIA} strokeWidth={2} pointerEvents="none" />
-        {barras.map((b, i) => (
-          <circle key={b.etiqueta} cx={cx(i)} cy={sy(b.acumulado)} r={4} fill={COLOR_REFERENCIA} stroke="#fff" strokeWidth={2} pointerEvents="none" />
-        ))}
-        <line x1={M.left} x2={ancho - M.right} y1={M.top + ih} y2={M.top + ih} className="grafico-base" />
-      </svg>
-    </Marco>
+          )}
+          {r.barras.map((b, i) => {
+            const y = sy(b.valor);
+            return (
+              <g key={b.etiqueta}>
+                <path d={barra(cx(i) - w / 2, y, w, m.top + ih - y)} fill={PALETA.barra} />
+                {!r.aditiva && (
+                  <text x={cx(i)} y={y - 6} {...txt(11, PALETA.textoSec)} textAnchor="middle">{t('graficos.n')}={b.n}</text>
+                )}
+                <text x={cx(i)} y={m.top + ih + 14} {...txt(compacto ? 11 : 12, PALETA.texto)} textAnchor="end"
+                  transform={`rotate(-35 ${cx(i)} ${m.top + ih + 14})`}>{recortar(b.etiqueta, maxCar)}</text>
+                <rect x={cx(i) - banda / 2} y={m.top} width={banda} height={ih} fill="transparent"
+                  onMouseMove={() => setTip({
+                    x: cx(i), y: Math.max(m.top, y - 10),
+                    contenido: <><strong>{b.etiqueta}</strong><br />{r.etiquetaValor}: {fmt(b.valor)}<br />{t('graficos.nSolicitudes', { n: b.n })}
+                      {b.acumulado != null && <><br />{t('graficos.acumulado')}: {fmt(b.acumulado, false, 1)}%</>}{b.ayuda && <><br />{b.ayuda}</>}</>,
+                  })} />
+              </g>
+            );
+          })}
+          {r.referencia != null && (
+            <line x1={m.left} x2={ancho - m.right} y1={sy(r.referencia)} y2={sy(r.referencia)} stroke={PALETA.referencia} strokeWidth={1.5} strokeDasharray="6 4" pointerEvents="none" />
+          )}
+          {r.aditiva && (
+            <g pointerEvents="none">
+              <path d={linea} fill="none" stroke={PALETA.acento} strokeWidth={2} />
+              {r.barras.map((b, i) => (
+                <circle key={b.etiqueta} cx={cx(i)} cy={sp(b.acumulado ?? 0)} r={4.5} fill={PALETA.acento} stroke={PALETA.superficie} strokeWidth={2} />
+              ))}
+            </g>
+          )}
+          <line x1={m.left} x2={ancho - m.right} y1={m.top + ih} y2={m.top + ih} stroke={PALETA.base} />
+          {!compacto && <TituloEje x={16} y={m.top + ih / 2} texto={r.etiquetaValor} vertical />}
+        </Svg>
+      </Marco>
+    </>
   );
 }
 
-// ── Corrida ──
-
-export function Corrida({ valores, mediana, esFecha }: { valores: number[]; mediana: number; esFecha: boolean }) {
-  const { ref, ancho } = useAncho();
-  const [tip, setTip] = useState<Tip | null>(null);
-  const [activo, setActivo] = useState<number | null>(null);
-  if (valores.length === 0) return null;
-  const iw = ancho - M.left - M.right;
-  const ih = ALTO - M.top - M.bottom;
-  let min = Infinity, max = -Infinity;
-  for (const v of valores) { if (v < min) min = v; if (v > max) max = v; }
-  const ty = ticks(min, max);
-  const y0 = Math.min(min, ty[0] ?? min);
-  const y1 = Math.max(max, ty[ty.length - 1] ?? max);
-  const sx = (i: number) => M.left + (valores.length === 1 ? iw / 2 : (i / (valores.length - 1)) * iw);
-  const sy = (v: number) => M.top + ih - ((v - y0) / (y1 - y0 || 1)) * ih;
-  const d = valores.map((v, i) => `${i === 0 ? 'M' : 'L'}${sx(i).toFixed(1)},${sy(v).toFixed(1)}`).join(' ');
-
-  function mover(e: React.MouseEvent<SVGRectElement>) {
-    const caja = e.currentTarget.getBoundingClientRect();
-    const i = Math.round(((e.clientX - caja.left) / caja.width) * (valores.length - 1));
-    const v = valores[i];
-    if (v == null) return;
-    setActivo(i);
-    setTip({ x: sx(i), y: sy(v) - 10, contenido: <><strong>{fmtValor(v, esFecha)}</strong><br />Registro {i + 1} de {valores.length}</> });
-  }
-
+export function ComparativoGrafico({ r, ancho: fijo, alto = ALTO }: { r: ResultadoComparativo; ancho?: number | undefined; alto?: number }) {
+  const t = useT();
+  const etiqueta = r.paneles[0]?.pareto;
+  const anchoPanel = fijo ? Math.floor((fijo - 16 * (r.paneles.length - 1)) / r.paneles.length) : undefined;
   return (
-    <Marco refDiv={ref} tip={tip}>
-      <svg width={ancho} height={ALTO} onMouseLeave={() => { setTip(null); setActivo(null); }}>
-        <EjeY valores={ty} escala={sy} ancho={ancho} formato={v => fmtValor(v, esFecha)} />
-        <path d={d} fill="none" stroke={COLOR_SERIE} strokeWidth={1.5} strokeLinejoin="round" />
-        <line x1={M.left} x2={ancho - M.right} y1={sy(mediana)} y2={sy(mediana)} stroke={COLOR_REFERENCIA} strokeWidth={2} strokeDasharray="5 4" />
-        <text x={ancho - M.right} y={M.top - 10} className="grafico-referencia" textAnchor="end">
-          <tspan fill={COLOR_REFERENCIA}>- - </tspan>Mediana: {fmtValor(mediana, esFecha)}
-        </text>
-        {activo != null && (
-          <g pointerEvents="none">
-            <line x1={sx(activo)} x2={sx(activo)} y1={M.top} y2={M.top + ih} className="grafico-cruz" />
-            <circle cx={sx(activo)} cy={sy(valores[activo]!)} r={5} fill={COLOR_SERIE} stroke="#fff" strokeWidth={2} />
-          </g>
-        )}
-        <rect x={M.left} y={M.top} width={iw} height={ih} fill="transparent" onMouseMove={mover} />
-        <text x={M.left + iw / 2} y={ALTO - 16} className="grafico-eje" textAnchor="middle">Orden de captura (registro)</text>
-      </svg>
-    </Marco>
+    <>
+      {etiqueta && (
+        <Leyenda elementos={[
+          { color: PALETA.barra, texto: etiqueta.etiquetaValor, tipo: 'barra' },
+          ...(etiqueta.aditiva ? [{ color: PALETA.acento, texto: t('graficos.acumulado'), tipo: 'linea' as const }] : []),
+        ]} />
+      )}
+      <div className="grafico-paneles" style={{ gridTemplateColumns: `repeat(${Math.min(r.paneles.length, 4)}, minmax(0, 1fr))` }}>
+        {r.paneles.map(p => (
+          <div key={p.titulo} className="grafico-panel">
+            <div className="grafico-panel-titulo">{p.titulo} <span>{t('graficos.nSolicitudes', { n: p.n })}</span></div>
+            <ParetoGrafico r={p.pareto} compacto alto={Math.round(alto * 0.85)} ancho={anchoPanel} />
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
-// ── Gráfica de control ──
+// ── Histograma ──
 
-export function CartaControl({ carta }: { carta: DatosCarta }) {
-  const { ref, ancho } = useAncho();
+export function HistogramaGrafico({ r, ancho: fijo, alto = ALTO }: { r: ResultadoHistograma; ancho?: number | undefined; alto?: number }) {
+  const t = useT();
+  const { ref, ancho } = useAncho(fijo);
   const [tip, setTip] = useState<Tip | null>(null);
-  const ps = carta.puntos;
-  if (ps.length === 0) return null;
-  const iw = ancho - M.left - M.right;
-  const ih = ALTO - M.top - M.bottom;
-  let min = Infinity, max = -Infinity;
-  for (const p of ps) { min = Math.min(min, p.media, p.lci); max = Math.max(max, p.media, p.lcs); }
-  const ty = ticks(min, max);
-  const y0 = Math.min(min, ty[0] ?? min);
-  const y1 = Math.max(max, ty[ty.length - 1] ?? max);
-  const paso = iw / ps.length;
-  const sx = (i: number) => M.left + paso * (i + 0.5);
-  const sy = (v: number) => M.top + ih - ((v - y0) / (y1 - y0 || 1)) * ih;
-  // Los límites cambian con el tamaño de cada mes, por eso se dibujan como escalones
-  const escalon = (k: 'lcs' | 'lci') => ps.map((p, i) => `${i === 0 ? 'M' : 'L'}${(M.left + paso * i).toFixed(1)},${sy(p[k]).toFixed(1)} L${(M.left + paso * (i + 1)).toFixed(1)},${sy(p[k]).toFixed(1)}`).join(' ');
-  const linea = ps.map((p, i) => `${i === 0 ? 'M' : 'L'}${sx(i).toFixed(1)},${sy(p.media).toFixed(1)}`).join(' ');
-  const cadaCuanto = Math.max(1, Math.ceil(ps.length / Math.max(1, Math.floor(iw / 64))));
+  const dos = r.series.length > 1;
+  const m = { ...M, top: dos ? 44 : 40 };
+  const iw = ancho - m.left - m.right;
+  const ih = alto - m.top - m.bottom;
+  const x0 = r.bordes[0]!, x1 = r.bordes[r.bordes.length - 1]!;
+  const sx = (v: number) => m.left + ((v - x0) / (x1 - x0 || 1)) * iw;
+  const maxC = Math.max(...r.series.flatMap(s => s.conteos));
+  const ty = ticks(0, maxC);
+  const tope = Math.max(maxC, ty[ty.length - 1] ?? maxC) || 1;
+  const sy = (v: number) => m.top + ih - (v / tope) * ih;
+  const colores = dos ? [PALETA.grupos[0]!, PALETA.grupos[1]!] : [PALETA.barra];
+  const tx = ticks(x0, x1, Math.max(3, Math.floor(iw / 90)));
+  const refs = r.series.flatMap((s, i) => [
+    { v: s.resumen.media, et: `${dos ? `${s.etiqueta}: ` : ''}${t('graficos.media')} ${fmt(s.resumen.media, r.esFecha, 1)}`, color: dos ? colores[i]! : PALETA.referencia, guion: '' },
+    { v: s.resumen.mediana, et: `${dos ? `${s.etiqueta}: ` : ''}${t('graficos.mediana')} ${fmt(s.resumen.mediana, r.esFecha, 1)}`, color: dos ? colores[i]! : PALETA.acento, guion: '6 4' },
+  ]);
 
   return (
-    <Marco refDiv={ref} tip={tip}>
-      <svg width={ancho} height={ALTO} onMouseLeave={() => setTip(null)}>
-        <EjeY valores={ty} escala={sy} ancho={ancho} formato={v => formatoNumero(v)} />
-        <path d={escalon('lcs')} fill="none" stroke={COLOR_FUERA} strokeWidth={1.5} strokeDasharray="4 4" />
-        <path d={escalon('lci')} fill="none" stroke={COLOR_FUERA} strokeWidth={1.5} strokeDasharray="4 4" />
-        <line x1={M.left} x2={ancho - M.right} y1={sy(carta.centro)} y2={sy(carta.centro)} stroke={COLOR_REFERENCIA} strokeWidth={2} />
-        <path d={linea} fill="none" stroke={COLOR_SERIE} strokeWidth={1.5} strokeLinejoin="round" />
-        {ps.map((p, i) => (
-          <circle key={p.mes} cx={sx(i)} cy={sy(p.media)} r={p.fuera ? 6 : 4} fill={p.fuera ? COLOR_FUERA : COLOR_SERIE} stroke="#fff" strokeWidth={2}
-            onMouseEnter={() => setTip({ x: sx(i), y: sy(p.media) - 10, contenido: <><strong>{p.mes}</strong><br />Media: {formatoNumero(p.media)} · n = {p.n}<br />Límites: {formatoNumero(p.lci)} a {formatoNumero(p.lcs)}{p.fuera && <><br /><strong>Fuera de control</strong></>}</> })} />
-        ))}
-        {ps.map((p, i) => i % cadaCuanto === 0 && (
-          <text key={p.mes} x={sx(i)} y={M.top + ih + 18} className="grafico-eje" textAnchor="middle">{p.mes}</text>
-        ))}
-        <text x={ancho - M.right} y={M.top - 10} className="grafico-referencia" textAnchor="end">
-          <tspan fill={COLOR_REFERENCIA}>— </tspan>Media general: {formatoNumero(carta.centro)}   <tspan fill={COLOR_FUERA}>- - </tspan>Límites ±3σ
-        </text>
-        <text x={M.left + iw / 2} y={ALTO - 12} className="grafico-eje" textAnchor="middle">Mes</text>
-      </svg>
-    </Marco>
+    <>
+      <Leyenda elementos={[
+        ...(dos ? r.series.map((s, i) => ({ color: colores[i]!, texto: `${s.etiqueta} (${t('graficos.n')}=${s.resumen.n})`, tipo: 'barra' as const })) : []),
+        ...refs.map(x => ({ color: x.color, texto: x.et, tipo: x.guion ? 'discontinua' as const : 'linea' as const })),
+      ]} />
+      <Marco refDiv={ref} tip={tip} alto={alto}>
+        <Svg ancho={ancho} alto={alto} onLeave={() => setTip(null)}>
+          <EjeY valores={ty} escala={sy} x1={m.left} x2={ancho - m.right} formato={v => formatoNumero(v)} />
+          {r.bordes.slice(0, -1).map((b, i) => {
+            const xa = sx(b) + 1, xb = sx(r.bordes[i + 1]!) - 1;
+            const ancho1 = Math.max(1, xb - xa);
+            return (
+              <g key={i}>
+                {r.series.map((s, j) => {
+                  const w = dos ? ancho1 / 2 : ancho1;
+                  const x = xa + (dos ? j * w : 0);
+                  const y = sy(s.conteos[i] ?? 0);
+                  return <path key={j} d={barra(x, y, Math.max(1, w - (dos ? 1 : 0)), m.top + ih - y)} fill={colores[j]} />;
+                })}
+                <rect x={xa} y={m.top} width={ancho1} height={ih} fill="transparent"
+                  onMouseMove={() => setTip({
+                    x: (xa + xb) / 2, y: m.top + 4,
+                    contenido: <><strong>{t('graficos.rango', { a: fmt(b, r.esFecha, 1), b: fmt(r.bordes[i + 1]!, r.esFecha, 1) })}</strong>
+                      {r.series.map(s => <span key={s.etiqueta}><br />{dos ? `${s.etiqueta}: ` : ''}{s.conteos[i]} {t('comun.registros')}</span>)}</>,
+                  })} />
+              </g>
+            );
+          })}
+          {refs.map((x, i) => (
+            <line key={i} x1={sx(x.v)} x2={sx(x.v)} y1={m.top - 6} y2={m.top + ih} stroke={x.color} strokeWidth={2} strokeDasharray={x.guion || undefined} pointerEvents="none" />
+          ))}
+          {tx.filter(v => v >= x0 - 1e-9 && v <= x1 + 1e-9).map(v => (
+            <text key={v} x={sx(v)} y={m.top + ih + 18} {...txt()} textAnchor="middle">{fmt(v, r.esFecha)}</text>
+          ))}
+          <line x1={m.left} x2={ancho - m.right} y1={m.top + ih} y2={m.top + ih} stroke={PALETA.base} />
+          <TituloEje x={m.left + iw / 2} y={alto - 16} texto={r.etiquetaX} />
+          <TituloEje x={16} y={m.top + ih / 2} texto={t('graficos.frecuencia')} vertical />
+        </Svg>
+      </Marco>
+    </>
   );
 }
 
 // ── Dispersión ──
 
-export function Dispersion({ puntos, etiquetaX, etiquetaY, xFecha, yFecha }: {
-  puntos: { x: number; y: number }[];
-  etiquetaX: string;
-  etiquetaY: string;
-  xFecha: boolean;
-  yFecha: boolean;
-}) {
-  const { ref, ancho } = useAncho();
+function Marca({ x, y, grupo, r = 4.5, opacidad = 0.7 }: { x: number; y: number; grupo: number; r?: number; opacidad?: number }) {
+  const color = PALETA.grupos[Math.min(grupo, PALETA.grupos.length - 1)]!;
+  // Forma distinta por grupo para que se distingan impresos en blanco y negro
+  const forma = grupo % 4;
+  const comun = { fill: color, fillOpacity: opacidad, stroke: PALETA.superficie, strokeWidth: 1 };
+  if (forma === 1) return <rect x={x - r} y={y - r} width={r * 2} height={r * 2} {...comun} />;
+  if (forma === 2) return <path d={`M${x},${y - r * 1.2} L${x + r * 1.1},${y + r * 0.8} L${x - r * 1.1},${y + r * 0.8} Z`} {...comun} />;
+  if (forma === 3) return <path d={`M${x},${y - r * 1.2} L${x + r * 1.2},${y} L${x},${y + r * 1.2} L${x - r * 1.2},${y} Z`} {...comun} />;
+  return <circle cx={x} cy={y} r={r} {...comun} />;
+}
+
+export function DispersionGrafico({ r, ancho: fijo, alto = ALTO }: { r: ResultadoDispersion; ancho?: number | undefined; alto?: number }) {
+  const t = useT();
+  const { ref, ancho } = useAncho(fijo);
   const [tip, setTip] = useState<Tip | null>(null);
-  if (puntos.length === 0) return null;
   const iw = ancho - M.left - M.right;
-  const ih = ALTO - M.top - M.bottom;
+  const ih = alto - M.top - M.bottom;
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-  for (const p of puntos) {
-    if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x;
-    if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y;
-  }
-  const sx = (v: number) => M.left + ((v - x0) / (x1 - x0 || 1)) * iw;
-  const sy = (v: number) => M.top + ih - ((v - y0) / (y1 - y0 || 1)) * ih;
-  const tx = ticks(x0, x1, Math.max(3, Math.floor(iw / 110)));
+  for (const p of r.puntos) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
   const ty = ticks(y0, y1);
+  const tx = ticks(x0, x1, Math.max(3, Math.floor(iw / 100)));
+  const ya = Math.min(y0, ty[0] ?? y0), yb = Math.max(y1, ty[ty.length - 1] ?? y1);
+  const pad = (x1 - x0) * 0.03 || 0.5;
+  const xa = x0 - pad, xb = x1 + pad;
+  const sx = (v: number) => M.left + ((v - xa) / (xb - xa || 1)) * iw;
+  const sy = (v: number) => M.top + ih - ((v - ya) / (yb - ya || 1)) * ih;
+  const yTend = (x: number) => Math.min(yb, Math.max(ya, r.intercepto + r.pendiente * x));
+  // Los puntos que coinciden se separan un poco para ver cuántos hay
+  const desplazar = (i: number) => (((i * 7919) % 11) - 5) * 0.6;
 
   function mover(e: React.MouseEvent<SVGRectElement>) {
     const caja = e.currentTarget.getBoundingClientRect();
-    const mx = M.left + (e.clientX - caja.left);
-    const my = M.top + (e.clientY - caja.top);
-    let mejor: { x: number; y: number } | null = null;
-    let dist = 24 * 24;
-    for (const p of puntos) {
-      const d = (sx(p.x) - mx) ** 2 + (sy(p.y) - my) ** 2;
-      if (d < dist) { dist = d; mejor = p; }
+    const mx = M.left + (e.clientX - caja.left), my = M.top + (e.clientY - caja.top);
+    let mejor: (typeof r.puntos)[number] | null = null;
+    let d = 20 * 20;
+    const cerca: typeof r.puntos = [];
+    for (const p of r.puntos) {
+      const dd = (sx(p.x) - mx) ** 2 + (sy(p.y) - my) ** 2;
+      if (dd < 36) cerca.push(p);
+      if (dd < d) { d = dd; mejor = p; }
     }
-    setTip(mejor ? {
+    if (!mejor) { setTip(null); return; }
+    const mismos = r.puntos.filter(p => p.x === mejor!.x && p.y === mejor!.y);
+    setTip({
       x: sx(mejor.x), y: sy(mejor.y) - 10,
-      contenido: <>{etiquetaX}: <strong>{fmtValor(mejor.x, xFecha)}</strong><br />{etiquetaY}: <strong>{fmtValor(mejor.y, yFecha)}</strong></>,
-    } : null);
+      contenido: <>
+        <strong>{t('graficos.solicitud')} {mismos.slice(0, 6).map(p => p.id).join(', ')}{mismos.length > 6 ? '…' : ''}</strong><br />
+        {r.etiquetaX}: {fmt(mejor.x, r.xFecha)}<br />{r.etiquetaY}: {fmt(mejor.y, r.yFecha)}
+        {r.grupos.length > 0 && <><br />{r.grupos[mejor.grupo]}</>}
+        {mismos.length > 1 && <><br />{t('graficos.casos')}: {mismos.length}</>}
+      </>,
+    });
   }
 
   return (
-    <Marco refDiv={ref} tip={tip}>
-      <svg width={ancho} height={ALTO} onMouseLeave={() => setTip(null)}>
-        <EjeY valores={ty} escala={sy} ancho={ancho} formato={v => fmtValor(v, yFecha)} />
-        {tx.map(v => (
-          <text key={v} x={sx(v)} y={M.top + ih + 18} className="grafico-eje" textAnchor="middle">{fmtValor(v, xFecha)}</text>
-        ))}
-        {puntos.map((p, i) => (
-          <circle key={i} cx={sx(p.x)} cy={sy(p.y)} r={3.5} fill={COLOR_SERIE} fillOpacity={0.45} pointerEvents="none" />
-        ))}
-        <line x1={M.left} x2={ancho - M.right} y1={M.top + ih} y2={M.top + ih} className="grafico-base" />
-        <rect x={M.left} y={M.top} width={iw} height={ih} fill="transparent" onMouseMove={mover} />
-        <text x={M.left + iw / 2} y={ALTO - 12} className="grafico-eje" textAnchor="middle">{etiquetaX}</text>
-      </svg>
-    </Marco>
+    <>
+      <Leyenda elementos={[
+        ...(r.grupos.length ? r.grupos.map((g, i) => ({ color: PALETA.grupos[Math.min(i, 3)]!, texto: g, tipo: 'punto' as const })) : []),
+        { color: PALETA.acento, texto: `${t('graficos.tendencia')} · ${t('graficos.correlacion')} ${Number.isFinite(r.r) ? r.r.toFixed(3) : '-'} · ${t('graficos.casos')} ${r.puntos.length}`, tipo: 'linea' },
+      ]} />
+      <Marco refDiv={ref} tip={tip} alto={alto}>
+        <Svg ancho={ancho} alto={alto} onLeave={() => setTip(null)}>
+          <EjeY valores={ty} escala={sy} x1={M.left} x2={ancho - M.right} formato={v => fmt(v, r.yFecha)} />
+          {tx.filter(v => v >= xa && v <= xb).map(v => <text key={v} x={sx(v)} y={M.top + ih + 18} {...txt()} textAnchor="middle">{fmt(v, r.xFecha)}</text>)}
+          {r.puntos.map((p, i) => <Marca key={i} x={sx(p.x) + desplazar(i)} y={sy(p.y) + desplazar(i + 3)} grupo={p.grupo} />)}
+          <line x1={sx(xa)} x2={sx(xb)} y1={sy(yTend(xa))} y2={sy(yTend(xb))} stroke={PALETA.acento} strokeWidth={2} pointerEvents="none" />
+          <line x1={M.left} x2={ancho - M.right} y1={M.top + ih} y2={M.top + ih} stroke={PALETA.base} />
+          <rect x={M.left} y={M.top} width={iw} height={ih} fill="transparent" onMouseMove={mover} />
+          <TituloEje x={M.left + iw / 2} y={alto - 16} texto={r.etiquetaX} />
+          <TituloEje x={16} y={M.top + ih / 2} texto={r.etiquetaY} vertical />
+        </Svg>
+      </Marco>
+    </>
   );
+}
+
+// ── Corrida ──
+
+export function CorridaGrafico({ r, ancho: fijo, alto = ALTO }: { r: ResultadoCorrida; ancho?: number | undefined; alto?: number }) {
+  const t = useT();
+  const { ref, ancho } = useAncho(fijo);
+  const [tip, setTip] = useState<Tip | null>(null);
+  const [activo, setActivo] = useState<number | null>(null);
+  const vs = r.valores;
+  const iw = ancho - M.left - M.right;
+  const ih = alto - M.top - M.bottom;
+  let min = Infinity, max = -Infinity;
+  for (const p of vs) { min = Math.min(min, p.v); max = Math.max(max, p.v); }
+  const ty = ticks(min, max);
+  const y0 = Math.min(min, ty[0] ?? min), y1 = Math.max(max, ty[ty.length - 1] ?? max);
+  const sx = (i: number) => M.left + (vs.length === 1 ? iw / 2 : (i / (vs.length - 1)) * iw);
+  const sy = (v: number) => M.top + ih - ((v - y0) / (y1 - y0 || 1)) * ih;
+  const d = vs.map((p, i) => `${i === 0 ? 'M' : 'L'}${sx(i).toFixed(1)},${sy(p.v).toFixed(1)}`).join(' ');
+  // Marcas de mes en el eje para ubicar el tiempo
+  const marcas: { i: number; et: string }[] = [];
+  let ultimo = '';
+  vs.forEach((p, i) => { const k = new Date(p.fecha).toISOString().slice(0, 7); if (k !== ultimo) { marcas.push({ i, et: k }); ultimo = k; } });
+  const cada = Math.max(1, Math.ceil(marcas.length / Math.max(1, Math.floor(iw / 70))));
+
+  function mover(e: React.MouseEvent<SVGRectElement>) {
+    const caja = e.currentTarget.getBoundingClientRect();
+    const i = Math.round(((e.clientX - caja.left) / caja.width) * (vs.length - 1));
+    const p = vs[i];
+    if (!p) return;
+    setActivo(i);
+    setTip({ x: sx(i), y: sy(p.v) - 10, contenido: <><strong>{fmt(p.v, r.esFecha)}</strong><br />{t('graficos.solicitud')} {p.id} · {formatoFecha(p.fecha)}</> });
+  }
+
+  return (
+    <>
+      <Leyenda elementos={[{ color: PALETA.barra, texto: r.etiquetaY, tipo: 'linea' }, { color: PALETA.acento, texto: `${t('graficos.mediana')}: ${fmt(r.mediana, r.esFecha)}`, tipo: 'discontinua' }]} />
+      <Marco refDiv={ref} tip={tip} alto={alto}>
+        <Svg ancho={ancho} alto={alto} onLeave={() => { setTip(null); setActivo(null); }}>
+          <EjeY valores={ty} escala={sy} x1={M.left} x2={ancho - M.right} formato={v => fmt(v, r.esFecha)} />
+          <path d={d} fill="none" stroke={PALETA.barra} strokeWidth={1.5} strokeLinejoin="round" />
+          <line x1={M.left} x2={ancho - M.right} y1={sy(r.mediana)} y2={sy(r.mediana)} stroke={PALETA.acento} strokeWidth={2} strokeDasharray="6 4" />
+          {marcas.filter((_, k) => k % cada === 0).map(mk => (
+            <text key={mk.et} x={sx(mk.i)} y={M.top + ih + 18} {...txt()} textAnchor="start">{mk.et}</text>
+          ))}
+          {activo != null && vs[activo] && (
+            <g pointerEvents="none">
+              <line x1={sx(activo)} x2={sx(activo)} y1={M.top} y2={M.top + ih} stroke={PALETA.base} strokeDasharray="3 3" />
+              <circle cx={sx(activo)} cy={sy(vs[activo]!.v)} r={5} fill={PALETA.referencia} stroke={PALETA.superficie} strokeWidth={2} />
+            </g>
+          )}
+          <line x1={M.left} x2={ancho - M.right} y1={M.top + ih} y2={M.top + ih} stroke={PALETA.base} />
+          <rect x={M.left} y={M.top} width={iw} height={ih} fill="transparent" onMouseMove={mover} />
+          <TituloEje x={M.left + iw / 2} y={alto - 16} texto={r.etiquetaX} />
+          <TituloEje x={16} y={M.top + ih / 2} texto={r.etiquetaY} vertical />
+        </Svg>
+      </Marco>
+    </>
+  );
+}
+
+// ── Control ──
+
+export function ControlGrafico({ r, ancho: fijo, alto = ALTO }: { r: ResultadoControl; ancho?: number | undefined; alto?: number }) {
+  const t = useT();
+  const { ref, ancho } = useAncho(fijo);
+  const [tip, setTip] = useState<Tip | null>(null);
+  const ps = r.puntos;
+  const iw = ancho - M.left - M.right;
+  const ih = alto - M.top - M.bottom;
+  let min = Infinity, max = -Infinity;
+  for (const p of ps) { min = Math.min(min, p.media, p.lci); max = Math.max(max, p.media, p.lcs); }
+  const ty = ticks(min, max);
+  const y0 = Math.min(min, ty[0] ?? min), y1 = Math.max(max, ty[ty.length - 1] ?? max);
+  const paso = iw / ps.length;
+  const sx = (i: number) => M.left + paso * (i + 0.5);
+  const sy = (v: number) => M.top + ih - ((v - y0) / (y1 - y0 || 1)) * ih;
+  // Los límites dependen del tamaño de cada periodo: se dibujan como escalones
+  const escalon = (k: 'lcs' | 'lci') => ps.map((p, i) => `${i === 0 ? 'M' : 'L'}${(M.left + paso * i).toFixed(1)},${sy(p[k]).toFixed(1)} L${(M.left + paso * (i + 1)).toFixed(1)},${sy(p[k]).toFixed(1)}`).join(' ');
+  const linea = ps.map((p, i) => `${i === 0 ? 'M' : 'L'}${sx(i).toFixed(1)},${sy(p.media).toFixed(1)}`).join(' ');
+  const cada = Math.max(1, Math.ceil(ps.length / Math.max(1, Math.floor(iw / 70))));
+  const etPeriodo = (p: string) => (r.periodo === 'mes' ? p : new Date(`${p}T00:00:00Z`).toLocaleDateString(localeActual(), { timeZone: 'UTC', day: '2-digit', month: 'short', year: '2-digit' }));
+
+  return (
+    <>
+      <Leyenda elementos={[
+        { color: PALETA.referencia, texto: `${t('graficos.media')}: ${formatoNumero(r.centro)}`, tipo: 'linea' },
+        { color: PALETA.textoSec, texto: t('graficos.limites'), tipo: 'discontinua' },
+        { color: PALETA.acento, texto: t('graficos.fueraControl'), tipo: 'punto' },
+      ]} />
+      <Marco refDiv={ref} tip={tip} alto={alto}>
+        <Svg ancho={ancho} alto={alto} onLeave={() => setTip(null)}>
+          <EjeY valores={ty} escala={sy} x1={M.left} x2={ancho - M.right} formato={v => formatoNumero(v)} />
+          <path d={escalon('lcs')} fill="none" stroke={PALETA.textoSec} strokeWidth={1.5} strokeDasharray="4 4" />
+          <path d={escalon('lci')} fill="none" stroke={PALETA.textoSec} strokeWidth={1.5} strokeDasharray="4 4" />
+          <line x1={M.left} x2={ancho - M.right} y1={sy(r.centro)} y2={sy(r.centro)} stroke={PALETA.referencia} strokeWidth={1.5} />
+          <path d={linea} fill="none" stroke={PALETA.barra} strokeWidth={1.5} strokeLinejoin="round" />
+          {ps.map((p, i) => {
+            const senal = p.fuera || p.racha;
+            return (
+              <circle key={p.periodo} cx={sx(i)} cy={sy(p.media)} r={senal ? 6 : 4}
+                fill={p.fuera ? PALETA.acento : senal ? PALETA.superficie : PALETA.barra}
+                stroke={senal ? PALETA.acento : PALETA.superficie} strokeWidth={2}
+                onMouseEnter={() => setTip({
+                  x: sx(i), y: sy(p.media) - 10,
+                  contenido: <><strong>{etPeriodo(p.periodo)}</strong><br />{t('graficos.media')}: {formatoNumero(p.media)} · {t('graficos.n')} = {p.n}<br />
+                    {t('graficos.limites')}: {formatoNumero(p.lci)} / {formatoNumero(p.lcs)}
+                    {p.fuera && <><br /><strong>{t('graficos.fueraControl')}</strong></>}
+                    {!p.fuera && p.racha && <><br /><strong>{t('graficos.racha', { n: LARGO_RACHA })}</strong></>}</>,
+                })} />
+            );
+          })}
+          {ps.map((p, i) => i % cada === 0 && (
+            <text key={p.periodo} x={sx(i)} y={M.top + ih + 18} {...txt()} textAnchor="middle">{etPeriodo(p.periodo)}</text>
+          ))}
+          <TituloEje x={M.left + iw / 2} y={alto - 16} texto={t(r.periodo === 'mes' ? 'graficos.mes' : 'graficos.semana')} />
+          <TituloEje x={16} y={M.top + ih / 2} texto={r.etiquetaY} vertical />
+        </Svg>
+      </Marco>
+    </>
+  );
+}
+
+// ── Caja ──
+
+export function CajaGrafico({ r, ancho: fijo, alto = ALTO }: { r: ResultadoCaja; ancho?: number | undefined; alto?: number }) {
+  const t = useT();
+  const { ref, ancho } = useAncho(fijo);
+  const [tip, setTip] = useState<Tip | null>(null);
+  const m = { ...M, bottom: 80 };
+  const iw = ancho - m.left - m.right;
+  const ih = alto - m.top - m.bottom;
+  const min = Math.min(...r.cajas.map(c => c.min)), max = Math.max(...r.cajas.map(c => c.max));
+  const ty = ticks(min, max);
+  const y0 = Math.min(min, ty[0] ?? min), y1 = Math.max(max, ty[ty.length - 1] ?? max);
+  const sy = (v: number) => m.top + ih - ((v - y0) / (y1 - y0 || 1)) * ih;
+  const banda = iw / r.cajas.length;
+  const cx = (i: number) => m.left + banda * (i + 0.5);
+  const w = Math.min(56, banda * 0.5);
+
+  return (
+    <>
+      <Leyenda elementos={[{ color: PALETA.barra, texto: `${t('graficos.q1')} / ${t('graficos.q3')}`, tipo: 'barra' }, { color: PALETA.acento, texto: t('graficos.mediana'), tipo: 'linea' }]} />
+      <Marco refDiv={ref} tip={tip} alto={alto}>
+        <Svg ancho={ancho} alto={alto} onLeave={() => setTip(null)}>
+          <EjeY valores={ty} escala={sy} x1={m.left} x2={ancho - m.right} formato={v => formatoNumero(v)} />
+          {r.cajas.map((c, i) => (
+            <g key={c.grupo}>
+              <line x1={cx(i)} x2={cx(i)} y1={sy(c.bigoteAlto)} y2={sy(c.q3)} stroke={PALETA.textoSec} strokeWidth={1.5} />
+              <line x1={cx(i)} x2={cx(i)} y1={sy(c.q1)} y2={sy(c.bigoteBajo)} stroke={PALETA.textoSec} strokeWidth={1.5} />
+              <line x1={cx(i) - w / 4} x2={cx(i) + w / 4} y1={sy(c.bigoteAlto)} y2={sy(c.bigoteAlto)} stroke={PALETA.textoSec} strokeWidth={1.5} />
+              <line x1={cx(i) - w / 4} x2={cx(i) + w / 4} y1={sy(c.bigoteBajo)} y2={sy(c.bigoteBajo)} stroke={PALETA.textoSec} strokeWidth={1.5} />
+              <rect x={cx(i) - w / 2} y={sy(c.q3)} width={w} height={Math.max(1, sy(c.q1) - sy(c.q3))} rx={3} fill={PALETA.barra} fillOpacity={0.55} stroke={PALETA.textoSec} />
+              <line x1={cx(i) - w / 2} x2={cx(i) + w / 2} y1={sy(c.mediana)} y2={sy(c.mediana)} stroke={PALETA.acento} strokeWidth={2.5} />
+              {c.atipicos.map((a, j) => <circle key={j} cx={cx(i)} cy={sy(a)} r={3} fill="none" stroke={PALETA.textoSec} />)}
+              <text x={cx(i)} y={m.top + ih + 14} {...txt(12, PALETA.texto)} textAnchor="end" transform={`rotate(-35 ${cx(i)} ${m.top + ih + 14})`}>{recortar(c.grupo, 16)}</text>
+              <rect x={cx(i) - banda / 2} y={m.top} width={banda} height={ih} fill="transparent"
+                onMouseMove={() => setTip({
+                  x: cx(i), y: sy(c.q3) - 10,
+                  contenido: <><strong>{c.grupo}</strong> · {t('graficos.n')} = {c.n}<br />{t('graficos.maximo')}: {formatoNumero(c.max)}<br />{t('graficos.q3')}: {formatoNumero(c.q3)}<br />
+                    {t('graficos.mediana')}: {formatoNumero(c.mediana)}<br />{t('graficos.q1')}: {formatoNumero(c.q1)}<br />{t('graficos.minimo')}: {formatoNumero(c.min)}</>,
+                })} />
+            </g>
+          ))}
+          <line x1={m.left} x2={ancho - m.right} y1={m.top + ih} y2={m.top + ih} stroke={PALETA.base} />
+          <TituloEje x={16} y={m.top + ih / 2} texto={r.etiquetaY} vertical />
+        </Svg>
+      </Marco>
+    </>
+  );
+}
+
+// ── Tabla dinámica ──
+
+export function PivoteTabla({ r, formatoCondicional }: { r: ResultadoPivote; formatoCondicional: boolean }) {
+  const t = useT();
+  const [orden, setOrden] = useState<{ col: number; asc: boolean }>({ col: -1, asc: false });
+  const valores = r.filas.flatMap(f => (r.columnas.length ? f.valores : [f.total])).filter((v): v is number => v != null);
+  const vmin = Math.min(...valores), vmax = Math.max(...valores);
+  // Escala de un solo tono, de claro a oscuro
+  const fondo = (v: number | null) => {
+    if (!formatoCondicional || v == null || vmax === vmin) return undefined;
+    const k = (v - vmin) / (vmax - vmin);
+    return `rgba(42, 120, 214, ${(0.06 + k * 0.5).toFixed(2)})`;
+  };
+  const clave = (f: ResultadoPivote['filas'][number]) => (orden.col === -2 ? null : orden.col === -1 ? f.total : f.valores[orden.col]);
+  const filas = [...r.filas].sort((a, b) => {
+    if (orden.col === -2) return (orden.asc ? 1 : -1) * a.grupo.localeCompare(b.grupo, undefined, { numeric: true });
+    const va = clave(a) ?? -Infinity, vb = clave(b) ?? -Infinity;
+    return orden.asc ? va - vb : vb - va;
+  });
+  const th = (col: number, texto: string) => (
+    <th onClick={() => setOrden(o => ({ col, asc: o.col === col ? !o.asc : col === -2 }))} title={t('tablas.ordenar')} style={{ cursor: 'pointer' }}>
+      {texto}{orden.col === col ? (orden.asc ? ' ▲' : ' ▼') : ''}
+    </th>
+  );
+  const f = (v: number | null) => (v == null ? '' : formatoNumero(v));
+  return (
+    <div className="datos-pivote">
+      <p className="datos-nota" style={{ marginTop: 0 }}>{r.etiquetaValor}</p>
+      <table className="datos">
+        <thead>
+          <tr>{th(-2, r.etiquetaFilas)}{r.columnas.map((c, i) => <th key={c} onClick={() => setOrden(o => ({ col: i, asc: o.col === i ? !o.asc : false }))} style={{ cursor: 'pointer' }}>{c}{orden.col === i ? (orden.asc ? ' ▲' : ' ▼') : ''}</th>)}{th(-1, t('medidas.total'))}</tr>
+        </thead>
+        <tbody>
+          {filas.map(fl => (
+            <tr key={fl.grupo}>
+              <td style={{ fontWeight: 500 }}>{fl.grupo}</td>
+              {fl.valores.map((v, i) => <td key={i} style={{ background: fondo(v) }}>{f(v)}</td>)}
+              <td style={{ fontWeight: 600, background: r.columnas.length ? undefined : fondo(fl.total) }}>{f(fl.total)}</td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr><td style={{ fontWeight: 600 }}>{t('medidas.total')}</td>{r.totales.map((v, i) => <td key={i} style={{ fontWeight: 600 }}>{f(v)}</td>)}<td style={{ fontWeight: 700 }}>{f(r.total)}</td></tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
+export function SinValores({ texto }: { texto?: string }) {
+  const t = useT();
+  return <div className="datos-aviso" style={{ margin: 0 }}>{texto ?? t('graficos.sinValores')}</div>;
+}
+
+// Dibuja cualquier resultado del constructor
+export function Grafico({ r, ancho, alto = ALTO, formatoCondicional = true }: { r: Resultado; ancho?: number | undefined; alto?: number; formatoCondicional?: boolean }) {
+  switch (r.clase) {
+    case 'pareto': return <ParetoGrafico r={r} ancho={ancho} alto={alto} />;
+    case 'comparativo': return <ComparativoGrafico r={r} ancho={ancho} alto={alto} />;
+    case 'histograma': return <HistogramaGrafico r={r} ancho={ancho} alto={alto} />;
+    case 'dispersion': return <DispersionGrafico r={r} ancho={ancho} alto={alto} />;
+    case 'corrida': return <CorridaGrafico r={r} ancho={ancho} alto={alto} />;
+    case 'control': return <ControlGrafico r={r} ancho={ancho} alto={alto} />;
+    case 'caja': return <CajaGrafico r={r} ancho={ancho} alto={alto} />;
+    case 'pivote': return <PivoteTabla r={r} formatoCondicional={formatoCondicional} />;
+  }
 }

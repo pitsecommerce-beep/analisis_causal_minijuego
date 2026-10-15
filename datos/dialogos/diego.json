@@ -7,7 +7,7 @@
     "expresion": "timido",
     "lineas": [
       "Perdón, solo quiero comentar algo.",
-      "Hay 142 expedientes aprobados a los que nunca se les envió la tarjeta.",
+      {"si": "atorados", "texto": "Hay {{atorados}} expedientes aprobados a los que nunca se les envió la tarjeta.", "sino": "Hay expedientes aprobados a los que nunca se les envió la tarjeta."},
       "Nadie les está dando seguimiento."
     ],
     "pendiente": "Validar: Diego dice que hay 142 expedientes aprobados que nunca recibieron su tarjeta.",
@@ -27,7 +27,7 @@
     "expresion": "atreviendose",
     "lineas": [
       "Otra cosa: yo reviso expedientes todos los días.",
-      "Tres sucursales, la 110, la 676 y la 728, generan el 40% de los errores.",
+      {"si": "top3", "texto": "Tres sucursales, la {{top3_a}}, la {{top3_b}} y la {{top3_c}}, generan el {{pct_top3}}% de los errores.", "sino": "Dos sucursales, la {{top2_a}} y la {{top2_b}}, son las que más errores generan."},
       "Si les pedimos un checklist, se elimina la mitad del retrabajo."
     ],
     "pendiente": "Validar: Diego dice que las sucursales 110, 676 y 728 generan el 40% de los errores. Recomienda un checklist para ellas.",

@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { RAMAS_6M, ORIGENES, ESTADOS, ultimaVotacion } from '../../compartido/espina.js';
+import { RAMAS_6M, ORIGENES, ultimaVotacion } from '../../compartido/espina.js';
 import type { Espina, Origen, Rama, Tarjeta, EstadoTarjeta } from '../../compartido/espina.js';
 import { useEspina, agregarTarjeta, actualizarTarjeta, eliminarTarjeta, adjuntarEvidencia, quitarEvidencia } from '../espina.js';
 import { Icono } from './ui/Iconos.js';
+import { useUI } from './ui/Notificaciones.js';
+import { useSesion } from '../i18n.js';
 
 const CLASE_ESTADO: Record<EstadoTarjeta, string> = { hipotesis: 'badge-info', verificada: 'badge-exito', refutada: 'badge-advertencia' };
 
@@ -12,9 +14,10 @@ interface Props {
 
 // Diagrama de Ishikawa con las 6M: cada tarjeta es una causa posible con su evidencia
 export function TabEspina({ onAgregar }: Props) {
+  const { t } = useSesion();
   const espina = useEspina();
   const votadas = new Set(ultimaVotacion(espina)?.causas ?? []);
-  const cuenta = (e: EstadoTarjeta) => espina.tarjetas.filter(t => t.estado === e).length;
+  const cuenta = (e: EstadoTarjeta) => espina.tarjetas.filter(x => x.estado === e).length;
   const arriba = RAMAS_6M.slice(0, 3);
   const abajo = RAMAS_6M.slice(3);
 
@@ -22,26 +25,26 @@ export function TabEspina({ onAgregar }: Props) {
     <div data-tour="espina-contenido">
       <div className="espina-encabezado">
         <div>
-          <h3>Espina de pescado</h3>
-          <p>Ordena las causas posibles en las 6M. Una causa solo queda verificada cuando le adjuntas una gráfica o cálculo de la pestaña Datos.</p>
+          <h3>{t('espinaUi.titulo')}</h3>
+          <p>{t('espinaUi.ayuda')}</p>
         </div>
         <div className="espina-cuentas">
-          <span className="badge badge-info">{cuenta('hipotesis')} hipótesis</span>
-          <span className="badge badge-exito">{cuenta('verificada')} verificadas</span>
-          <span className="badge badge-advertencia">{cuenta('refutada')} refutadas</span>
+          <span className="badge badge-info">{t('espinaUi.cuentas.hipotesis', { n: cuenta('hipotesis') })}</span>
+          <span className="badge badge-exito">{t('espinaUi.cuentas.verificada', { n: cuenta('verificada') })}</span>
+          <span className="badge badge-advertencia">{t('espinaUi.cuentas.refutada', { n: cuenta('refutada') })}</span>
         </div>
       </div>
 
       <div className="espina-diagrama">
         <div className="espina-fila">
-          {arriba.map(r => <RamaEspina key={r.id} rama={r.id} nombre={r.nombre} espina={espina} votadas={votadas} onAgregar={onAgregar} />)}
+          {arriba.map(r => <RamaEspina key={r.id} rama={r.id} espina={espina} votadas={votadas} onAgregar={onAgregar} />)}
         </div>
         <div className="espina-columna-vertebral" aria-hidden="true">
           <span className="espina-linea" />
-          <div className="espina-cabeza">Efecto: ETF Bank tarda demasiado en entregar las tarjetas de crédito</div>
+          <div className="espina-cabeza">{t('espinaUi.efecto')}</div>
         </div>
         <div className="espina-fila">
-          {abajo.map(r => <RamaEspina key={r.id} rama={r.id} nombre={r.nombre} espina={espina} votadas={votadas} onAgregar={onAgregar} />)}
+          {abajo.map(r => <RamaEspina key={r.id} rama={r.id} espina={espina} votadas={votadas} onAgregar={onAgregar} />)}
         </div>
       </div>
 
@@ -51,11 +54,13 @@ export function TabEspina({ onAgregar }: Props) {
   );
 }
 
-function RamaEspina({ rama, nombre, espina, votadas, onAgregar }: { rama: Rama; nombre: string; espina: Espina; votadas: Set<string>; onAgregar?: Props['onAgregar'] }) {
+function RamaEspina({ rama, espina, votadas, onAgregar }: { rama: Rama; espina: Espina; votadas: Set<string>; onAgregar?: Props['onAgregar'] }) {
+  const { t } = useSesion();
   const [agregando, setAgregando] = useState(false);
   const [texto, setTexto] = useState('');
   const [origen, setOrigen] = useState<Origen>('propio');
-  const tarjetas = espina.tarjetas.filter(t => t.rama === rama);
+  const tarjetas = espina.tarjetas.filter(x => x.rama === rama);
+  const nombre = t(`espinaUi.ramas.${rama}`);
 
   function guardar(e: React.FormEvent) {
     e.preventDefault();
@@ -67,74 +72,81 @@ function RamaEspina({ rama, nombre, espina, votadas, onAgregar }: { rama: Rama; 
   }
 
   return (
-    <section className="espina-rama" aria-label={`Rama ${nombre}`}>
+    <section className="espina-rama" aria-label={nombre}>
       <header>
         <h4>{nombre}</h4>
         <span>{tarjetas.length}</span>
       </header>
       <div className="espina-tarjetas">
-        {tarjetas.map(t => <TarjetaEspina key={t.id} tarjeta={t} espina={espina} votada={votadas.has(t.id)} />)}
+        {tarjetas.map(x => <TarjetaEspina key={x.id} tarjeta={x} espina={espina} votada={votadas.has(x.id)} />)}
       </div>
       {agregando ? (
         <form className="espina-form" onSubmit={guardar}>
-          <textarea value={texto} onChange={e => setTexto(e.target.value)} placeholder="Describe la causa posible" rows={3} autoFocus maxLength={400} />
-          <select value={origen} onChange={e => setOrigen(e.target.value as Origen)} aria-label="Origen de la causa">
-            {Object.entries(ORIGENES).map(([id, n]) => <option key={id} value={id}>{n}</option>)}
+          <textarea value={texto} onChange={e => setTexto(e.target.value)} placeholder={t('espinaUi.describe')} rows={3} autoFocus maxLength={400} />
+          <select value={origen} onChange={e => setOrigen(e.target.value as Origen)} aria-label={t('espinaUi.origen')}>
+            {Object.keys(ORIGENES).map(id => <option key={id} value={id}>{t(`espinaUi.origenes.${id}`)}</option>)}
           </select>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button type="submit" className="btn-primario btn-sm" disabled={!texto.trim()}>Agregar</button>
-            <button type="button" className="btn-fantasma btn-sm" onClick={() => setAgregando(false)}>Cancelar</button>
+            <button type="submit" className="btn-primario btn-sm" disabled={!texto.trim()}>{t('espinaUi.agregar')}</button>
+            <button type="button" className="btn-fantasma btn-sm" onClick={() => setAgregando(false)}>{t('comun.cancelar')}</button>
           </div>
         </form>
       ) : (
-        <button className="espina-agregar" onClick={() => setAgregando(true)}>+ Agregar causa</button>
+        <button className="espina-agregar" onClick={() => setAgregando(true)}>+ {t('espinaUi.agregarCausa')}</button>
       )}
     </section>
   );
 }
 
 function TarjetaEspina({ tarjeta, espina, votada }: { tarjeta: Tarjeta; espina: Espina; votada: boolean }) {
+  const { t } = useSesion();
+  const { confirmar } = useUI();
   const [abierta, setAbierta] = useState(false);
   const evs = tarjeta.evidencias.map(id => espina.evidencias.find(e => e.id === id)).filter(e => e != null);
   const disponibles = espina.evidencias.filter(e => !tarjeta.evidencias.includes(e.id));
+
+  async function eliminar() {
+    const ok = await confirmar({ titulo: t('espinaUi.eliminarCausa'), mensaje: t('espinaUi.eliminarMensaje', { texto: tarjeta.texto }), textoConfirmar: t('comun.eliminar'), tono: 'peligro', icono: 'eliminar' });
+    if (ok) eliminarTarjeta(tarjeta.id);
+  }
 
   return (
     <article className={`espina-tarjeta estado-${tarjeta.estado}`}>
       <button className="espina-tarjeta-resumen" onClick={() => setAbierta(!abierta)} aria-expanded={abierta}>
         <span className="espina-tarjeta-texto">{tarjeta.texto}</span>
         <span className="espina-tarjeta-meta">
-          <span className={`badge ${CLASE_ESTADO[tarjeta.estado]}`}>{ESTADOS[tarjeta.estado]}</span>
-          <span>{ORIGENES[tarjeta.origen]}</span>
-          {evs.length > 0 && <span>· {evs.length} {evs.length === 1 ? 'evidencia' : 'evidencias'}</span>}
-          {votada && <span className="badge badge-primario">Votada</span>}
+          <span className={`badge ${CLASE_ESTADO[tarjeta.estado]}`}>{t(`espinaUi.estados.${tarjeta.estado}`)}</span>
+          <span>{t(`espinaUi.origenes.${tarjeta.origen}`)}</span>
+          {evs.length > 0 && <span>· {evs.length} {evs.length === 1 ? t('espinaUi.evidencia') : t('espinaUi.evidencias')}</span>}
+          {votada && <span className="badge badge-primario">{t('espinaUi.votada')}</span>}
         </span>
       </button>
       {abierta && (
         <div className="espina-tarjeta-detalle">
-          <label className="campo-label" htmlFor={`estado-${tarjeta.id}`}>Estado</label>
+          <label className="campo-label" htmlFor={`estado-${tarjeta.id}`}>{t('espinaUi.estado')}</label>
           <select id={`estado-${tarjeta.id}`} value={tarjeta.estado} onChange={e => actualizarTarjeta(tarjeta.id, { estado: e.target.value as EstadoTarjeta })}>
-            <option value="hipotesis">Hipótesis</option>
-            <option value="verificada" disabled={evs.length === 0}>Verificada{evs.length === 0 ? ' (requiere evidencia)' : ''}</option>
-            <option value="refutada">Refutada</option>
+            <option value="hipotesis">{t('espinaUi.estados.hipotesis')}</option>
+            <option value="verificada" disabled={evs.length === 0} title={evs.length === 0 ? t('espinaUi.requiereEvidencia') : undefined}>{t('espinaUi.estados.verificada')}</option>
+            <option value="refutada">{t('espinaUi.estados.refutada')}</option>
           </select>
 
-          <span className="campo-label">Evidencia</span>
-          {evs.length === 0 && <p className="datos-nota" style={{ margin: 0 }}>Sin evidencia. En la pestaña Datos, usa "Adjuntar a la espina" sobre una gráfica o cálculo.</p>}
+          <span className="campo-label">{t('espinaUi.evidenciaTitulo')}</span>
+          {evs.length === 0 && <p className="datos-nota" style={{ margin: 0 }}>{t('espinaUi.sinEvidencia')}</p>}
           <ul className="espina-evidencias">
             {evs.map(e => (
               <li key={e.id}>
                 <span>{e.resumen}</span>
-                <button className="aviso-cerrar" onClick={() => quitarEvidencia(tarjeta.id, e.id)} aria-label="Quitar evidencia"><Icono nombre="cerrar" tamano={14} /></button>
+                <button className="aviso-cerrar" onClick={() => quitarEvidencia(tarjeta.id, e.id)} aria-label={t('espinaUi.quitarEvidencia')}><Icono nombre="cerrar" tamano={14} /></button>
               </li>
             ))}
           </ul>
           {disponibles.length > 0 && (
-            <select value="" onChange={e => e.target.value && adjuntarEvidencia(tarjeta.id, e.target.value)} aria-label="Adjuntar evidencia guardada">
-              <option value="">Adjuntar evidencia guardada…</option>
+            <select value="" onChange={e => e.target.value && adjuntarEvidencia(tarjeta.id, e.target.value)} aria-label={t('espinaUi.adjuntarGuardada')}>
+              <option value="">{t('espinaUi.adjuntarGuardada')}</option>
               {disponibles.map(e => <option key={e.id} value={e.id}>{e.resumen}</option>)}
             </select>
           )}
-          <button className="btn-fantasma btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => eliminarTarjeta(tarjeta.id)}>Eliminar causa</button>
+          <button className="btn-fantasma btn-sm" style={{ alignSelf: 'flex-start' }} onClick={eliminar}>{t('espinaUi.eliminarCausa')}</button>
         </div>
       )}
     </article>
@@ -142,14 +154,22 @@ function TarjetaEspina({ tarjeta, espina, votada }: { tarjeta: Tarjeta; espina: 
 }
 
 function Evidencias({ espina }: { espina: Espina }) {
+  const { t } = useSesion();
   if (espina.evidencias.length === 0) return null;
   return (
     <div className="tarjeta" style={{ marginTop: 16 }}>
-      <h4 style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--color-primario)' }}>Evidencias guardadas desde Datos</h4>
+      <h4 style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--color-primario)' }}>{t('espinaUi.guardadas')}</h4>
       <ul className="espina-evidencias">
         {espina.evidencias.map(e => {
-          const usos = espina.tarjetas.filter(t => t.evidencias.includes(e.id)).length;
-          return <li key={e.id}><span>{e.resumen}</span><span className="datos-nota" style={{ margin: 0 }}>Ciclo {e.ciclo} · {usos === 0 ? 'sin asignar' : `en ${usos} ${usos === 1 ? 'causa' : 'causas'}`}</span></li>;
+          const usos = espina.tarjetas.filter(x => x.evidencias.includes(e.id)).length;
+          return (
+            <li key={e.id}>
+              <span>{e.resumen}</span>
+              <span className="datos-nota" style={{ margin: 0 }}>
+                {t('espinaUi.ciclo', { n: e.ciclo })} · {usos === 0 ? t('espinaUi.sinAsignar') : usos === 1 ? t('espinaUi.enCausa') : t('espinaUi.enCausas', { n: usos })}
+              </span>
+            </li>
+          );
         })}
       </ul>
     </div>
@@ -157,11 +177,12 @@ function Evidencias({ espina }: { espina: Espina }) {
 }
 
 function Porques({ espina }: { espina: Espina }) {
+  const { t } = useSesion();
   const v = ultimaVotacion(espina);
   if (!v) return null;
   return (
     <div className="tarjeta" style={{ marginTop: 16 }}>
-      <h4 style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--color-primario)' }}>Tus 5 porqués del ciclo {v.ciclo}</h4>
+      <h4 style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--color-primario)' }}>{t('espinaUi.porques', { n: v.ciclo })}</h4>
       <ol style={{ margin: 0, paddingLeft: 20, fontSize: 14, lineHeight: 1.6 }}>
         {v.porques.map((p, i) => <li key={i}>{p}</li>)}
       </ol>

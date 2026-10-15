@@ -1,0 +1,259 @@
+[
+  {
+    "id": "oscar_c1_apertura",
+    "personaje": "oscar",
+    "ciclo": 1,
+    "fase": "apertura",
+    "expresion": "impaciente",
+    "lineas": [
+      "The problem is the system. {{fraccion_captura}} of the errors are input errors; you can check it in two minutes.",
+      "The C.R.A.S.S. system is 14 years old. I already told the person before you."
+    ],
+    "pendiente": "Validate: Óscar says half of the errors are input errors and that the cause is the C.R.A.S.S. system.",
+    "afirmacion": {
+      "id": "errores_captura_interfaz",
+      "verificable": true,
+      "veredicto": "parcialmente_cierta"
+    },
+    "respuestas": [
+      {
+        "texto": "Let me check the data.",
+        "efecto": "abrir_laptop",
+        "credibilidad": 0
+      },
+      {
+        "texto": "You are right, let’s replace the system.",
+        "efecto": "aceptar:10",
+        "credibilidad": 1
+      },
+      {
+        "texto": "Yes, there are 659 input errors. But nothing shows that the system is the cause.",
+        "requiere": "verifico:errores_captura_interfaz",
+        "efecto": "refutar",
+        "credibilidad": 2
+      },
+      {
+        "texto": "Let’s look at it later.",
+        "efecto": "postergar",
+        "credibilidad": -1
+      }
+    ]
+  },
+  {
+    "id": "oscar_c1_refutado",
+    "personaje": "oscar",
+    "ciclo": 1,
+    "fase": "refutado",
+    "expresion": "irritado",
+    "condicion": {
+      "tipo": "refutado",
+      "afirmacion": "errores_captura_interfaz"
+    },
+    "lineas": [
+      "Then what is the cause? The officers? With this system anyone makes mistakes.",
+      "I have been asking for it to be replaced for two years."
+    ],
+    "respuestas": [
+      {
+        "texto": "Maybe. But replacing the system takes four cycles and costs the whole budget.",
+        "efecto": "contraargumentar",
+        "credibilidad": 1
+      },
+      {
+        "texto": "I will check where the errors are concentrated.",
+        "efecto": "abrir_laptop",
+        "credibilidad": 1
+      }
+    ]
+  },
+  {
+    "id": "oscar_c1_aceptado",
+    "personaje": "oscar",
+    "ciclo": 1,
+    "fase": "aceptado",
+    "expresion": "entusiasmado",
+    "condicion": {
+      "tipo": "aceptaron_su_accion"
+    },
+    "lineas": [
+      "Finally. I will ask my team to start the migration.",
+      "In four cycles we will have a completely different process."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "oscar_c2_apertura",
+    "personaje": "oscar",
+    "ciclo": 2,
+    "fase": "apertura",
+    "expresion": "insistente",
+    "lineas": [
+      "When do we start replacing C.R.A.S.S.? I already have the vendor ready."
+    ],
+    "respuestas": [
+      {
+        "texto": "We are not going to replace the whole system.",
+        "efecto": "rechazar",
+        "credibilidad": 0
+      },
+      {
+        "texto": "Óscar, there is no budget for that.",
+        "efecto": "rechazar",
+        "credibilidad": 0
+      },
+      {
+        "texto": "All right, go ahead.",
+        "efecto": "aceptar:10",
+        "credibilidad": 1
+      }
+    ]
+  },
+  {
+    "id": "oscar_c2_checklist_puesto",
+    "personaje": "oscar",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "esceptico",
+    "condicion": {
+      "tipo": "accion_elegida",
+      "accionId": 1
+    },
+    "lineas": [
+      "The checklist is just a patch. It will reduce incomplete files, yes.",
+      "But the system is still just as bad."
+    ],
+    "respuestas": [
+      {
+        "texto": "In the meantime, it works.",
+        "efecto": "postergar",
+        "credibilidad": 0
+      },
+      {
+        "texto": "If it reduces errors, that is enough for me.",
+        "efecto": "rechazar",
+        "credibilidad": 1
+      }
+    ]
+  },
+  {
+    "id": "oscar_c3_apertura",
+    "personaje": "oscar",
+    "ciclo": 3,
+    "fase": "apertura",
+    "expresion": "resignado",
+    "lineas": [
+      "I see we are not going to replace C.R.A.S.S.",
+      "I am just warning you that any improvement will run into the system’s limitations."
+    ],
+    "respuestas": [
+      {
+        "texto": "I will keep it in mind.",
+        "efecto": "postergar",
+        "credibilidad": 0
+      }
+    ]
+  },
+  {
+    "id": "oscar_c3_sin_sistema",
+    "personaje": "oscar",
+    "ciclo": 3,
+    "fase": "reaccion",
+    "expresion": "frustrado",
+    "condicion": {
+      "tipo": "accion_no_elegida",
+      "accionId": 10
+    },
+    "lineas": [
+      "Third cycle without touching the system. Patches do not solve the problem in the long run, Director."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "oscar_c4_apertura",
+    "personaje": "oscar",
+    "ciclo": 4,
+    "fase": "apertura",
+    "expresion": "cinico",
+    "lineas": [
+      "Last meeting. I will not insist on the system anymore."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "oscar_c4_resultado_bueno",
+    "personaje": "oscar",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "sorprendido",
+    "condicion": {
+      "tipo": "kpi",
+      "metrica": "tasaReproceso",
+      "operador": "<",
+      "valor": 40
+    },
+    "lineas": [
+      "You brought rework down without replacing the system. I did not expect that.",
+      "Even though the system is still old."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "oscar_c4_resultado_malo",
+    "personaje": "oscar",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "vindicado",
+    "condicion": {
+      "tipo": "kpi",
+      "metrica": "tasaReproceso",
+      "operador": ">=",
+      "valor": 40
+    },
+    "lineas": [
+      "See? Rework is still high. I warned you."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "oscar_consejo",
+    "personaje": "oscar",
+    "ciclo": 0,
+    "fase": "consejo",
+    "expresion": "tecnico",
+    "condicion": {
+      "tipo": "pide_consejo"
+    },
+    "lineas": [
+      "If you let me replace C.R.A.S.S., the system errors will be gone in four cycles.",
+      "It costs 100 units, the whole budget, but it solves the underlying problem."
+    ],
+    "pendiente": "Óscar’s recommendation: replace the C.R.A.S.S. system, 100 units, the whole budget. First, confirm that the system is the cause of the errors.",
+    "respuestas": [
+      {
+        "texto": "It is too expensive.",
+        "efecto": "rechazar",
+        "credibilidad": 0
+      },
+      {
+        "texto": "Go ahead.",
+        "efecto": "aceptar:10",
+        "credibilidad": 1
+      }
+    ]
+  },
+  {
+    "id": "oscar_vida_perdida",
+    "personaje": "oscar",
+    "ciclo": 0,
+    "fase": "vida_perdida",
+    "expresion": "serio",
+    "condicion": {
+      "tipo": "vida_perdida"
+    },
+    "lineas": [
+      "This is what happens when you do not fix the system properly.",
+      "Patches do not last."
+    ],
+    "respuestas": []
+  }
+]

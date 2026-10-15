@@ -23,8 +23,8 @@ describe('Herramientas de análisis', () => {
 
   it('cuenta los eventos mencionados en Comments en lugar del texto completo', () => {
     const cats = contarCategorias(filas, comentarios);
-    expect(cats[0]).toEqual({ etiqueta: 'input error', conteo: 2 });
-    expect(cats.map(c => c.etiqueta)).toContain('bureau rejected');
+    expect(cats[0]).toEqual({ etiqueta: 'captura', conteo: 2 });
+    expect(cats.map(c => c.etiqueta)).toContain('rechazo_buro');
   });
 
   it('el Pareto termina en 100% acumulado', () => {

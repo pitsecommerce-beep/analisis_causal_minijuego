@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { obtenerSupabase } from './supabase.js';
 import type { EstadoPartida } from '../motor/ciclos.js';
 import type { EstadoDialogoJSON } from './serializar.js';
+import type { ConfigSesion } from '../../compartido/configuracion.js';
 
 const sb = () => obtenerSupabase();
 
@@ -21,11 +22,11 @@ function generarToken(): string {
 
 // --- Sesiones ---
 
-export async function crearSesion(profesorId: string, nombre: string, semilla: number) {
+export async function crearSesion(profesorId: string, nombre: string, semilla: number, config: ConfigSesion) {
   const codigo = generarCodigo();
   const { data, error } = await sb()
     .from('sesiones_juego')
-    .insert({ codigo, profesor_id: profesorId, nombre, semilla })
+    .insert({ codigo, profesor_id: profesorId, nombre, semilla, ...config })
     .select()
     .single();
   if (error) throw error;
@@ -351,4 +352,32 @@ export async function obtenerResumenExperimento(sesionId: string) {
     partidas: partidas ?? [],
     totalEventos: totalEventos ?? 0,
   };
+}
+
+// --- Tablero del equipo ---
+
+export async function obtenerTablero(jugadorId: string) {
+  const { data, error } = await sb()
+    .from('tableros')
+    .select('contenido, updated_at')
+    .eq('jugador_id', jugadorId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function guardarTablero(jugadorId: string, sesionId: string, contenido: unknown) {
+  const { error } = await sb()
+    .from('tableros')
+    .upsert({ jugador_id: jugadorId, sesion_id: sesionId, contenido, updated_at: new Date().toISOString() }, { onConflict: 'jugador_id' });
+  if (error) throw error;
+}
+
+export async function listarTablerosSesion(sesionId: string) {
+  const { data, error } = await sb()
+    .from('tableros')
+    .select('jugador_id, contenido, updated_at')
+    .eq('sesion_id', sesionId);
+  if (error) throw error;
+  return data ?? [];
 }

@@ -89,14 +89,20 @@ export function resumirMetodo(eventos: Evento[], espina: Espina): ResumenMetodo 
 }
 
 // Lo que Betancourt señala en cuanto el participante decide sin sustento
-export function avisosPorAcciones(vinculos: VinculoAccion[], nombres: Record<number, string>, eventosPrevios: Evento[]): string[] {
+export function avisosPorAcciones(vinculos: VinculoAccion[], nombres: Record<number, string>, eventosPrevios: Evento[], idioma: 'es' | 'en' = 'es'): string[] {
+  const en = idioma === 'en';
   const avisos: string[] = [];
   if (vinculos.some(v => v.accionId === ACCION_CAPACITAR_TODAS) && !estratificoPorSucursal(eventosPrevios)) {
-    avisos.push('Vas a capacitar a las 18 sucursales sin haber revisado los datos por sucursal. Antes de gastar 100 unidades, estratifica los errores por sucursal: ¿están repartidos o se concentran en unas cuantas?');
+    avisos.push(en
+      ? 'You are about to train all 18 branches without looking at the data by branch. Before spending 100 units, stratify the errors by branch: are they spread out or concentrated in a few?'
+      : 'Vas a capacitar a las 18 sucursales sin haber revisado los datos por sucursal. Antes de gastar 100 unidades, estratifica los errores por sucursal: ¿están repartidos o se concentran en unas cuantas?');
   }
-  const sinSustento = vinculos.filter(v => !v.verificada).map(v => nombres[v.accionId] ?? `Acción ${v.accionId}`);
+  const sinSustento = vinculos.filter(v => !v.verificada).map(v => nombres[v.accionId] ?? `${en ? 'Action' : 'Acción'} ${v.accionId}`);
   if (sinSustento.length > 0) {
-    avisos.push(`Elegiste ${sinSustento.map(n => `«${n}»`).join(', ')} sin ligarla a una causa verificada. El consejo espera decisiones sustentadas en datos: verifica la causa en tu espina de pescado antes de invertir.`);
+    const lista = sinSustento.map(n => (en ? `“${n}”` : `«${n}»`)).join(', ');
+    avisos.push(en
+      ? `You chose ${lista} without linking it to a verified cause. The board expects data-driven decisions: verify the cause in your fishbone before investing.`
+      : `Elegiste ${lista} sin ligarla a una causa verificada. El consejo espera decisiones sustentadas en datos: verifica la causa en tu espina de pescado antes de invertir.`);
   }
   return avisos;
 }

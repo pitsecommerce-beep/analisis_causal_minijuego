@@ -6,8 +6,8 @@
     "fase": "apertura",
     "expresion": "entusiasta",
     "lineas": [
-      "Lo que me preocupa es la gente. El error de captura es, por mucho, el más frecuente.",
-      "Déjame organizar una capacitación para las 18 sucursales. Yo la coordino."
+      {"si": "captura_por_mucho", "texto": "Lo que me preocupa es la gente. El error de captura es, por mucho, el más frecuente.", "sino": "Lo que me preocupa es la gente. El error de captura es el más frecuente."},
+      {"si": "num_sucursales", "texto": "Déjame organizar una capacitación para las {{num_sucursales}} sucursales. Yo la coordino.", "sino": "Déjame organizar una capacitación para todas las sucursales. Yo la coordino."}
     ],
     "pendiente": "Validar: Silvia dice que el error de captura es el más frecuente y propone capacitar a las 18 sucursales. Revisar en qué sucursales se concentran.",
     "afirmacion": { "id": "error_captura_frecuente", "verificable": true, "veredicto": "cierta" },

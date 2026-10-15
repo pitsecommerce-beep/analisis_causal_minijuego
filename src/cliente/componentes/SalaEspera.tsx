@@ -1,16 +1,9 @@
+import { useSesion } from '../i18n.js';
+import { DICCIONARIOS } from '../../compartido/i18n/index.js';
 import { useEffect, useState } from 'react';
 import { PiePagina } from './ui/PiePagina.js';
 
-const FRASES: { texto: string; autor: string }[] = [
-  { texto: 'Correlación no implica causalidad.', autor: 'Principio de la estadística' },
-  { texto: 'Sin datos, solo eres otra persona con una opinión.', autor: 'W. Edwards Deming' },
-  { texto: 'En Dios confiamos. Todos los demás deben traer datos.', autor: 'Atribuida a W. Edwards Deming' },
-  { texto: 'Todos los modelos están equivocados, pero algunos son útiles.', autor: 'George E. P. Box' },
-  { texto: 'Un problema bien planteado está medio resuelto.', autor: 'John Dewey' },
-  { texto: 'Pregunta por qué cinco veces y llegarás a la causa raíz.', autor: 'Taiichi Ohno' },
-  { texto: 'No todo lo que cuenta puede contarse, y no todo lo que puede contarse cuenta.', autor: 'William Bruce Cameron' },
-  { texto: 'La mediana no cuenta toda la historia. Mira la variabilidad.', autor: 'Control estadístico de procesos' },
-];
+const N_FRASES = 8;
 
 const INTERVALO_FRASE = 8000;
 
@@ -20,14 +13,16 @@ interface Props {
 }
 
 export function SalaEspera({ nombre, sesion }: Props) {
-  const [indice, setIndice] = useState(() => Math.floor(Math.random() * FRASES.length));
+  const { t, config } = useSesion();
+  const frases = DICCIONARIOS[config.idioma].ui.espera.frases;
+  const [indice, setIndice] = useState(() => Math.floor(Math.random() * N_FRASES));
 
   useEffect(() => {
-    const id = window.setInterval(() => setIndice(i => (i + 1) % FRASES.length), INTERVALO_FRASE);
+    const id = window.setInterval(() => setIndice(i => (i + 1) % N_FRASES), INTERVALO_FRASE);
     return () => window.clearInterval(id);
   }, []);
 
-  const frase = FRASES[indice]!;
+  const [texto, autor] = frases[indice % frases.length]!;
 
   return (
     <div className="pagina espera-pagina">
@@ -39,17 +34,17 @@ export function SalaEspera({ nombre, sesion }: Props) {
         </div>
 
         <h1 className="espera-estado" role="status">
-          Esperando a que el profesor inicie la sesión
+          {t('ui.espera.estado')}
         </h1>
 
         <p className="espera-saludo">
-          Hola, <strong>{nombre}</strong>. Ya estás en <strong>{sesion || 'la sesión'}</strong>.
-          <br />El simulador comenzará automáticamente.
+          {t('ui.espera.saludo', { nombre, sesion: sesion || t('ui.espera.laSesion') })}
+          <br />{t('ui.espera.automatico')}
         </p>
 
         <figure key={indice} className="espera-frase transicion-contenido">
-          <blockquote>“{frase.texto}”</blockquote>
-          <figcaption>{frase.autor}</figcaption>
+          <blockquote>“{texto}”</blockquote>
+          <figcaption>{autor}</figcaption>
         </figure>
 
       </main>

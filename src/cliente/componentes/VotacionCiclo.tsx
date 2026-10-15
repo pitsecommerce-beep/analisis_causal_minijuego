@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { CAUSAS_A_VOTAR, NUM_PORQUES, ESTADOS, ultimaVotacion } from '../../compartido/espina.js';
+import { CAUSAS_A_VOTAR, NUM_PORQUES, ultimaVotacion } from '../../compartido/espina.js';
+import { useSesion } from '../i18n.js';
 import { useEspina, votar } from '../espina.js';
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 
 // Cierre de ciclo: elegir las causas principales de la espina y escribir los 5 porqués
 export function VotacionCiclo({ ciclo, onCancelar, onVotado, onIrEspina }: Props) {
+  const { t: tr } = useSesion();
   const espina = useEspina();
   const previa = espina.votaciones.find(v => v.ciclo === ciclo) ?? ultimaVotacion(espina);
   const vigentes = new Set(espina.tarjetas.map(t => t.id));
@@ -35,7 +37,8 @@ export function VotacionCiclo({ ciclo, onCancelar, onVotado, onIrEspina }: Props
       await votar(causas, porques);
       onVotado();
     } catch (err: any) {
-      setError(err.message);
+      setError(tr('votacion.error'));
+      void err;
     }
     setEnviando(false);
   }
@@ -43,18 +46,18 @@ export function VotacionCiclo({ ciclo, onCancelar, onVotado, onIrEspina }: Props
   return (
     <div className="modal-fondo" onMouseDown={e => { if (e.target === e.currentTarget) onCancelar(); }}>
       <form className="modal votacion" role="dialog" aria-modal="true" aria-labelledby="votacion-titulo" onSubmit={enviar}>
-        <h3 id="votacion-titulo" className="modal-titulo">Cierre del ciclo {ciclo}</h3>
+        <h3 id="votacion-titulo" className="modal-titulo">{tr('votacion.titulo', { n: ciclo })}</h3>
         {espina.tarjetas.length === 0 ? (
           <>
-            <p className="modal-mensaje">Tu espina de pescado está vacía. Antes de avanzar, agrega al menos una causa posible.</p>
+            <p className="modal-mensaje">{tr('votacion.vacia')}</p>
             <div className="modal-acciones">
-              <button type="button" className="btn-fantasma" onClick={onCancelar}>Cancelar</button>
-              <button type="button" className="btn-primario" onClick={onIrEspina}>Ir a la espina</button>
+              <button type="button" className="btn-fantasma" onClick={onCancelar}>{tr('comun.cancelar')}</button>
+              <button type="button" className="btn-primario" onClick={onIrEspina}>{tr('votacion.irEspina')}</button>
             </div>
           </>
         ) : (
           <>
-            <p className="modal-mensaje">Vota tus {requeridas} causas principales. Solo cuentan para tu diagnóstico las que verificaste con datos.</p>
+            <p className="modal-mensaje">{tr('votacion.instrucciones', { n: requeridas })}</p>
             <ul className="votacion-causas">
               {tarjetas.map(t => (
                 <li key={t.id}>
@@ -62,22 +65,22 @@ export function VotacionCiclo({ ciclo, onCancelar, onVotado, onIrEspina }: Props
                     <input type="checkbox" className="casilla" checked={causas.includes(t.id)} onChange={() => alternar(t.id)}
                       disabled={!causas.includes(t.id) && causas.length >= requeridas} />
                     <span>{t.texto}</span>
-                    <span className={`badge ${t.estado === 'verificada' ? 'badge-exito' : t.estado === 'refutada' ? 'badge-advertencia' : 'badge-info'}`}>{ESTADOS[t.estado]}</span>
+                    <span className={`badge ${t.estado === 'verificada' ? 'badge-exito' : t.estado === 'refutada' ? 'badge-advertencia' : 'badge-info'}`}>{tr(`espinaUi.estados.${t.estado}`)}</span>
                   </label>
                 </li>
               ))}
             </ul>
-            <p className="campo-label" style={{ marginTop: 14 }}>Los 5 porqués de tu causa principal</p>
+            <p className="campo-label" style={{ marginTop: 14 }}>{tr('votacion.porques')}</p>
             {porques.map((p, i) => (
-              <input key={i} value={p} maxLength={400} aria-label={`Porqué ${i + 1}`} style={{ marginBottom: 6 }}
-                placeholder={i === 0 ? '¿Por qué tardan tanto las tarjetas?' : `¿Por qué? (${i + 1})`}
+              <input key={i} value={p} maxLength={400} aria-label={tr('votacion.porque', { n: i + 1 })} style={{ marginBottom: 6 }}
+                placeholder={i === 0 ? tr('votacion.primerPorque') : tr('votacion.otroPorque', { n: i + 1 })}
                 onChange={e => setPorques(ps => ps.map((x, j) => j === i ? e.target.value : x))} />
             ))}
             {error && <div className="alerta-error" role="alert">{error}</div>}
             <div className="modal-acciones">
-              <button type="button" className="btn-fantasma" onClick={onCancelar}>Cancelar</button>
+              <button type="button" className="btn-fantasma" onClick={onCancelar}>{tr('comun.cancelar')}</button>
               <button type="submit" className="btn-primario" disabled={enviando || causas.length !== requeridas || porques.some(p => !p.trim())}>
-                Guardar y continuar
+                {tr('votacion.guardar')}
               </button>
             </div>
           </>

@@ -1,3 +1,5 @@
+import type { Tablero } from '../compartido/tablero.js';
+import type { ConfigSesion } from '../compartido/configuracion.js';
 import type { Espina } from '../compartido/espina.js';
 import type { Evento, Hitos } from '../compartido/metodo.js';
 
@@ -37,6 +39,21 @@ function renovarTokenProfesor(): Promise<boolean> {
   return renovacion;
 }
 
+// Descarga un archivo autenticado y lo guarda con el nombre que propone el servidor
+async function descargarArchivo(path: string): Promise<void> {
+  const res = await fetch(`${BASE}${path}`, { headers: headers() });
+  if (!res.ok) throw new Error(String(res.status));
+  const nombre = /filename="?([^";]+)"?/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? 'datos.xlsx';
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 async function request<T>(method: string, path: string, body?: unknown, reintento = false): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method,
@@ -72,6 +89,8 @@ export const api = {
       request<{ token: string; refreshToken: string; profesorId: string }>('POST', '/profesor/login', { email, password }),
     sesiones: () => request<any[]>('GET', '/profesor/sesiones'),
     sesion: (id: string) => request<any>('GET', `/profesor/sesion/${id}`),
+    tableros: (id: string) => request<{ config: ConfigSesion; tableros: { jugadorId: string; nombre: string; actualizado: string; tablero: Tablero }[] }>('GET', `/profesor/sesion/${id}/tableros`),
+    datosSesion: (id: string) => request<{ solicitudes: any[]; comentarios: any[]; columnas: any }>('GET', `/profesor/sesion/${id}/datos`),
     lineaTiempo: (id: string) => request<LineaParticipante[]>('GET', `/profesor/sesion/${id}/linea-tiempo`),
     iniciarSesion: (id: string) => request<any>('POST', `/profesor/sesion/${id}/iniciar`),
     finalizarSesion: (id: string) => request<any>('POST', `/profesor/sesion/${id}/finalizar`),
@@ -81,9 +100,9 @@ export const api = {
   },
   sesion: {
     buscar: (codigo: string) => request<any>('GET', `/sesion/${codigo}`),
-    crear: (nombre: string) => request<any>('POST', '/sesion', { nombre }),
+    crear: (nombre: string, config: ConfigSesion) => request<any>('POST', '/sesion', { nombre, ...config }),
     unirse: (codigo: string, nombre: string, email?: string) =>
-      request<{ jugadorId: string; token: string; sesion: any; reconectado?: boolean }>('POST', `/sesion/${codigo}/unirse`, { nombre, email }),
+      request<{ jugadorId: string; token: string; sesion: any; config?: ConfigSesion; reconectado?: boolean }>('POST', `/sesion/${codigo}/unirse`, { nombre, email }),
   },
   eventos: {
     // keepalive: el evento se envía aunque el participante cambie de página
@@ -117,13 +136,21 @@ export const api = {
     verificar: (verificacionId: string, herramienta?: string) =>
       request<any>('POST', '/datos/verificacion', { verificacionId, herramienta }),
     verificaciones: () => request<string[]>('GET', '/datos/verificaciones'),
+    excel: (tabla: 'solicitudes' | 'comentarios') => descargarArchivo(`/datos/excel/${tabla}`),
+  },
+  sala: {
+    testimonios: () => request<any[]>('GET', '/sala/testimonios'),
+  },
+  tablero: {
+    obtener: () => request<Tablero>('GET', '/tablero'),
+    guardar: (tablero: Tablero) => request<{ ok: boolean }>('PUT', '/tablero', tablero),
   },
   config: {
     acciones: () => request<any[]>('GET', '/config/acciones'),
     metricas: () => request<any[]>('GET', '/config/metricas'),
   },
   experimento: {
-    info: () => request<{ modoExperimento: boolean; grupo: string | null; consentimiento: boolean }>('GET', '/experimento/info'),
+    info: () => request<{ modoExperimento: boolean; grupo: string | null; consentimiento: boolean; config: ConfigSesion }>('GET', '/experimento/info'),
     consentimiento: (acepta: boolean) => request<any>('POST', '/consentimiento', { acepta }),
     recomendacion: () => request<any>('GET', '/experimento/recomendacion'),
     configurar: (sesionId: string, modoExperimento: boolean, pctTratamiento: number) =>

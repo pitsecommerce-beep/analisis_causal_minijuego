@@ -16,10 +16,16 @@ import {
   actualizarSesionExperimento, asignarGrupoJugador,
   registrarConsentimiento, registrarEvento,
   obtenerTelemetriaSesion, obtenerResumenExperimento, listarEventosPartida, listarEstadosPartidasSesion,
+  obtenerTablero, guardarTablero, listarTablerosSesion,
 } from '../db/consultas.js';
+import { normalizarTablero, tableroVacio } from '../../compartido/tablero.js';
 import { generarRecomendacion } from '../experimento/asesor-algoritmico.js';
 import { serializarDialogo, deserializarDialogo } from '../db/serializar.js';
-import { autenticarProfesor, autenticarJugador } from './middleware.js';
+import { autenticarProfesor, autenticarJugador, soloModoCompleto } from './middleware.js';
+import { validarConfig, configDeSesion, claveDatos, CLAVES_DATOS } from '../../compartido/configuracion.js';
+import type { ClaveDatos, Idioma } from '../../compartido/configuracion.js';
+import { DICCIONARIOS } from '../../compartido/i18n/index.js';
+import { libroComentarios } from '../datos/excel.js';
 import { estaConectado } from './presencia.js';
 import { normalizarEspina, validarVotacion, causasDesdeEspina, ESPINA_VACIA } from '../../compartido/espina.js';
 import type { Espina } from '../../compartido/espina.js';
@@ -31,8 +37,9 @@ import { crearPartida, elegirAcciones, declararCompromiso, procesarCiclo } from 
 import { evaluarPartida, determinarDesenlace } from '../puntuacion/evaluacion.js';
 import { crearEstadoDialogo, obtenerNodosCiclo, filtrarRespuestas, evaluarCondicion, aplicarEfecto } from '../dialogos/motor-dialogos.js';
 import type { NodoDialogo } from '../dialogos/motor-dialogos.js';
-import { cargarTodo } from '../datos/cargador.js';
-import type { DatosCargados } from '../datos/cargador.js';
+import { leerDialogosCrudos, resolverDialogos, variablesDialogo, testimonios } from '../dialogos/textos.js';
+import { cargarTodo, rutaSolicitudes } from '../datos/cargador.js';
+import type { DatosCargados, TodosLosDatos } from '../datos/cargador.js';
 import { RAIZ } from '../raiz.js';
 import config from '../../../config/simulador.json' with { type: 'json' };
 import verificacionesConfig from '../../../config/verificaciones.json' with { type: 'json' };
@@ -51,20 +58,36 @@ if (fs.existsSync(clientePath)) {
 
 // --- Datos cargados al inicio ---
 
-let datosJuego!: DatosCargados;
-// Lo que ven los jugadores no cambia durante la vida del proceso: se arma una sola vez
-let datosPublicos!: ReturnType<typeof datosParaJugador>;
-const dialogos: Record<string, NodoDialogo[]> = {};
+let todosLosDatos!: TodosLosDatos;
+// Lo que ven los jugadores no cambia durante la vida del proceso: se arma una sola vez por combinación
+let datosPublicos!: Record<ClaveDatos, ReturnType<typeof datosParaJugador>>;
+let dialogosCrudos!: Record<Idioma, ReturnType<typeof leerDialogosCrudos>>;
+const cacheDialogos = new Map<string, Record<string, NodoDialogo[]>>();
+
+// Diálogos con las cifras de la base y en el idioma de la sesión del participante
+function dialogosDe(req: express.Request): Record<string, NodoDialogo[]> {
+  const config = (req as RequestJugador).jugador.config;
+  const clave = claveDatos(config);
+  const llave = `${clave}|${config.idioma}`;
+  let d = cacheDialogos.get(llave);
+  if (!d) {
+    d = resolverDialogos(dialogosCrudos[config.idioma], variablesDialogo(clave, todosLosDatos[clave], config.idioma));
+    cacheDialogos.set(llave, d);
+  }
+  return d;
+}
 
 function cargarDatosInicio() {
-  datosJuego = cargarTodo();
-  datosPublicos = datosParaJugador(datosJuego);
+  todosLosDatos = cargarTodo();
+  datosPublicos = Object.fromEntries(
+    CLAVES_DATOS.map((c) => [c, datosParaJugador(todosLosDatos[c])])
+  ) as Record<ClaveDatos, ReturnType<typeof datosParaJugador>>;
 
-  const dirDialogos = path.join(RAIZ, 'datos', 'dialogos');
-  const personajes = ['bernardo', 'oscar', 'paulina', 'silvia', 'diego', 'ramon'];
-  for (const p of personajes) {
-    dialogos[p] = JSON.parse(fs.readFileSync(path.join(dirDialogos, `${p}.json`), 'utf-8'));
-  }
+  // Mientras no exista la versión en inglés de un archivo se usa la española
+  const es = leerDialogosCrudos('es');
+  let en = es;
+  try { en = leerDialogosCrudos('en'); } catch { /* sin traducción */ }
+  dialogosCrudos = { es, en };
 }
 
 // --- Utilidades ---
@@ -114,8 +137,8 @@ function datosParaJugador(datos: DatosCargados) {
       lastStatus: s.lastStatus,
       creditLineGranted: s.creditLineGranted,
       comments: s.comments,
+      ...(s.extras ?? {}),
     })),
-    comentarios: datos.comentarios,
   };
 }
 
@@ -217,9 +240,14 @@ app.post('/api/profesor/refrescar', async (req, res) => {
 // ╚══════════════════════════════════════╝
 
 app.post('/api/sesion', autenticarProfesor, async (req, res) => {
-  const { nombre } = req.body;
+  const { nombre } = req.body ?? {};
   if (!nombre) {
     res.status(400).json({ error: 'Nombre de sesión requerido' });
+    return;
+  }
+  const validacion = validarConfig(req.body);
+  if (!validacion.ok) {
+    res.status(400).json({ error: validacion.error });
     return;
   }
 
@@ -227,7 +255,7 @@ app.post('/api/sesion', autenticarProfesor, async (req, res) => {
   const profesorId = (req as RequestProfesor).profesorId;
 
   try {
-    const sesion = await crearSesion(profesorId, nombre, semilla);
+    const sesion = await crearSesion(profesorId, nombre, semilla, validacion.config);
     res.json(sesion);
   } catch (err) {
     responderError(res, 'Error al crear sesión', err);
@@ -246,6 +274,7 @@ app.get('/api/sesion/:codigo', async (req, res) => {
       codigo: sesion.codigo,
       nombre: sesion.nombre,
       estado: sesion.estado,
+      idioma: configDeSesion(sesion).idioma,
     });
   } catch (err) {
     responderError(res, 'Error al buscar sesión', err);
@@ -267,6 +296,7 @@ async function reconectarJugador(req: express.Request, res: express.Response): P
       jugadorId: existente.id,
       token,
       sesion: { id: sesion.id, nombre: sesion.nombre, estado: sesion.estado },
+      config: configDeSesion(sesion),
       modoExperimento: sesion.modo_experimento ?? false,
       reconectado: true,
     });
@@ -317,6 +347,7 @@ app.post('/api/sesion/:codigo/unirse', async (req, res) => {
       jugadorId: jugador.id,
       token: jugador.token,
       sesion: { id: sesion.id, nombre: sesion.nombre, estado: sesion.estado },
+      config: configDeSesion(sesion),
       modoExperimento: sesion.modo_experimento ?? false,
     });
   } catch (err) {
@@ -447,53 +478,78 @@ app.delete('/api/profesor/sesion/:id', autenticarProfesor, async (req, res) => {
 // ║     RUTAS DE DATOS (HOJA)           ║
 // ╚══════════════════════════════════════╝
 
-app.get('/api/datos/solicitudes', autenticarJugador, (_req, res) => {
-  res.json(datosPublicos.solicitudes);
+// Cada participante recibe la base que corresponde a la configuración de su sesión
+const claveDe = (req: express.Request) => claveDatos((req as RequestJugador).jugador.config);
+
+app.get('/api/datos/solicitudes', autenticarJugador, (req, res) => {
+  res.json(datosPublicos[claveDe(req)].solicitudes);
 });
 
-app.get('/api/datos/comentarios', autenticarJugador, (_req, res) => {
-  res.json(datosPublicos.comentarios);
+// R2 es una sola base de solicitudes con comentarios en dos idiomas
+function comentariosDe(req: express.Request) {
+  const clave = claveDe(req);
+  const enIngles = (req as RequestJugador).jugador.config.idioma === 'en';
+  return (clave === 'R2' && enIngles ? todosLosDatos.R2.comentariosEn : undefined) ?? todosLosDatos[clave].comentarios;
+}
+
+app.get('/api/datos/comentarios', autenticarJugador, (req, res) => {
+  res.json(comentariosDe(req));
 });
 
-app.get('/api/datos/columnas', autenticarJugador, (_req, res) => {
-  res.json({
-    solicitudes: [
-      { campo: 'applicationNum', nombre: 'Núm. de solicitud', tipo: 'numero' },
-      { campo: 'customerNum', nombre: 'Núm. de cliente', tipo: 'numero' },
-      { campo: 'age', nombre: 'Edad', tipo: 'numero' },
-      { campo: 'maritalStatus', nombre: 'Estado civil', tipo: 'texto' },
-      { campo: 'gender', nombre: 'Género', tipo: 'texto' },
-      { campo: 'state', nombre: 'Estado', tipo: 'texto' },
-      { campo: 'branchNum', nombre: 'Sucursal', tipo: 'numero' },
-      { campo: 'yearsAsCustomer', nombre: 'Años como cliente', tipo: 'numero' },
-      { campo: 'creditBureauScore', nombre: 'Puntaje del buró de crédito', tipo: 'numero' },
-      { campo: 'etfBankScore', nombre: 'Score interno', tipo: 'numero' },
-      { campo: 'dateFirstInput', nombre: 'Inicio de captura en sucursal', tipo: 'fecha' },
-      { campo: 'dateLastInput', nombre: 'Fin de captura en sucursal', tipo: 'fecha' },
-      { campo: 'numTries', nombre: 'Intentos de captura', tipo: 'numero' },
-      { campo: 'dateDocsSent', nombre: 'Envío a back office (CrOP)', tipo: 'fecha' },
-      { campo: 'dateDocsReceived', nombre: 'Recepción en back office (CrOP)', tipo: 'fecha' },
-      { campo: 'creditBureauResult', nombre: 'Resultado del buró de crédito', tipo: 'texto' },
-      { campo: 'creditBureauRunDate', nombre: 'Consulta al buró de crédito', tipo: 'fecha' },
-      { campo: 'etfBankScoreResult', nombre: 'Resultado del score interno', tipo: 'texto' },
-      { campo: 'etfbScoreDate', nombre: 'Fecha del score interno', tipo: 'fecha' },
-      { campo: 'datePlasticSent', nombre: 'Envío de tarjeta', tipo: 'fecha' },
-      { campo: 'lastStatus', nombre: 'Último estatus', tipo: 'texto' },
-      { campo: 'creditLineGranted', nombre: 'Línea de crédito otorgada', tipo: 'numero' },
-      { campo: 'comments', nombre: 'Comentarios', tipo: 'texto' },
-    ],
-    comentarios: [
-      { campo: 'solicitudNum', nombre: 'Núm. de solicitud', tipo: 'numero' },
-      { campo: 'estado', nombre: 'Estado', tipo: 'texto' },
-      { campo: 'sucursalNum', nombre: 'Sucursal', tipo: 'numero' },
-      { campo: 'intentos', nombre: 'Intentos', tipo: 'numero' },
-      { campo: 'canalCaptacion', nombre: 'Canal', tipo: 'texto' },
-      { campo: 'fechaComentario', nombre: 'Fecha', tipo: 'fecha' },
-      { campo: 'categoriaPrimaria', nombre: 'Categoría primaria', tipo: 'texto' },
-      { campo: 'categoriaSecundaria', nombre: 'Categoría secundaria', tipo: 'texto' },
-      { campo: 'comentarioCliente', nombre: 'Comentario', tipo: 'texto' },
-    ],
-  });
+// Descarga en Excel. Las solicitudes se entregan en su archivo original, tal cual;
+// los comentarios se arman sin la columna de evidencia, que nunca llega al participante.
+app.get('/api/datos/excel/:tabla', autenticarJugador, (req, res) => {
+  const clave = claveDe(req);
+  const idioma = (req as RequestJugador).jugador.config.idioma;
+  const tabla = req.params['tabla'];
+  try {
+    if (tabla === 'solicitudes') {
+      const nombre = idioma === 'en' ? 'ETF_Bank_applications.xlsx' : 'ETF_Bank_solicitudes.xlsx';
+      res.download(rutaSolicitudes(clave), nombre);
+      return;
+    }
+    if (tabla === 'comentarios') {
+      const nombre = idioma === 'en' ? 'ETF_Bank_customer_comments.xlsx' : 'ETF_Bank_comentarios_clientes.xlsx';
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=${nombre}`);
+      res.send(libroComentarios(comentariosDe(req), idioma));
+      return;
+    }
+    res.status(404).json({ error: 'Tabla no encontrada' });
+  } catch (err) {
+    responderError(res, 'No se pudo generar el archivo', err);
+  }
+});
+
+// Tipos de las columnas originales. Los nombres visibles salen del diccionario del idioma de la sesión.
+const TIPOS_SOLICITUDES: [string, 'numero' | 'texto' | 'fecha'][] = [
+  ['applicationNum', 'numero'], ['customerNum', 'numero'], ['age', 'numero'], ['maritalStatus', 'texto'], ['gender', 'texto'],
+  ['state', 'texto'], ['branchNum', 'numero'], ['yearsAsCustomer', 'numero'], ['creditBureauScore', 'numero'], ['etfBankScore', 'numero'],
+  ['dateFirstInput', 'fecha'], ['dateLastInput', 'fecha'], ['numTries', 'numero'],
+  ['timePasses', 'numero'], ['cropDeliveryTime', 'numero'], ['dateDocsSent', 'fecha'], ['executiveTime', 'numero'],
+  ['dateDocsReceived', 'fecha'], ['creditBureauResult', 'texto'], ['creditBureauRunDate', 'fecha'], ['etfBankScoreResult', 'texto'],
+  ['etfbScoreDate', 'fecha'], ['datePlasticSent', 'fecha'], ['cropTime', 'numero'], ['lastStatus', 'texto'],
+  ['creditLineGranted', 'numero'], ['comments', 'texto'],
+];
+const TIPOS_COMENTARIOS: [string, 'numero' | 'texto' | 'fecha'][] = [
+  ['id', 'texto'], ['solicitudNum', 'numero'], ['estado', 'texto'], ['sucursalNum', 'numero'], ['intentos', 'numero'], ['canalCaptacion', 'texto'],
+  ['fechaComentario', 'fecha'], ['categoriaPrimaria', 'texto'], ['categoriaSecundaria', 'texto'], ['comentarioCliente', 'texto'],
+];
+// Columnas que solo existen en el archivo de la base B
+const SOLO_BASE_B = new Set(['timePasses', 'cropDeliveryTime', 'executiveTime', 'cropTime']);
+
+function columnasDe(idioma: Idioma, clave: ClaveDatos) {
+  const nombres = DICCIONARIOS[idioma].columnas;
+  const esB = clave.startsWith('B');
+  return {
+    solicitudes: TIPOS_SOLICITUDES.filter(([c]) => esB || !SOLO_BASE_B.has(c))
+      .map(([campo, tipo]) => ({ campo, tipo, nombre: nombres.solicitudes[campo as keyof typeof nombres.solicitudes] })),
+    comentarios: TIPOS_COMENTARIOS.map(([campo, tipo]) => ({ campo, tipo, nombre: nombres.comentarios[campo as keyof typeof nombres.comentarios] })),
+  };
+}
+
+app.get('/api/datos/columnas', autenticarJugador, (req, res) => {
+  res.json(columnasDe((req as RequestJugador).jugador.config.idioma, claveDe(req)));
 });
 
 app.post('/api/datos/verificacion', autenticarJugador, sesionActiva, async (req, res) => {
@@ -602,7 +658,7 @@ app.get('/api/partida', autenticarJugador, async (req, res) => {
   }
 });
 
-app.post('/api/partida/acciones', autenticarJugador, sesionActiva, async (req, res) => {
+app.post('/api/partida/acciones', autenticarJugador, soloModoCompleto, sesionActiva, async (req, res) => {
   const { acciones } = req.body;
   if (!Array.isArray(acciones) || acciones.length === 0) {
     res.status(400).json({ error: 'Acciones requeridas (array de {accionId})' });
@@ -644,8 +700,9 @@ app.post('/api/partida/acciones', autenticarJugador, sesionActiva, async (req, r
       return { accionId: a.accionId, tarjetaId: t?.id ?? null, verificada: !!t && t.estado === 'verificada' && t.evidencias.length > 0 };
     });
     const previos = await eventosDe(partida.id);
-    const nombres = Object.fromEntries((config.acciones as { id: number; nombre: string }[]).map(a => [a.id, a.nombre]));
-    const avisos = avisosPorAcciones(vinculos, nombres, previos);
+    const idioma = jugador.config.idioma;
+    const nombres = Object.fromEntries(config.acciones.map(a => [a.id, idioma === 'en' ? a.nombre_en ?? a.nombre : a.nombre]));
+    const avisos = avisosPorAcciones(vinculos, nombres, previos, idioma);
 
     await actualizarPartida(jugador.id, estado, serializarDialogo(estadoDialogo));
     await registrarMetodo(partida.id, jugador, 'acciones', { ciclo: cicloActual, acciones: vinculos });
@@ -657,7 +714,7 @@ app.post('/api/partida/acciones', autenticarJugador, sesionActiva, async (req, r
   }
 });
 
-app.post('/api/partida/compromiso', autenticarJugador, sesionActiva, async (req, res) => {
+app.post('/api/partida/compromiso', autenticarJugador, soloModoCompleto, sesionActiva, async (req, res) => {
   const { metrica, valorPrometido } = req.body;
   if (!metrica || valorPrometido == null) {
     res.status(400).json({ error: 'Métrica y valor prometido requeridos' });
@@ -682,7 +739,7 @@ app.post('/api/partida/compromiso', autenticarJugador, sesionActiva, async (req,
   }
 });
 
-app.post('/api/partida/avanzar', autenticarJugador, sesionActiva, async (req, res) => {
+app.post('/api/partida/avanzar', autenticarJugador, soloModoCompleto, sesionActiva, async (req, res) => {
   try {
     const jugador = (req as RequestJugador).jugador;
     const partida = await obtenerPartida(jugador.id);
@@ -733,7 +790,7 @@ app.get('/api/partida/dialogos', autenticarJugador, async (req, res) => {
     const resultado: Record<string, unknown>[] = [];
 
     for (const p of personajes) {
-      const nodos = dialogos[p]!;
+      const nodos = dialogosDe(req)[p]!;
       const apertura = nodos.find(n => n.ciclo === ciclo && n.fase === 'apertura');
       if (!apertura) continue;
 
@@ -805,7 +862,7 @@ app.get('/api/partida/dialogos', autenticarJugador, async (req, res) => {
       }
     }
 
-    const ramonNodos = dialogos['ramon']!;
+    const ramonNodos = dialogosDe(req)['ramon']!;
     const ultimoResultado = estado.resultadosCiclo?.[estado.resultadosCiclo.length - 1];
     if (ultimoResultado) {
       if (ultimoResultado.vidaPerdida) {
@@ -858,6 +915,11 @@ app.get('/api/partida/dialogos', autenticarJugador, async (req, res) => {
   }
 });
 
+// Sala de Juntas de solo lectura (modo informativo): lo que afirma cada asesor sobre la base de la sesión
+app.get('/api/sala/testimonios', autenticarJugador, (req, res) => {
+  res.json(testimonios(dialogosDe(req)));
+});
+
 app.post('/api/partida/respuesta', autenticarJugador, sesionActiva, async (req, res) => {
   const { nodoId, efecto, personaje } = req.body;
   if (!efecto) {
@@ -877,7 +939,7 @@ app.post('/api/partida/respuesta', autenticarJugador, sesionActiva, async (req, 
     const estadoDialogo = deserializarDialogo(partida.estado_dialogo as any);
 
     if (efecto === 'refutar' && nodoId) {
-      const nodos = dialogos[personaje as string];
+      const nodos = dialogosDe(req)[personaje as string];
       if (nodos) {
         const nodo = nodos.find(n => n.id === nodoId);
         if (nodo?.afirmacion) {
@@ -895,7 +957,7 @@ app.post('/api/partida/respuesta', autenticarJugador, sesionActiva, async (req, 
 
     let siguienteNodo: Record<string, unknown> | null = null;
     if (efecto === 'refutar' && nodoId && personaje) {
-      const nodos = dialogos[personaje as string];
+      const nodos = dialogosDe(req)[personaje as string];
       if (nodos) {
         const nodoOrig = nodos.find(n => n.id === nodoId);
         if (nodoOrig?.afirmacion) {
@@ -922,7 +984,7 @@ app.post('/api/partida/respuesta', autenticarJugador, sesionActiva, async (req, 
     // "¿Qué propones?" abre la recomendación de esa persona
     if (efecto.startsWith('pedir_consejo:')) {
       const quien = efecto.slice('pedir_consejo:'.length);
-      const consejo = dialogos[quien]?.find(n => n.fase === 'consejo');
+      const consejo = dialogosDe(req)[quien]?.find(n => n.fase === 'consejo');
       if (consejo) {
         siguienteNodo = {
           nodoId: consejo.id,
@@ -1046,7 +1108,7 @@ app.put('/api/partida/espina', autenticarJugador, sesionActiva, async (req, res)
   }
 });
 
-app.post('/api/partida/votacion', autenticarJugador, sesionActiva, async (req, res) => {
+app.post('/api/partida/votacion', autenticarJugador, soloModoCompleto, sesionActiva, async (req, res) => {
   try {
     const jugador = (req as RequestJugador).jugador;
     const partida = await obtenerPartida(jugador.id);
@@ -1065,7 +1127,7 @@ app.post('/api/partida/votacion', autenticarJugador, sesionActiva, async (req, r
   }
 });
 
-app.post('/api/partida/cierre', autenticarJugador, async (req, res) => {
+app.post('/api/partida/cierre', autenticarJugador, soloModoCompleto, async (req, res) => {
 
   try {
     const jugador = (req as RequestJugador).jugador;
@@ -1106,7 +1168,7 @@ app.post('/api/partida/cierre', autenticarJugador, async (req, res) => {
       { fase: 'finalizada', puntuacion: desglose.total, desenlace_id: desenlace.id }
     );
 
-    const ramonCierre = dialogos['ramon']!.find(n =>
+    const ramonCierre = dialogosDe(req)['ramon']!.find(n =>
       n.ciclo === 4 && n.condicion?.valor === desenlace.id
     );
 
@@ -1124,13 +1186,14 @@ app.post('/api/partida/cierre', autenticarJugador, async (req, res) => {
 // ║     RUTAS DE CONFIG                 ║
 // ╚══════════════════════════════════════╝
 
-app.get('/api/config/acciones', autenticarJugador, (_req, res) => {
+app.get('/api/config/acciones', autenticarJugador, (req, res) => {
+  const en = (req as RequestJugador).jugador.config.idioma === 'en';
   res.json(config.acciones.map(a => ({
     id: a.id,
-    nombre: a.nombre,
+    nombre: en ? a.nombre_en ?? a.nombre : a.nombre,
     costo: a.costo,
     demora: a.demora,
-    descripcion: a.descripcion,
+    descripcion: en ? a.descripcion_en ?? a.descripcion : a.descripcion,
   })));
 });
 
@@ -1176,13 +1239,14 @@ app.get('/api/experimento/info', autenticarJugador, async (req, res) => {
       modoExperimento: sesion.modo_experimento ?? false,
       grupo: jugador.grupo ?? null,
       consentimiento: jugador.consentimiento ?? false,
+      config: jugador.config,
     });
   } catch (err) {
     responderError(res, 'Error al obtener info del experimento', err);
   }
 });
 
-app.get('/api/experimento/recomendacion', autenticarJugador, async (req, res) => {
+app.get('/api/experimento/recomendacion', autenticarJugador, soloModoCompleto, async (req, res) => {
   try {
     const jugador = (req as RequestJugador).jugador;
     if (jugador.grupo !== 'tratamiento') {
@@ -1293,6 +1357,58 @@ app.get('/api/profesor/sesion/:id/exportar', async (req, res) => {
 });
 
 // ╔══════════════════════════════════════╗
+// ║     TABLERO DEL EQUIPO              ║
+// ╚══════════════════════════════════════╝
+
+app.get('/api/tablero', autenticarJugador, async (req, res) => {
+  try {
+    const fila = await obtenerTablero((req as RequestJugador).jugador.id);
+    res.json(fila ? normalizarTablero(fila.contenido) : tableroVacio());
+  } catch (err) {
+    responderError(res, 'Error al cargar el tablero', err);
+  }
+});
+
+app.put('/api/tablero', autenticarJugador, sesionActiva, async (req, res) => {
+  const jugador = (req as RequestJugador).jugador;
+  try {
+    const tablero = normalizarTablero(req.body);
+    await guardarTablero(jugador.id, jugador.sesionId, tablero);
+    res.json({ ok: true });
+  } catch (err) {
+    responderError(res, 'Error al guardar el tablero', err);
+  }
+});
+
+// El profesor ve los tableros de todos los equipos, en solo lectura, con los datos de la sesión para dibujarlos
+app.get('/api/profesor/sesion/:id/tableros', autenticarProfesor, sesionPropia, async (req, res) => {
+  try {
+    const sesionId = idParam(req);
+    const [sesion, jugadores, tableros] = await Promise.all([obtenerSesionPorId(sesionId), listarJugadoresSesion(sesionId), listarTablerosSesion(sesionId)]);
+    const nombres = new Map(jugadores.map((j: any) => [j.id, j.nombre]));
+    res.json({
+      config: configDeSesion(sesion),
+      tableros: tableros
+        .map((t: any) => ({ jugadorId: t.jugador_id, nombre: nombres.get(t.jugador_id) ?? '', actualizado: t.updated_at, tablero: normalizarTablero(t.contenido) }))
+        .filter(t => t.tablero.graficos.length > 0 || Object.values(t.tablero.textos).some(Boolean)),
+    });
+  } catch (err) {
+    responderError(res, 'Error al cargar los tableros', err);
+  }
+});
+
+app.get('/api/profesor/sesion/:id/datos', autenticarProfesor, sesionPropia, async (req, res) => {
+  try {
+    const config = configDeSesion(await obtenerSesionPorId(idParam(req)));
+    const clave = claveDatos(config);
+    const comentarios = clave === 'R2' && config.idioma === 'en' ? todosLosDatos.R2.comentariosEn ?? todosLosDatos.R2.comentarios : todosLosDatos[clave].comentarios;
+    res.json({ solicitudes: datosPublicos[clave].solicitudes, comentarios, columnas: columnasDe(config.idioma, clave) });
+  } catch (err) {
+    responderError(res, 'Error al cargar los datos de la sesión', err);
+  }
+});
+
+// ╔══════════════════════════════════════╗
 // ║     INICIO                          ║
 // ╚══════════════════════════════════════╝
 
@@ -1305,7 +1421,7 @@ if (fs.existsSync(clientePath)) {
 const PORT = parseInt(process.env['PORT'] ?? '3000', 10);
 
 cargarDatosInicio();
-console.log(`Datos cargados: ${datosJuego.solicitudes.length} solicitudes, ${datosJuego.comentarios.length} comentarios`);
+console.log(`Datos cargados: ${CLAVES_DATOS.map((c) => `${c} ${todosLosDatos[c].solicitudes.length}`).join(', ')}`);
 
 app.listen(PORT, () => {
   console.log(`Servidor en http://localhost:${PORT}`);

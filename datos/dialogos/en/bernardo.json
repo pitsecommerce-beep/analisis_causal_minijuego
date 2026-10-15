@@ -1,0 +1,328 @@
+[
+  {
+    "id": "bernardo_c1_apertura",
+    "personaje": "bernardo",
+    "ciclo": 1,
+    "fase": "apertura",
+    "expresion": "insistiendo",
+    "lineas": [
+      {
+        "si": "medianas_iguales",
+        "texto": "Director, I already measured both stages of the process: branch data entry takes {{med_captura}} days and the back office (CrOP) also takes {{med_backoffice}} days, at the median.",
+        "sino": "Director, I already measured both stages of the process: at the median, branch data entry takes {{med_captura}} days and the back office (CrOP), {{med_backoffice}}."
+      },
+      {
+        "si": "medianas_iguales",
+        "texto": "If they take the same time, the problem is not in my branches but at CrOP.",
+        "sino": "Before blaming my branches, look at what happens at CrOP too."
+      }
+    ],
+    "pendiente": "Validate: do data entry and the back office really take the same time? Bernardo only compared the medians, 11 days each.",
+    "afirmacion": {
+      "id": "medianas_iguales",
+      "verificable": true,
+      "veredicto": "cierta_pero_enganosa"
+    },
+    "respuestas": [
+      {
+        "texto": "I would rather check it in the data myself.",
+        "efecto": "abrir_laptop",
+        "credibilidad": 0
+      },
+      {
+        "texto": "Agreed, let’s strengthen CrOP.",
+        "efecto": "aceptar:6",
+        "credibilidad": 1
+      },
+      {
+        "texto": "I already checked and it does not add up: the median is the same, but the variation is not.",
+        "requiere": "verifico:medianas_iguales",
+        "efecto": "refutar",
+        "credibilidad": 2
+      },
+      {
+        "texto": "Let’s look at it later.",
+        "efecto": "postergar",
+        "credibilidad": -1
+      }
+    ]
+  },
+  {
+    "id": "bernardo_c1_refutado",
+    "personaje": "bernardo",
+    "ciclo": 1,
+    "fase": "refutado",
+    "expresion": "sorprendido",
+    "condicion": {
+      "tipo": "refutado",
+      "afirmacion": "medianas_iguales"
+    },
+    "lineas": [
+      "Wait. The median is 11 days in both stages.",
+      "If your numbers say otherwise, show me."
+    ],
+    "respuestas": [
+      {
+        "texto": "In data entry, the slowest 10% take 52 days or more. In the back office, 17.",
+        "requiere": "verifico:medianas_iguales",
+        "efecto": "convencer:bernardo",
+        "credibilidad": 3
+      },
+      {
+        "texto": "Trust me.",
+        "efecto": "insistir_sin_datos",
+        "credibilidad": -1
+      }
+    ]
+  },
+  {
+    "id": "bernardo_c1_convencido",
+    "personaje": "bernardo",
+    "ciclo": 1,
+    "fase": "convencido",
+    "expresion": "pensativo",
+    "condicion": {
+      "tipo": "convencido"
+    },
+    "lineas": [
+      "You are right, I had not seen it in the histogram.",
+      "If the slowest cases are in data entry, that is where we have to act."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_c1_aceptado",
+    "personaje": "bernardo",
+    "ciclo": 1,
+    "fase": "aceptado",
+    "expresion": "satisfecho",
+    "condicion": {
+      "tipo": "aceptaron_su_accion"
+    },
+    "lineas": [
+      "With two more reviewers at CrOP we clear the backlog in one cycle."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_c2_apertura",
+    "personaje": "bernardo",
+    "ciclo": 2,
+    "fase": "apertura",
+    "expresion": "defensivo",
+    "lineas": [
+      "How are we doing? I still think the main problem is in the back office."
+    ],
+    "respuestas": [
+      {
+        "texto": "I have data that says otherwise.",
+        "efecto": "abrir_laptop",
+        "credibilidad": 0
+      },
+      {
+        "texto": "You are right, I will add people at CrOP.",
+        "efecto": "aceptar:6",
+        "credibilidad": 1
+      },
+      {
+        "texto": "Bernardo, the variation is in data entry. We already measured it.",
+        "requiere": "verifico:medianas_iguales",
+        "efecto": "refutar",
+        "credibilidad": 2
+      }
+    ]
+  },
+  {
+    "id": "bernardo_c2_kpi_bajo",
+    "personaje": "bernardo",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "preocupado",
+    "condicion": {
+      "tipo": "kpi",
+      "metrica": "ventanaCapturaMedia",
+      "operador": ">",
+      "valor": 15
+    },
+    "lineas": [
+      "Director, data entry still takes more than 15 days on average.",
+      "The branches will not hold out much longer like this."
+    ],
+    "respuestas": [
+      {
+        "texto": "I know, I am working on it.",
+        "efecto": "postergar",
+        "credibilidad": 0
+      },
+      {
+        "texto": "What do you propose?",
+        "efecto": "pedir_consejo:bernardo",
+        "credibilidad": 0
+      }
+    ]
+  },
+  {
+    "id": "bernardo_c2_kpi_bueno",
+    "personaje": "bernardo",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "aliviado",
+    "condicion": {
+      "tipo": "kpi",
+      "metrica": "ventanaCapturaMedia",
+      "operador": "<=",
+      "valor": 15
+    },
+    "lineas": [
+      "Data entry time has come down and the branches can tell.",
+      "We are on the right track."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_c3_apertura",
+    "personaje": "bernardo",
+    "ciclo": 3,
+    "fase": "apertura",
+    "expresion": "campechano",
+    "lineas": [
+      "Third meeting. Do we have results yet, or are we still measuring?"
+    ],
+    "respuestas": [
+      {
+        "texto": "The indicators have already moved.",
+        "efecto": "mostrar_resultados",
+        "credibilidad": 1
+      },
+      {
+        "texto": "Not yet.",
+        "efecto": "postergar",
+        "credibilidad": 0
+      }
+    ]
+  },
+  {
+    "id": "bernardo_c3_sin_acciones",
+    "personaje": "bernardo",
+    "ciclo": 3,
+    "fase": "reaccion",
+    "expresion": "molesto",
+    "condicion": {
+      "tipo": "sin_acciones_nuevas"
+    },
+    "lineas": [
+      "We have had three meetings without taking any new action.",
+      "I say this in good faith: the board is going to lose patience."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_c4_apertura",
+    "personaje": "bernardo",
+    "ciclo": 4,
+    "fase": "apertura",
+    "expresion": "serio",
+    "lineas": [
+      "Last meeting. Today we see whether what we did worked."
+    ],
+    "respuestas": [
+      {
+        "texto": "Let’s go over the numbers.",
+        "efecto": "abrir_laptop",
+        "credibilidad": 0
+      }
+    ]
+  },
+  {
+    "id": "bernardo_c4_resultado_bueno",
+    "personaje": "bernardo",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "contento",
+    "condicion": {
+      "tipo": "kpi",
+      "metrica": "ventanaCapturaMedia",
+      "operador": "<",
+      "valor": 12
+    },
+    "lineas": [
+      "I did not see it at first, but the numbers confirm it.",
+      "Good work, Director."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_c4_resultado_malo",
+    "personaje": "bernardo",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "decepcionado",
+    "condicion": {
+      "tipo": "kpi",
+      "metrica": "ventanaCapturaMedia",
+      "operador": ">=",
+      "valor": 12
+    },
+    "lineas": [
+      "Data entry time barely changed.",
+      "I still think the problem is CrOP."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_consejo",
+    "personaje": "bernardo",
+    "ciclo": 0,
+    "fase": "consejo",
+    "expresion": "campechano",
+    "condicion": {
+      "tipo": "pide_consejo"
+    },
+    "lineas": [
+      "I recommend hiring two more reviewers at CrOP. That brings back office time down quickly.",
+      "It costs 35 budget units."
+    ],
+    "pendiente": "Bernardo’s recommendation: hire two more reviewers at CrOP, 35 units. First, confirm that the delay is in the back office.",
+    "respuestas": [
+      {
+        "texto": "I will consider it.",
+        "efecto": "postergar",
+        "credibilidad": 0
+      },
+      {
+        "texto": "All right, do it.",
+        "efecto": "aceptar:6",
+        "credibilidad": 1
+      }
+    ]
+  },
+  {
+    "id": "bernardo_vida_perdida",
+    "personaje": "bernardo",
+    "ciclo": 0,
+    "fase": "vida_perdida",
+    "expresion": "nervioso",
+    "condicion": {
+      "tipo": "vida_perdida"
+    },
+    "lineas": [
+      "This does not look good.",
+      "The board will not accept another meeting without results."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "bernardo_postergar",
+    "personaje": "bernardo",
+    "ciclo": 0,
+    "fase": "postergado",
+    "expresion": "resignado",
+    "condicion": {
+      "tipo": "postergado"
+    },
+    "lineas": [
+      "All right, we can look at it whenever you want."
+    ],
+    "respuestas": []
+  }
+]
