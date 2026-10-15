@@ -16,6 +16,8 @@ export const RUTA_PRECALCULADOS = path.join(RAIZ, 'dist', 'datos-precalculados.j
 export interface DatosCargados {
   solicitudes: SolicitudDerivada[];
   comentarios: ComentarioCliente[];
+  // Solo R2: la versión en inglés de sus comentarios
+  comentariosEn?: ComentarioCliente[];
   estadisticas: EstadisticasVerificacion;
   verdadOculta: Record<string, unknown>;
 }
@@ -29,10 +31,11 @@ export function rutaSolicitudes(clave: ClaveDatos): string {
     : path.join(ORIGINAL_DIR, `${clave}.xlsx`);
 }
 
-export function rutaComentarios(clave: ClaveDatos): string {
-  return clave === 'R2'
-    ? path.join(DATOS_DIR, 'R2_ETF_Bank_Comentarios_Clientes.xlsx')
-    : path.join(ORIGINAL_DIR, `comentarios_${clave}.xlsx`);
+// R2 tiene un archivo de comentarios por idioma porque su base de solicitudes es una sola
+export function rutaComentarios(clave: ClaveDatos | 'R2_en'): string {
+  if (clave === 'R2') return path.join(DATOS_DIR, 'R2_ETF_Bank_Comentarios_Clientes.xlsx');
+  if (clave === 'R2_en') return path.join(DATOS_DIR, 'R2_ETF_Bank_Comentarios_Clientes_en.xlsx');
+  return path.join(ORIGINAL_DIR, `comentarios_${clave}.xlsx`);
 }
 
 const FECHA_ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
@@ -71,7 +74,9 @@ export function cargarCombinacion(clave: ClaveDatos): DatosCargados {
   const verdadOculta = clave === 'R2'
     ? JSON.parse(fs.readFileSync(path.join(DATOS_DIR, 'R2_verdad_oculta.json'), 'utf-8'))
     : {};
-  return { solicitudes, comentarios, estadisticas, verdadOculta };
+  const datos: DatosCargados = { solicitudes, comentarios, estadisticas, verdadOculta };
+  if (clave === 'R2' && fs.existsSync(rutaComentarios('R2_en'))) datos.comentariosEn = cargarComentarios(rutaComentarios('R2_en'));
+  return datos;
 }
 
 export function cargarDesdeExcel(): TodosLosDatos {

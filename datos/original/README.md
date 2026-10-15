@@ -80,3 +80,13 @@ Se aplica en este orden, sin distinguir mayúsculas. Se eligió la redacción m�
 | invalid id | identificación no valida |
 
 Como A_es es una traducción manual con variantes, B_es no coincide evento por evento con A_es: sus conteos de errores son los de B_en (49 de captura, 43 incompletos, 20 ilegibles y 3 otros).
+
+## Comentarios de clientes
+
+`comentarios_{A,B}_{es,en}.xlsx` y `../R2_ETF_Bank_Comentarios_Clientes_en.xlsx` se generan con `npx tsx scripts/generar-comentarios.ts` a partir de `scripts/comentarios/`. Ese script también reescribe los textos de `../R2_ETF_Bank_Comentarios_Clientes.xlsx` sin tocar su evidencia.
+
+- Cada comentario apunta a una solicitud real de su base y su texto no contradice intentos, errores, días, montos, sucursal ni estatus. Lo revisa `src/servidor/datos/coherencia.ts` en `npm test` y en `npm run datos:verificar`.
+- Las fechas caen entre junio y noviembre de 2015 y son posteriores a la primera captura.
+- En A las quejas se concentran en las sucursales 110 (Edo Mex) y 676 (D.F.). En B, en la 637 (Edo Mex, errores de captura) y la 336 (D.F., documentación incompleta).
+- A y B comparten solicitudes y bitácora, así que varios clientes dicen lo mismo en ambas bases.
+- Las versiones en inglés son traducción fiel, con los mismos ID. La columna de evidencia nunca llega al participante; la descarga en Excel se arma sin ella.

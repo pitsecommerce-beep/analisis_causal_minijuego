@@ -1,5 +1,6 @@
 import { cargarDesdeExcel } from '../datos/cargador.js';
 import { compararEsperados } from '../datos/esperados.js';
+import { problemasComentarios } from '../datos/coherencia.js';
 import { CLAVES_DATOS } from '../../compartido/configuracion.js';
 
 function run() {
@@ -29,6 +30,10 @@ function run() {
       }
       if (clave === 'R2' && fuera.length > 10) console.log(`    ... y ${fuera.length - 10} más`);
     }
+    // Los comentarios de clientes no deben contradecir su solicitud
+    const incoherentes = [...problemasComentarios(comentarios, solicitudes), ...problemasComentarios(todos[clave].comentariosEn ?? [], solicitudes)];
+    for (const p of incoherentes) console.log(`  \x1b[31mComentario incoherente\x1b[0m ${p}`);
+    fallos += incoherentes.length;
     console.log('');
   }
 

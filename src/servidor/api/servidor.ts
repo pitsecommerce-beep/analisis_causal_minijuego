@@ -121,7 +121,6 @@ function datosParaJugador(datos: DatosCargados) {
       comments: s.comments,
       ...(s.extras ?? {}),
     })),
-    comentarios: datos.comentarios,
   };
 }
 
@@ -468,8 +467,15 @@ app.get('/api/datos/solicitudes', autenticarJugador, (req, res) => {
   res.json(datosPublicos[claveDe(req)].solicitudes);
 });
 
+// R2 es una sola base de solicitudes con comentarios en dos idiomas
+function comentariosDe(req: express.Request) {
+  const clave = claveDe(req);
+  const enIngles = (req as RequestJugador).jugador.config.idioma === 'en';
+  return (clave === 'R2' && enIngles ? todosLosDatos.R2.comentariosEn : undefined) ?? todosLosDatos[clave].comentarios;
+}
+
 app.get('/api/datos/comentarios', autenticarJugador, (req, res) => {
-  res.json(datosPublicos[claveDe(req)].comentarios);
+  res.json(comentariosDe(req));
 });
 
 // Descarga en Excel. Las solicitudes se entregan en su archivo original, tal cual;
@@ -488,7 +494,7 @@ app.get('/api/datos/excel/:tabla', autenticarJugador, (req, res) => {
       const nombre = idioma === 'en' ? 'ETF_Bank_customer_comments.xlsx' : 'ETF_Bank_comentarios_clientes.xlsx';
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.setHeader('Content-Disposition', `attachment; filename=${nombre}`);
-      res.send(libroComentarios(todosLosDatos[clave].comentarios, idioma));
+      res.send(libroComentarios(comentariosDe(req), idioma));
       return;
     }
     res.status(404).json({ error: 'Tabla no encontrada' });
