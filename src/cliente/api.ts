@@ -38,6 +38,21 @@ function renovarTokenProfesor(): Promise<boolean> {
   return renovacion;
 }
 
+// Descarga un archivo autenticado y lo guarda con el nombre que propone el servidor
+async function descargarArchivo(path: string): Promise<void> {
+  const res = await fetch(`${BASE}${path}`, { headers: headers() });
+  if (!res.ok) throw new Error(String(res.status));
+  const nombre = /filename="?([^";]+)"?/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? 'datos.xlsx';
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 async function request<T>(method: string, path: string, body?: unknown, reintento = false): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method,
@@ -118,13 +133,14 @@ export const api = {
     verificar: (verificacionId: string, herramienta?: string) =>
       request<any>('POST', '/datos/verificacion', { verificacionId, herramienta }),
     verificaciones: () => request<string[]>('GET', '/datos/verificaciones'),
+    excel: (tabla: 'solicitudes' | 'comentarios') => descargarArchivo(`/datos/excel/${tabla}`),
   },
   config: {
     acciones: () => request<any[]>('GET', '/config/acciones'),
     metricas: () => request<any[]>('GET', '/config/metricas'),
   },
   experimento: {
-    info: () => request<{ modoExperimento: boolean; grupo: string | null; consentimiento: boolean }>('GET', '/experimento/info'),
+    info: () => request<{ modoExperimento: boolean; grupo: string | null; consentimiento: boolean; config: ConfigSesion }>('GET', '/experimento/info'),
     consentimiento: (acepta: boolean) => request<any>('POST', '/consentimiento', { acepta }),
     recomendacion: () => request<any>('GET', '/experimento/recomendacion'),
     configurar: (sesionId: string, modoExperimento: boolean, pctTratamiento: number) =>

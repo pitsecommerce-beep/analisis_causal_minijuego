@@ -1,3 +1,5 @@
+import { contarEventos } from '../compartido/expediente.js';
+import type { Vocabulario } from '../compartido/expediente.js';
 // Cálculos de las herramientas de análisis de la pestaña Datos. Funciones puras para poder probarlas.
 
 export type TipoColumna = 'numero' | 'texto' | 'fecha';
@@ -13,46 +15,47 @@ export type Fila = Record<string, unknown>;
 
 const MS_DIA = 86_400_000;
 
-// Eventos que aparecen en el texto libre de la columna Comments
-export const EVENTOS_COMENTARIO: { etiqueta: string; patron: RegExp; esError: boolean }[] = [
-  { etiqueta: 'input error', patron: /input error/gi, esError: true },
-  { etiqueta: 'incomplete documents', patron: /incomplete/gi, esError: true },
-  { etiqueta: 'illegible document', patron: /illegible|ilegible/gi, esError: true },
-  { etiqueta: 'bureau rejected', patron: /bureau rejected/gi, esError: false },
-  { etiqueta: 'score rejected', patron: /score rejected/gi, esError: false },
-  { etiqueta: 'authorized', patron: /authori[sz]ed/gi, esError: false },
+// Formato de números y fechas según el idioma de la sesión
+let LOCALE = 'es-MX';
+export function fijarLocale(locale: string) { LOCALE = locale; }
+export function localeActual() { return LOCALE; }
+
+// Columnas calculadas de cada tabla. El nombre visible sale del diccionario del idioma.
+export const CAMPOS_CALCULADOS_SOLICITUDES: { campo: string; tipo: TipoColumna; soloOriginal?: boolean }[] = [
+  { campo: 'ventanaCaptura', tipo: 'numero' },
+  { campo: 'diasEnvioCrop', tipo: 'numero' },
+  { campo: 'diasEnCrop', tipo: 'numero' },
+  { campo: 'diasHastaBuro', tipo: 'numero' },
+  { campo: 'diasTotales', tipo: 'numero' },
+  { campo: 'erroresComentario', tipo: 'numero' },
+  { campo: 'erroresCaptura', tipo: 'numero' },
+  { campo: 'erroresIncompletos', tipo: 'numero' },
+  { campo: 'erroresIlegibles', tipo: 'numero' },
+  { campo: 'erroresOtros', tipo: 'numero', soloOriginal: true },
+  { campo: 'tieneReproceso', tipo: 'texto' },
+  { campo: 'mes', tipo: 'texto' },
+  { campo: 'rechazoBuroTrasReproceso', tipo: 'texto' },
+  { campo: 'aprobadaSinTarjeta', tipo: 'texto' },
+  { campo: 'quejas', tipo: 'numero' },
+  { campo: 'categoriaQueja', tipo: 'texto' },
 ];
 
-export const COLUMNAS_CALCULADAS: Columna[] = [
-  { campo: 'ventanaCaptura', nombre: 'Días de captura en sucursal (calculado)', tipo: 'numero', calculada: true },
-  { campo: 'erroresComentario', nombre: 'Errores en comentarios (calculado)', tipo: 'numero', calculada: true },
-  { campo: 'mes', nombre: 'Mes de inicio de captura (calculado)', tipo: 'texto', calculada: true },
-  { campo: 'quejas', nombre: 'Quejas del cliente (cruce con comentarios)', tipo: 'numero', calculada: true },
-  { campo: 'categoriaQueja', nombre: 'Categoría de la queja (cruce con comentarios)', tipo: 'texto', calculada: true },
+// Datos de la solicitud que se agregan a cada comentario
+export const CAMPOS_CALCULADOS_COMENTARIOS: { campo: string; tipo: TipoColumna; clave: string }[] = [
+  { campo: 'mes', tipo: 'texto', clave: 'mesComentario' },
+  { campo: 'solicitudVentanaCaptura', tipo: 'numero', clave: 'solicitudVentanaCaptura' },
+  { campo: 'solicitudErrores', tipo: 'numero', clave: 'solicitudErrores' },
+  { campo: 'solicitudUltimoEstatus', tipo: 'texto', clave: 'solicitudUltimoEstatus' },
 ];
 
-// Columnas que se agregan a cada comentario a partir de su solicitud (cruce por número de solicitud)
-export const COLUMNAS_CRUCE_COMENTARIOS: Columna[] = [
-  { campo: 'mes', nombre: 'Mes del comentario (calculado)', tipo: 'texto', calculada: true },
-  { campo: 'solicitudVentanaCaptura', nombre: 'Días de captura de la solicitud (cruce)', tipo: 'numero', calculada: true },
-  { campo: 'solicitudErrores', nombre: 'Errores de la solicitud (cruce)', tipo: 'numero', calculada: true },
-  { campo: 'solicitudResultadoBuro', nombre: 'Resultado del buró de la solicitud (cruce)', tipo: 'texto', calculada: true },
-  { campo: 'solicitudUltimoEstatus', nombre: 'Último estatus de la solicitud (cruce)', tipo: 'texto', calculada: true },
-];
-
-// Campos por los que se puede estratificar cualquier análisis
-export const ESTRATOS: Record<'solicitudes' | 'comentarios', { campo: string; nombre: string }[]> = {
-  solicitudes: [
-    { campo: 'branchNum', nombre: 'Sucursal' },
-    { campo: 'state', nombre: 'Estado' },
-    { campo: 'mes', nombre: 'Mes' },
-  ],
-  comentarios: [
-    { campo: 'sucursalNum', nombre: 'Sucursal' },
-    { campo: 'estado', nombre: 'Estado' },
-    { campo: 'mes', nombre: 'Mes' },
-  ],
-};
+export function columnasCalculadas(tabla: 'solicitudes' | 'comentarios', t: (c: string) => string, vocabulario: Vocabulario): Columna[] {
+  if (tabla === 'comentarios') {
+    return CAMPOS_CALCULADOS_COMENTARIOS.map(c => ({ campo: c.campo, tipo: c.tipo, nombre: t(`calculadas.${c.clave}`), calculada: true }));
+  }
+  return CAMPOS_CALCULADOS_SOLICITUDES
+    .filter(c => !c.soloOriginal || vocabulario === 'original')
+    .map(c => ({ campo: c.campo, tipo: c.tipo, nombre: t(`calculadas.${c.campo}`), calculada: true }));
+}
 
 // Mes en formato AAAA-MM; ordena bien como texto
 export function claveMes(v: unknown): string | null {
@@ -125,24 +128,36 @@ export function cartaControl(filas: Fila[], col: Columna): CartaControl | null {
   return { centro: r.media, sigma: r.desviacion, puntos };
 }
 
-function contarCoincidencias(texto: string, patron: RegExp): number {
-  return texto.match(patron)?.length ?? 0;
-}
+const diasEntre = (f: Fila, desde: string, hasta: string): number | null => {
+  const a = aNumero(f[desde], 'fecha');
+  const b = aNumero(f[hasta], 'fecha');
+  return a != null && b != null ? Math.round((b - a) / MS_DIA) : null;
+};
 
 // Agrega a cada solicitud las columnas calculadas que no vienen en el archivo original
-export function agregarCalculadas(filas: Fila[]): Fila[] {
+export function agregarCalculadas(filas: Fila[], vocabulario: Vocabulario = 'R2'): Fila[] {
   return filas.map(f => {
-    const inicio = aNumero(f['dateFirstInput'], 'fecha');
-    const fin = aNumero(f['dateLastInput'], 'fecha');
-    const comentario = String(f['comments'] ?? '');
-    const errores = EVENTOS_COMENTARIO
-      .filter(e => e.esError)
-      .reduce((s, e) => s + contarCoincidencias(comentario, e.patron), 0);
+    const ev = contarEventos(String(f['comments'] ?? ''), vocabulario);
+    const errores = ev.captura + ev.incompletos + ev.ilegibles + (ev.otros ?? 0);
+    const finCrop = aNumero(f['datePlasticSent'], 'fecha') != null ? 'datePlasticSent'
+      : aNumero(f['etfbScoreDate'], 'fecha') != null ? 'etfbScoreDate' : 'creditBureauRunDate';
+    const enviada = aNumero(f['datePlasticSent'], 'fecha') != null;
     return {
       ...f,
-      ventanaCaptura: inicio != null && fin != null ? Math.round((fin - inicio) / MS_DIA) : null,
+      ventanaCaptura: diasEntre(f, 'dateFirstInput', 'dateLastInput'),
+      diasEnvioCrop: diasEntre(f, 'dateLastInput', 'dateDocsReceived'),
+      diasEnCrop: diasEntre(f, 'dateDocsReceived', finCrop),
+      diasHastaBuro: diasEntre(f, 'dateFirstInput', 'creditBureauRunDate'),
+      diasTotales: diasEntre(f, 'dateFirstInput', 'datePlasticSent'),
       erroresComentario: errores,
+      erroresCaptura: ev.captura,
+      erroresIncompletos: ev.incompletos,
+      erroresIlegibles: ev.ilegibles,
+      ...(vocabulario === 'original' ? { erroresOtros: ev.otros ?? 0 } : {}),
+      tieneReproceso: errores > 0,
       mes: claveMes(f['dateFirstInput']),
+      rechazoBuroTrasReproceso: String(f['creditBureauResult'] ?? '').trim().toLowerCase() === 'rejected' && errores > 0,
+      aprobadaSinTarjeta: String(f['etfBankScoreResult'] ?? '').trim().toLowerCase() === 'accepted' && !enviada,
     };
   });
 }
@@ -241,21 +256,19 @@ export function histograma(nums: number[], esFecha = false): Contenedor[] {
 
 export interface Categoria { etiqueta: string; conteo: number }
 
-// Conteo por categoría. En Comments se cuentan los eventos mencionados en el texto.
-export function contarCategorias(filas: Fila[], col: Columna): Categoria[] {
+// Conteo por categoría. En la bitácora se cuentan los eventos mencionados en el texto.
+export function contarCategorias(filas: Fila[], col: Columna, vocabulario: Vocabulario = 'R2', sinDato = 'Sin dato'): Categoria[] {
   const conteos = new Map<string, number>();
   if (col.campo === 'comments') {
     for (const f of filas) {
-      const texto = String(f['comments'] ?? '');
-      for (const e of EVENTOS_COMENTARIO) {
-        const c = contarCoincidencias(texto, e.patron);
-        if (c > 0) conteos.set(e.etiqueta, (conteos.get(e.etiqueta) ?? 0) + c);
+      for (const [tipo, c] of Object.entries(contarEventos(String(f['comments'] ?? ''), vocabulario))) {
+        if (c > 0) conteos.set(tipo, (conteos.get(tipo) ?? 0) + c);
       }
     }
   } else {
     for (const f of filas) {
       const v = f[col.campo];
-      const etiqueta = v == null || v === '' ? '(vacío)' : col.tipo === 'fecha' ? formatoFecha(aNumero(v, 'fecha')) : String(v);
+      const etiqueta = v == null || v === '' ? sinDato : col.tipo === 'fecha' ? formatoFecha(aNumero(v, 'fecha')) : String(v);
       conteos.set(etiqueta, (conteos.get(etiqueta) ?? 0) + 1);
     }
   }
@@ -309,7 +322,7 @@ export function pivote(filas: Fila[], grupo: Columna, valor: Columna | null, max
   const mapa = new Map<string, { conteo: number; suma: number; n: number }>();
   for (const f of filas) {
     const v = f[grupo.campo];
-    const clave = v == null || v === '' ? '(vacío)' : grupo.tipo === 'fecha' ? formatoMes(aNumero(v, 'fecha')) : String(v);
+    const clave = v == null || v === '' ? 'Sin dato' : grupo.tipo === 'fecha' ? formatoMes(aNumero(v, 'fecha')) : String(v);
     const acc = mapa.get(clave) ?? { conteo: 0, suma: 0, n: 0 };
     acc.conteo++;
     if (valor) {
@@ -333,17 +346,17 @@ export function pivote(filas: Fila[], grupo: Columna, valor: Columna | null, max
 
 export function formatoFecha(ms: number | null): string {
   if (ms == null) return '';
-  return new Date(ms).toLocaleDateString('es-MX', { timeZone: 'UTC', day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(ms).toLocaleDateString(LOCALE, { timeZone: 'UTC', day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 export function formatoMes(ms: number | null): string {
   if (ms == null) return '';
-  return new Date(ms).toLocaleDateString('es-MX', { timeZone: 'UTC', month: 'short', year: 'numeric' });
+  return new Date(ms).toLocaleDateString(LOCALE, { timeZone: 'UTC', month: 'short', year: 'numeric' });
 }
 
 export function formatoNumero(n: number, decimales = 2): string {
   if (!Number.isFinite(n)) return '-';
-  return Number.isInteger(n) ? n.toLocaleString('es-MX') : n.toLocaleString('es-MX', { maximumFractionDigits: decimales });
+  return Number.isInteger(n) ? n.toLocaleString(LOCALE) : n.toLocaleString(LOCALE, { maximumFractionDigits: decimales });
 }
 
 // ── Vista del proceso (Anexo 1) ──

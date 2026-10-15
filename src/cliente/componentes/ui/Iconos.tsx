@@ -35,9 +35,133 @@ export type NombreIcono =
   | 'filtro'
   | 'contar'
   | 'sumar'
-  | 'estadisticas';
+  | 'estadisticas'
+  | 'caja'
+  | 'eventos'
+  | 'etapas'
+  | 'comparar'
+  | 'control'
+  | 'tablero'
+  | 'descargar'
+  | 'proyectar'
+  | 'izquierda'
+  | 'derecha'
+  | 'subir'
+  | 'bajar'
+  | 'mas'
+  | 'calculada'
+  | 'caso'
+  | 'imagen';
 
 const TRAZOS: Record<NombreIcono, ReactNode> = {
+  caja: (
+    <>
+      <path d="M6 3v4" />
+      <rect x="3" y="7" width="6" height="8" rx="1" />
+      <path d="M6 15v6" />
+      <path d="M18 5v3" />
+      <rect x="15" y="8" width="6" height="6" rx="1" />
+      <path d="M18 14v4" />
+      <path d="M3 11h6" />
+      <path d="M15 11h6" />
+    </>
+  ),
+  eventos: (
+    <>
+      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+      <path d="M14 2v6h6" />
+      <path d="M8 13h8" />
+      <path d="M8 17h5" />
+    </>
+  ),
+  etapas: (
+    <>
+      <circle cx="5" cy="12" r="2" />
+      <circle cx="12" cy="12" r="2" />
+      <circle cx="19" cy="12" r="2" />
+      <path d="M7 12h3" />
+      <path d="M14 12h3" />
+    </>
+  ),
+  comparar: (
+    <>
+      <rect x="3" y="4" width="7" height="16" rx="1" />
+      <rect x="14" y="4" width="7" height="16" rx="1" />
+      <path d="M5.5 16v-3" />
+      <path d="M7.5 16V9" />
+      <path d="M16.5 16v-5" />
+      <path d="M18.5 16v-2" />
+    </>
+  ),
+  control: (
+    <>
+      <path d="M3 5h18" strokeDasharray="2 2" />
+      <path d="M3 19h18" strokeDasharray="2 2" />
+      <path d="m3 13 4-3 4 4 4-6 6 4" />
+    </>
+  ),
+  tablero: (
+    <>
+      <rect x="3" y="3" width="7" height="9" rx="1" />
+      <rect x="14" y="3" width="7" height="5" rx="1" />
+      <rect x="14" y="12" width="7" height="9" rx="1" />
+      <rect x="3" y="16" width="7" height="5" rx="1" />
+    </>
+  ),
+  descargar: (
+    <>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M12 15V3" />
+    </>
+  ),
+  proyectar: (
+    <>
+      <rect x="2" y="3" width="20" height="14" rx="2" />
+      <path d="M8 21h8" />
+      <path d="M12 17v4" />
+    </>
+  ),
+  izquierda: (
+    <path d="m15 18-6-6 6-6" />
+  ),
+  derecha: (
+    <path d="m9 18 6-6-6-6" />
+  ),
+  subir: (
+    <path d="m18 15-6-6-6 6" />
+  ),
+  bajar: (
+    <path d="m6 9 6 6 6-6" />
+  ),
+  mas: (
+    <>
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </>
+  ),
+  calculada: (
+    <>
+      <path d="M9 3c-2 0-3 1-3 3v12c0 2-1 3-3 3" />
+      <path d="M3 10h8" />
+      <path d="m14 13 6 6" />
+      <path d="m20 13-6 6" />
+    </>
+  ),
+  caso: (
+    <>
+      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+      <path d="M8 7h8" />
+      <path d="M8 11h6" />
+    </>
+  ),
+  imagen: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="9" cy="9" r="2" />
+      <path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" />
+    </>
+  ),
   pregunta: (
     <>
       <circle cx="12" cy="12" r="10" />

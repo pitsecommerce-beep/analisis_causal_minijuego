@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { api, EVENTO_SESION_FINALIZADA, EVENTO_VERIFICACION } from '../api.js';
 import { useSondeo } from '../sondeo.js';
 import { TabDatos } from '../componentes/TabDatos.js';
+import { ConstructorGraficos } from '../componentes/ConstructorGraficos.js';
+import { useDatos } from '../datos.js';
+import { useSesion } from '../i18n.js';
 import { TabAsesores } from '../componentes/TabAsesores.js';
 import { TabDecisiones } from '../componentes/TabDecisiones.js';
 import { Consentimiento } from '../componentes/Consentimiento.js';
@@ -20,7 +23,7 @@ import { cargarEspina, fijarCicloEspina } from '../espina.js';
 import { registrarEvento } from '../eventos.js';
 import type { PasoRecorrido } from '../componentes/Onboarding.js';
 
-type Vista = 'datos' | 'asesores' | 'espina' | 'decisiones';
+type Vista = 'datos' | 'analisis' | 'asesores' | 'espina' | 'decisiones';
 
 const INTERVALO_ESPERA = 4000;
 const INTERVALO_LATIDO = 15000;
@@ -32,6 +35,7 @@ function onboardingVisto(): boolean {
 
 const TABS: { id: Vista; label: string; icono: NombreIcono }[] = [
   { id: 'datos', label: 'Datos', icono: 'tabla' },
+  { id: 'analisis', label: 'Análisis', icono: 'grafica' },
   { id: 'asesores', label: 'Sala de Juntas', icono: 'mensajes' },
   { id: 'espina', label: 'Espina de pescado', icono: 'diagnostico' },
   { id: 'decisiones', label: 'Decisiones', icono: 'decisiones' },
@@ -53,6 +57,8 @@ export function Juego() {
   const [mostrarPendientes, setMostrarPendientes] = useState(false);
   const [verificadas, setVerificadas] = useState<string[]>([]);
   const pendientes = usePendientes();
+  const { fijarConfig } = useSesion();
+  const { datos, error: errorDatos, reintentar: reintentarDatos } = useDatos();
   const [mostrarOnboarding, setMostrarOnboarding] = useState(false);
   const inicioRef = useRef(Date.now());
 
@@ -72,6 +78,7 @@ export function Juego() {
     try {
       const info = await api.experimento.info();
       setInfoExp(info);
+      if (info.config) fijarConfig(info.config);
 
       if (info.modoExperimento && !info.consentimiento) {
         setMostrarConsentimiento(true);
@@ -408,7 +415,7 @@ export function Juego() {
   return (
     <div className="pagina" style={{ background: 'var(--color-fondo)' }}>
       <header className="barra-estado">
-        <div className="contenedor" style={{ display: 'flex', alignItems: 'stretch', gap: 0, maxWidth: vista === 'datos' ? 1680 : undefined }}>
+        <div className="contenedor" style={{ display: 'flex', alignItems: 'stretch', gap: 0, maxWidth: vista === 'datos' || vista === 'analisis' ? 1680 : undefined }}>
           <div className="barra-estado-item">
             <span className="barra-estado-label">Director(a)</span>
             <span className="barra-estado-valor">{nombreJugador}</span>
@@ -494,7 +501,7 @@ export function Juego() {
         </div>
       </header>
 
-      <main className="contenedor" style={{ flex: 1, paddingTop: 20, paddingBottom: 40, width: '100%', maxWidth: vista === 'datos' ? 1680 : undefined }}>
+      <main className="contenedor" style={{ flex: 1, paddingTop: 20, paddingBottom: 40, width: '100%', maxWidth: vista === 'datos' || vista === 'analisis' ? 1680 : undefined }}>
         <div style={{
           display: 'flex',
           gap: 4,
@@ -535,7 +542,9 @@ export function Juego() {
         {esTratamiento && vista === 'decisiones' && <AsesorAlgoritmico />}
 
         <div key={vista} className="transicion-contenido">
-        {vista === 'datos' && <TabDatos onHerramientaUsada={onHerramientaUsada} />}
+        {(vista === 'datos' || vista === 'analisis') && !datos && <CargaDatos error={errorDatos} onReintentar={reintentarDatos} />}
+        {vista === 'datos' && datos && <TabDatos datos={datos} />}
+        {vista === 'analisis' && datos && <ConstructorGraficos datos={datos} conEspina onAnalisis={onHerramientaUsada} />}
         {vista === 'asesores' && (
           <TabAsesores
             onCredibilidadCambio={onCredibilidadCambio}
@@ -554,6 +563,19 @@ export function Juego() {
       {mostrarOnboarding && <Onboarding pasos={pasosRecorrido} onTerminar={terminarOnboarding} />}
     </div>
   );
+}
+
+function CargaDatos({ error, onReintentar }: { error: boolean; onReintentar: () => void }) {
+  const { t } = useSesion();
+  if (error) {
+    return (
+      <div className="alerta-error" role="alert" style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between' }}>
+        {t('comun.errorCarga')}
+        <button className="btn-fantasma btn-sm" onClick={onReintentar}>{t('comun.reintentar')}</button>
+      </div>
+    );
+  }
+  return <div style={{ padding: 40, textAlign: 'center' }}><div className="spinner" /></div>;
 }
 
 // Pantalla que reemplaza al juego cuando el profesor finaliza la sesión

@@ -6,6 +6,7 @@ import { Unirse } from './paginas/Unirse.js';
 import { Juego } from './paginas/Juego.js';
 import { Resultados } from './paginas/Resultados.js';
 import { ProveedorUI } from './componentes/ui/Notificaciones.js';
+import { ProveedorSesion } from './i18n.js';
 
 function Rutas() {
   const location = useLocation();
@@ -26,10 +27,12 @@ function Rutas() {
 
 export function App() {
   return (
-    <ProveedorUI>
-      <BrowserRouter>
-        <Rutas />
-      </BrowserRouter>
-    </ProveedorUI>
+    <ProveedorSesion>
+      <ProveedorUI>
+        <BrowserRouter>
+          <Rutas />
+        </BrowserRouter>
+      </ProveedorUI>
+    </ProveedorSesion>
   );
 }

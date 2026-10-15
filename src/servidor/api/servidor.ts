@@ -22,6 +22,7 @@ import { serializarDialogo, deserializarDialogo } from '../db/serializar.js';
 import { autenticarProfesor, autenticarJugador, soloModoCompleto } from './middleware.js';
 import { validarConfig, configDeSesion, claveDatos, CLAVES_DATOS } from '../../compartido/configuracion.js';
 import type { ClaveDatos } from '../../compartido/configuracion.js';
+import { DICCIONARIOS } from '../../compartido/i18n/index.js';
 import { libroComentarios } from '../datos/excel.js';
 import { estaConectado } from './presencia.js';
 import { normalizarEspina, validarVotacion, causasDesdeEspina, ESPINA_VACIA } from '../../compartido/espina.js';
@@ -503,51 +504,31 @@ app.get('/api/datos/excel/:tabla', autenticarJugador, (req, res) => {
   }
 });
 
+// Tipos de las columnas originales. Los nombres visibles salen del diccionario del idioma de la sesión.
+const TIPOS_SOLICITUDES: [string, 'numero' | 'texto' | 'fecha'][] = [
+  ['applicationNum', 'numero'], ['customerNum', 'numero'], ['age', 'numero'], ['maritalStatus', 'texto'], ['gender', 'texto'],
+  ['state', 'texto'], ['branchNum', 'numero'], ['yearsAsCustomer', 'numero'], ['creditBureauScore', 'numero'], ['etfBankScore', 'numero'],
+  ['dateFirstInput', 'fecha'], ['dateLastInput', 'fecha'], ['numTries', 'numero'],
+  ['timePasses', 'numero'], ['cropDeliveryTime', 'numero'], ['dateDocsSent', 'fecha'], ['executiveTime', 'numero'],
+  ['dateDocsReceived', 'fecha'], ['creditBureauResult', 'texto'], ['creditBureauRunDate', 'fecha'], ['etfBankScoreResult', 'texto'],
+  ['etfbScoreDate', 'fecha'], ['datePlasticSent', 'fecha'], ['cropTime', 'numero'], ['lastStatus', 'texto'],
+  ['creditLineGranted', 'numero'], ['comments', 'texto'],
+];
+const TIPOS_COMENTARIOS: [string, 'numero' | 'texto' | 'fecha'][] = [
+  ['id', 'texto'], ['solicitudNum', 'numero'], ['estado', 'texto'], ['sucursalNum', 'numero'], ['intentos', 'numero'], ['canalCaptacion', 'texto'],
+  ['fechaComentario', 'fecha'], ['categoriaPrimaria', 'texto'], ['categoriaSecundaria', 'texto'], ['comentarioCliente', 'texto'],
+];
+// Columnas que solo existen en el archivo de la base B
+const SOLO_BASE_B = new Set(['timePasses', 'cropDeliveryTime', 'executiveTime', 'cropTime']);
+
 app.get('/api/datos/columnas', autenticarJugador, (req, res) => {
+  const { idioma } = (req as RequestJugador).jugador.config;
+  const nombres = DICCIONARIOS[idioma].columnas;
+  const esB = claveDe(req).startsWith('B');
   res.json({
-    solicitudes: [
-      { campo: 'applicationNum', nombre: 'Núm. de solicitud', tipo: 'numero' },
-      { campo: 'customerNum', nombre: 'Núm. de cliente', tipo: 'numero' },
-      { campo: 'age', nombre: 'Edad', tipo: 'numero' },
-      { campo: 'maritalStatus', nombre: 'Estado civil', tipo: 'texto' },
-      { campo: 'gender', nombre: 'Género', tipo: 'texto' },
-      { campo: 'state', nombre: 'Estado', tipo: 'texto' },
-      { campo: 'branchNum', nombre: 'Sucursal', tipo: 'numero' },
-      { campo: 'yearsAsCustomer', nombre: 'Años como cliente', tipo: 'numero' },
-      { campo: 'creditBureauScore', nombre: 'Puntaje del buró de crédito', tipo: 'numero' },
-      { campo: 'etfBankScore', nombre: 'Score interno', tipo: 'numero' },
-      { campo: 'dateFirstInput', nombre: 'Inicio de captura en sucursal', tipo: 'fecha' },
-      { campo: 'dateLastInput', nombre: 'Fin de captura en sucursal', tipo: 'fecha' },
-      { campo: 'numTries', nombre: 'Intentos de captura', tipo: 'numero' },
-      { campo: 'dateDocsSent', nombre: 'Envío a back office (CrOP)', tipo: 'fecha' },
-      { campo: 'dateDocsReceived', nombre: 'Recepción en back office (CrOP)', tipo: 'fecha' },
-      { campo: 'creditBureauResult', nombre: 'Resultado del buró de crédito', tipo: 'texto' },
-      { campo: 'creditBureauRunDate', nombre: 'Consulta al buró de crédito', tipo: 'fecha' },
-      { campo: 'etfBankScoreResult', nombre: 'Resultado del score interno', tipo: 'texto' },
-      { campo: 'etfbScoreDate', nombre: 'Fecha del score interno', tipo: 'fecha' },
-      { campo: 'datePlasticSent', nombre: 'Envío de tarjeta', tipo: 'fecha' },
-      { campo: 'lastStatus', nombre: 'Último estatus', tipo: 'texto' },
-      { campo: 'creditLineGranted', nombre: 'Línea de crédito otorgada', tipo: 'numero' },
-      { campo: 'comments', nombre: 'Comentarios', tipo: 'texto' },
-      // La base B trae en su archivo cuatro columnas de tiempos que no tiene la A
-      ...(claveDe(req).startsWith('B') ? [
-        { campo: 'timePasses', nombre: 'Tiempo transcurrido', tipo: 'numero' },
-        { campo: 'cropDeliveryTime', nombre: 'Tiempo CrOP y entrega', tipo: 'numero' },
-        { campo: 'executiveTime', nombre: 'Tiempo del ejecutivo', tipo: 'numero' },
-        { campo: 'cropTime', nombre: 'Tiempo CrOP', tipo: 'numero' },
-      ] : []),
-    ],
-    comentarios: [
-      { campo: 'solicitudNum', nombre: 'Núm. de solicitud', tipo: 'numero' },
-      { campo: 'estado', nombre: 'Estado', tipo: 'texto' },
-      { campo: 'sucursalNum', nombre: 'Sucursal', tipo: 'numero' },
-      { campo: 'intentos', nombre: 'Intentos', tipo: 'numero' },
-      { campo: 'canalCaptacion', nombre: 'Canal', tipo: 'texto' },
-      { campo: 'fechaComentario', nombre: 'Fecha', tipo: 'fecha' },
-      { campo: 'categoriaPrimaria', nombre: 'Categoría primaria', tipo: 'texto' },
-      { campo: 'categoriaSecundaria', nombre: 'Categoría secundaria', tipo: 'texto' },
-      { campo: 'comentarioCliente', nombre: 'Comentario', tipo: 'texto' },
-    ],
+    solicitudes: TIPOS_SOLICITUDES.filter(([c]) => esB || !SOLO_BASE_B.has(c))
+      .map(([campo, tipo]) => ({ campo, tipo, nombre: nombres.solicitudes[campo as keyof typeof nombres.solicitudes] })),
+    comentarios: TIPOS_COMENTARIOS.map(([campo, tipo]) => ({ campo, tipo, nombre: nombres.comentarios[campo as keyof typeof nombres.comentarios] })),
   });
 });
 
