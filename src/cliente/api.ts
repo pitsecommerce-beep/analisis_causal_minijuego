@@ -1,3 +1,4 @@
+import type { ConfigSesion } from '../compartido/configuracion.js';
 import type { Espina } from '../compartido/espina.js';
 import type { Evento, Hitos } from '../compartido/metodo.js';
 
@@ -81,7 +82,7 @@ export const api = {
   },
   sesion: {
     buscar: (codigo: string) => request<any>('GET', `/sesion/${codigo}`),
-    crear: (nombre: string) => request<any>('POST', '/sesion', { nombre }),
+    crear: (nombre: string, config: ConfigSesion) => request<any>('POST', '/sesion', { nombre, ...config }),
     unirse: (codigo: string, nombre: string, email?: string) =>
       request<{ jugadorId: string; token: string; sesion: any; reconectado?: boolean }>('POST', `/sesion/${codigo}/unirse`, { nombre, email }),
   },

@@ -19,7 +19,8 @@ import {
 } from '../db/consultas.js';
 import { generarRecomendacion } from '../experimento/asesor-algoritmico.js';
 import { serializarDialogo, deserializarDialogo } from '../db/serializar.js';
-import { autenticarProfesor, autenticarJugador } from './middleware.js';
+import { autenticarProfesor, autenticarJugador, soloModoCompleto } from './middleware.js';
+import { validarConfig, configDeSesion } from '../../compartido/configuracion.js';
 import { estaConectado } from './presencia.js';
 import { normalizarEspina, validarVotacion, causasDesdeEspina, ESPINA_VACIA } from '../../compartido/espina.js';
 import type { Espina } from '../../compartido/espina.js';
@@ -217,9 +218,14 @@ app.post('/api/profesor/refrescar', async (req, res) => {
 // ╚══════════════════════════════════════╝
 
 app.post('/api/sesion', autenticarProfesor, async (req, res) => {
-  const { nombre } = req.body;
+  const { nombre } = req.body ?? {};
   if (!nombre) {
     res.status(400).json({ error: 'Nombre de sesión requerido' });
+    return;
+  }
+  const validacion = validarConfig(req.body);
+  if (!validacion.ok) {
+    res.status(400).json({ error: validacion.error });
     return;
   }
 
@@ -227,7 +233,7 @@ app.post('/api/sesion', autenticarProfesor, async (req, res) => {
   const profesorId = (req as RequestProfesor).profesorId;
 
   try {
-    const sesion = await crearSesion(profesorId, nombre, semilla);
+    const sesion = await crearSesion(profesorId, nombre, semilla, validacion.config);
     res.json(sesion);
   } catch (err) {
     responderError(res, 'Error al crear sesión', err);
@@ -246,6 +252,7 @@ app.get('/api/sesion/:codigo', async (req, res) => {
       codigo: sesion.codigo,
       nombre: sesion.nombre,
       estado: sesion.estado,
+      idioma: configDeSesion(sesion).idioma,
     });
   } catch (err) {
     responderError(res, 'Error al buscar sesión', err);
@@ -267,6 +274,7 @@ async function reconectarJugador(req: express.Request, res: express.Response): P
       jugadorId: existente.id,
       token,
       sesion: { id: sesion.id, nombre: sesion.nombre, estado: sesion.estado },
+      config: configDeSesion(sesion),
       modoExperimento: sesion.modo_experimento ?? false,
       reconectado: true,
     });
@@ -317,6 +325,7 @@ app.post('/api/sesion/:codigo/unirse', async (req, res) => {
       jugadorId: jugador.id,
       token: jugador.token,
       sesion: { id: sesion.id, nombre: sesion.nombre, estado: sesion.estado },
+      config: configDeSesion(sesion),
       modoExperimento: sesion.modo_experimento ?? false,
     });
   } catch (err) {
@@ -602,7 +611,7 @@ app.get('/api/partida', autenticarJugador, async (req, res) => {
   }
 });
 
-app.post('/api/partida/acciones', autenticarJugador, sesionActiva, async (req, res) => {
+app.post('/api/partida/acciones', autenticarJugador, soloModoCompleto, sesionActiva, async (req, res) => {
   const { acciones } = req.body;
   if (!Array.isArray(acciones) || acciones.length === 0) {
     res.status(400).json({ error: 'Acciones requeridas (array de {accionId})' });
@@ -657,7 +666,7 @@ app.post('/api/partida/acciones', autenticarJugador, sesionActiva, async (req, r
   }
 });
 
-app.post('/api/partida/compromiso', autenticarJugador, sesionActiva, async (req, res) => {
+app.post('/api/partida/compromiso', autenticarJugador, soloModoCompleto, sesionActiva, async (req, res) => {
   const { metrica, valorPrometido } = req.body;
   if (!metrica || valorPrometido == null) {
     res.status(400).json({ error: 'Métrica y valor prometido requeridos' });
@@ -682,7 +691,7 @@ app.post('/api/partida/compromiso', autenticarJugador, sesionActiva, async (req,
   }
 });
 
-app.post('/api/partida/avanzar', autenticarJugador, sesionActiva, async (req, res) => {
+app.post('/api/partida/avanzar', autenticarJugador, soloModoCompleto, sesionActiva, async (req, res) => {
   try {
     const jugador = (req as RequestJugador).jugador;
     const partida = await obtenerPartida(jugador.id);
@@ -1046,7 +1055,7 @@ app.put('/api/partida/espina', autenticarJugador, sesionActiva, async (req, res)
   }
 });
 
-app.post('/api/partida/votacion', autenticarJugador, sesionActiva, async (req, res) => {
+app.post('/api/partida/votacion', autenticarJugador, soloModoCompleto, sesionActiva, async (req, res) => {
   try {
     const jugador = (req as RequestJugador).jugador;
     const partida = await obtenerPartida(jugador.id);
@@ -1065,7 +1074,7 @@ app.post('/api/partida/votacion', autenticarJugador, sesionActiva, async (req, r
   }
 });
 
-app.post('/api/partida/cierre', autenticarJugador, async (req, res) => {
+app.post('/api/partida/cierre', autenticarJugador, soloModoCompleto, async (req, res) => {
 
   try {
     const jugador = (req as RequestJugador).jugador;
@@ -1176,13 +1185,14 @@ app.get('/api/experimento/info', autenticarJugador, async (req, res) => {
       modoExperimento: sesion.modo_experimento ?? false,
       grupo: jugador.grupo ?? null,
       consentimiento: jugador.consentimiento ?? false,
+      config: jugador.config,
     });
   } catch (err) {
     responderError(res, 'Error al obtener info del experimento', err);
   }
 });
 
-app.get('/api/experimento/recomendacion', autenticarJugador, async (req, res) => {
+app.get('/api/experimento/recomendacion', autenticarJugador, soloModoCompleto, async (req, res) => {
   try {
     const jugador = (req as RequestJugador).jugador;
     if (jugador.grupo !== 'tratamiento') {

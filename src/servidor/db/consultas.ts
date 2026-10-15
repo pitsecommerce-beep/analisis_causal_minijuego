@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { obtenerSupabase } from './supabase.js';
 import type { EstadoPartida } from '../motor/ciclos.js';
 import type { EstadoDialogoJSON } from './serializar.js';
+import type { ConfigSesion } from '../../compartido/configuracion.js';
 
 const sb = () => obtenerSupabase();
 
@@ -21,11 +22,11 @@ function generarToken(): string {
 
 // --- Sesiones ---
 
-export async function crearSesion(profesorId: string, nombre: string, semilla: number) {
+export async function crearSesion(profesorId: string, nombre: string, semilla: number, config: ConfigSesion) {
   const codigo = generarCodigo();
   const { data, error } = await sb()
     .from('sesiones_juego')
-    .insert({ codigo, profesor_id: profesorId, nombre, semilla })
+    .insert({ codigo, profesor_id: profesorId, nombre, semilla, ...config })
     .select()
     .single();
   if (error) throw error;

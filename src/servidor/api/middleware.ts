@@ -2,6 +2,8 @@ import type { Request, Response, NextFunction } from 'express';
 import { obtenerSupabase } from '../db/supabase.js';
 import { obtenerJugadorPorToken } from '../db/consultas.js';
 import { esCorreoProfesor, MENSAJE_DOMINIO } from './dominio.js';
+import { configDeSesion } from '../../compartido/configuracion.js';
+import type { ConfigSesion } from '../../compartido/configuracion.js';
 
 export interface RequestProfesor extends Request {
   profesorId: string;
@@ -15,6 +17,7 @@ export interface RequestJugador extends Request {
     sesionEstado: string;
     grupo: string | null;
     consentimiento: boolean;
+    config: ConfigSesion;
   };
 }
 
@@ -75,10 +78,20 @@ export async function autenticarJugador(
       sesionEstado: sesion.estado as string,
       grupo: jugador.grupo ?? null,
       consentimiento: jugador.consentimiento ?? false,
+      config: configDeSesion(sesion),
     };
     next();
   } catch (err) {
     console.error(`[${new Date().toISOString()}] Error de autenticación de jugador:`, err);
     res.status(500).json({ error: 'Error de autenticación' });
   }
+}
+
+// Las rutas de juego (decisiones, ciclos, votación y cierre) no existen en el modo informativo
+export function soloModoCompleto(req: Request, res: Response, next: NextFunction): void {
+  if ((req as RequestJugador).jugador?.config?.modo === 'informativo') {
+    res.status(403).json({ error: 'Esta función no está disponible en esta sesión.', modoInformativo: true });
+    return;
+  }
+  next();
 }

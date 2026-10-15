@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
+import { CONFIG_POR_DEFECTO, configDeSesion, vincular } from '../../compartido/configuracion.js';
+import type { Base, ConfigSesion, Idioma, Modo, Version } from '../../compartido/configuracion.js';
 import { useSondeo } from '../sondeo.js';
 import { useUI } from '../componentes/ui/Notificaciones.js';
 import { PiePagina } from '../componentes/ui/PiePagina.js';
@@ -140,12 +142,20 @@ function Registro() {
   );
 }
 
+function resumenConfig(sesion: Record<string, unknown>): string {
+  const c = configDeSesion(sesion);
+  const modo = c.modo === 'completo' ? 'Completo' : 'Informativo';
+  const datos = c.version === 'extendida' ? 'extendida' : `original ${c.base}`;
+  return `${modo} · ${datos} · ${c.idioma === 'es' ? 'español' : 'inglés'}`;
+}
+
 function Panel() {
   const nav = useNavigate();
   const { avisar, confirmar } = useUI();
   const [sesiones, setSesiones] = useState<any[]>([]);
   const [cargandoLista, setCargandoLista] = useState(true);
   const [nombre, setNombre] = useState('');
+  const [config, setConfig] = useState<ConfigSesion>(CONFIG_POR_DEFECTO);
   const [creando, setCreando] = useState(false);
   const [detalle, setDetalle] = useState<any>(null);
   const [modoExp, setModoExp] = useState(false);
@@ -184,7 +194,7 @@ function Panel() {
     if (!limpio) return;
     setCreando(true);
     try {
-      const sesion = await api.sesion.crear(limpio);
+      const sesion = await api.sesion.crear(limpio, config);
       setNombre('');
       await cargarSesiones();
       avisar('exito', 'Sesión creada', `Código de acceso: ${sesion.codigo}`);
@@ -408,13 +418,43 @@ function Panel() {
               <h3 style={{ marginBottom: 14, fontSize: 16, fontWeight: 600, color: 'var(--color-primario)' }}>
                 Nueva sesión de juego
               </h3>
-              <form onSubmit={crearSesion} style={{ display: 'flex', gap: 8 }}>
-                <input value={nombre} onChange={e => setNombre(e.target.value)}
-                  aria-label="Nombre de la sesión" maxLength={80}
-                  placeholder="Ej. MBA Grupo A, Octubre" required />
-                <button className="btn-primario" type="submit" disabled={creando || !nombre.trim()} style={{ whiteSpace: 'nowrap' }}>
-                  {creando ? 'Creando...' : 'Crear'}
-                </button>
+              <form onSubmit={crearSesion}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input value={nombre} onChange={e => setNombre(e.target.value)}
+                    aria-label="Nombre de la sesión" maxLength={80}
+                    placeholder="Ej. MBA Grupo A, Octubre" required />
+                  <button className="btn-primario" type="submit" disabled={creando || !nombre.trim()} style={{ whiteSpace: 'nowrap' }}>
+                    {creando ? 'Creando...' : 'Crear'}
+                  </button>
+                </div>
+                <div className="config-sesion">
+                  <label>Modo
+                    <select value={config.modo} onChange={e => setConfig(c => vincular(c, { modo: e.target.value as Modo }))}>
+                      <option value="completo">Completo</option>
+                      <option value="informativo">Informativo</option>
+                    </select>
+                  </label>
+                  <label>Versión
+                    <select value={config.version} onChange={e => setConfig(c => vincular(c, { version: e.target.value as Version }))}>
+                      <option value="extendida">Extendida</option>
+                      <option value="original">Original</option>
+                    </select>
+                  </label>
+                  <label>Base
+                    <select value={config.base} disabled={config.version === 'extendida'}
+                      title={config.version === 'extendida' ? 'La versión extendida está construida sobre la base A' : undefined}
+                      onChange={e => setConfig(c => vincular(c, { base: e.target.value as Base }))}>
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                    </select>
+                  </label>
+                  <label>Idioma
+                    <select value={config.idioma} onChange={e => setConfig(c => vincular(c, { idioma: e.target.value as Idioma }))}>
+                      <option value="es">Español</option>
+                      <option value="en">Inglés</option>
+                    </select>
+                  </label>
+                </div>
               </form>
             </div>
 
@@ -478,6 +518,7 @@ function Panel() {
                       <div style={{ fontSize: 13, color: 'var(--color-texto-secundario)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span>Código: <strong style={{ letterSpacing: 1 }}>{s.codigo}</strong></span>
                         <span className={`badge ${etiqueta.clase}`}>{etiqueta.texto}</span>
+                        <span style={{ color: 'var(--color-texto-terciario)' }}>{resumenConfig(s)}</span>
                       </div>
                     </div>
                     <div className="sesion-fila-acciones">
@@ -530,6 +571,7 @@ function Panel() {
                   <button className="btn-sutil btn-sm" onClick={() => copiarCodigo(detalle.sesion.codigo)}>
                     Copiar código
                   </button>
+                  <span style={{ fontSize: 13, color: 'var(--color-texto-secundario)' }}>{resumenConfig(detalle.sesion)}</span>
                 </div>
 
                 {(() => {

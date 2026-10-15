@@ -1652,3 +1652,9 @@ input[type='checkbox'].casilla {
   cursor: pointer;
 }
 .campo-contrasena-ojo:hover, .campo-contrasena-ojo:focus-visible { color: var(--color-primario); background: var(--color-fondo); }
+
+/* Configuración de la sesión al crearla */
+.config-sesion { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.config-sesion label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 500; color: var(--color-texto-secundario); }
+.config-sesion select:disabled { opacity: 0.55; cursor: not-allowed; }
+@media (max-width: 640px) { .config-sesion { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
