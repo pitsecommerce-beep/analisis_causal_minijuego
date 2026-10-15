@@ -186,13 +186,28 @@ export function Juego() {
 
   // Inducción: Ramón Betancourt recibe al nuevo director a prueba y señala la interfaz
   const ob = DICCIONARIOS[config.idioma].onboarding;
-  const pasosRecorrido: PasoRecorrido[] = [
+  const nSolicitudes = (datos?.solicitudes.length ?? 0).toLocaleString(LOCALES[config.idioma]);
+  // En modo informativo Ramón recibe al equipo consultor y recorre solo las pestañas de consulta
+  const obi = DICCIONARIOS[config.idioma].onboardingInformativo;
+  const pasosInformativo: PasoRecorrido[] = [
+    { ...obi.bienvenida, puntos: [...obi.bienvenida.puntos], alEntrar: () => setVista('caso') },
+    { objetivo: 'tab-caso', ...obi.caso, alEntrar: () => setVista('caso') },
+    { objetivo: 'tab-datos', titulo: obi.datos.titulo, texto: tr('onboardingInformativo.datos.texto', { n: nSolicitudes }), alEntrar: () => setVista('datos') },
+    { objetivo: 'tab-comentarios', ...obi.comentarios, alEntrar: () => setVista('datos') },
+    { objetivo: 'tab-proceso', ...obi.proceso, alEntrar: () => setVista('datos') },
+    { objetivo: 'tab-analisis', ...obi.analisis, alEntrar: () => setVista('analisis') },
+    { objetivo: 'tab-tablero', ...obi.tablero, alEntrar: () => setVista('tablero') },
+    { objetivo: 'tab-asesores', ...obi.sala, alEntrar: () => setVista('asesores') },
+    { objetivo: 'ayuda', ...obi.ayuda },
+    { ...obi.cierre, animo: 'feliz', alEntrar: () => setVista('caso') },
+  ];
+  const pasosRecorrido: PasoRecorrido[] = informativo ? pasosInformativo : [
     { ...ob.prueba, puntos: [...ob.prueba.puntos], alEntrar: () => setVista('asesores') },
     { objetivo: 'ciclo', ...ob.ciclos },
     { objetivo: 'vidas', animo: 'enojado', ...ob.vidas, puntos: [...ob.vidas.puntos] },
     { objetivo: 'credibilidad', ...ob.credibilidad },
     { objetivo: 'presupuesto', ...ob.presupuesto },
-    { objetivo: 'tab-datos', titulo: ob.datos.titulo, texto: tr('onboarding.datos.texto', { n: (datos?.solicitudes.length ?? 0).toLocaleString(LOCALES[config.idioma]) }), alEntrar: () => setVista('datos') },
+    { objetivo: 'tab-datos', titulo: ob.datos.titulo, texto: tr('onboarding.datos.texto', { n: nSolicitudes }), alEntrar: () => setVista('datos') },
     { objetivo: 'tab-proceso', ...ob.proceso, alEntrar: () => setVista('datos') },
     { objetivo: 'tab-comentarios', ...ob.comentarios, alEntrar: () => setVista('datos') },
     { objetivo: 'tab-analisis', ...ob.analisis, alEntrar: () => setVista('analisis') },
@@ -208,8 +223,8 @@ export function Juego() {
   function terminarOnboarding() {
     try { localStorage.setItem(CLAVE_ONBOARDING, '1'); } catch { /* sin almacenamiento */ }
     setMostrarOnboarding(false);
-    // Al terminar la inducción se vuelve a la Sala de Juntas para conocer al equipo
-    setVista('asesores');
+    // Al terminar la inducción se vuelve al inicio: el caso en modo informativo, la Sala de Juntas en el completo
+    setVista(informativo ? 'caso' : 'asesores');
   }
 
   async function iniciar() {
@@ -217,7 +232,7 @@ export function Juego() {
     try {
       const res = await api.partida.iniciar();
       setEstado(res);
-      if (!onboardingVisto() && leerModo() !== 'informativo') setMostrarOnboarding(true);
+      if (!onboardingVisto()) setMostrarOnboarding(true);
       telemetria('partida_iniciada', { ciclo: res.cicloActual });
     } catch (err: any) {
       setError(String(err?.message ?? '').includes('aún no ha iniciado') ? tr('juego.sesionNoIniciada') : tr('juego.errorInicio'));
@@ -415,11 +430,11 @@ export function Juego() {
               <span className="ocultar-movil">{tr('juego.pendientes')}</span>
               {porResolver > 0 && <span className="pendientes-contador">{porResolver}</span>}
             </button>}
-            {!informativo && <button
+            <button
               onClick={() => setMostrarOnboarding(true)}
               data-tour="ayuda"
-              aria-label={tr('juego.comoSeJuega')}
-              title={tr('juego.comoSeJuega')}
+              aria-label={tr(informativo ? 'juego.comoFunciona' : 'juego.comoSeJuega')}
+              title={tr(informativo ? 'juego.comoFunciona' : 'juego.comoSeJuega')}
               style={{
                 display: 'inline-flex',
                 background: 'rgba(255,255,255,0.1)',
@@ -429,7 +444,7 @@ export function Juego() {
               }}
             >
               <Icono nombre="pregunta" tamano={18} />
-            </button>}
+            </button>
             <button
               onClick={salir}
               style={{
@@ -508,7 +523,7 @@ export function Juego() {
       </main>
       <PiePagina />
       {mostrarPendientes && !informativo && <Pendientes pendientes={pendientes} verificadas={verificadas} onCerrar={() => setMostrarPendientes(false)} />}
-      {mostrarOnboarding && !informativo && <Onboarding pasos={pasosRecorrido} onTerminar={terminarOnboarding} />}
+      {mostrarOnboarding && <Onboarding pasos={pasosRecorrido} onTerminar={terminarOnboarding} />}
     </div>
   );
 }
