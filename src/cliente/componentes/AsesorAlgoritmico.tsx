@@ -1,3 +1,4 @@
+import { useSesion } from '../i18n.js';
 import { useState } from 'react';
 import { Icono } from './ui/Iconos.js';
 import { api } from '../api.js';
@@ -6,6 +7,7 @@ export function AsesorAlgoritmico() {
   const [recomendacion, setRecomendacion] = useState<any>(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useSesion();
 
   async function consultar() {
     setCargando(true);
@@ -14,7 +16,8 @@ export function AsesorAlgoritmico() {
       const rec = await api.experimento.recomendacion();
       setRecomendacion(rec);
     } catch (err: any) {
-      setError(err.message);
+      setError(t('ui.asesorAlgoritmico.error'));
+      void err;
     }
     setCargando(false);
   }
@@ -33,15 +36,15 @@ export function AsesorAlgoritmico() {
           <Icono nombre="asesor" tamano={18} />
         </div>
         <div>
-          <strong style={{ color: 'var(--color-acento)', fontSize: 14 }}>Asesor Algorítmico</strong>
-          <p style={{ fontSize: 11, color: 'var(--color-texto-terciario)' }}>Análisis basado en datos del proceso</p>
+          <strong style={{ color: 'var(--color-acento)', fontSize: 14 }}>{t('ui.asesorAlgoritmico.titulo')}</strong>
+          <p style={{ fontSize: 11, color: 'var(--color-texto-terciario)' }}>{t('ui.asesorAlgoritmico.subtitulo')}</p>
         </div>
       </div>
 
       {!recomendacion && (
         <button className="btn-acento" onClick={consultar} disabled={cargando}
           style={{ padding: '10px 18px', fontSize: 13 }}>
-          {cargando ? 'Analizando...' : 'Pedir recomendación'}
+          {cargando ? t('ui.asesorAlgoritmico.analizando') : t('ui.asesorAlgoritmico.pedir')}
         </button>
       )}
 
@@ -61,12 +64,12 @@ export function AsesorAlgoritmico() {
         }}>
           <p style={{ fontSize: 14, marginBottom: 10, lineHeight: 1.6 }}>{recomendacion.explicacion}</p>
           <div style={{ display: 'flex', gap: 20, fontSize: 12, color: 'var(--color-texto-secundario)' }}>
-            <span>Métrica: <strong style={{ color: 'var(--color-texto)' }}>{recomendacion.metricaPrioritaria}</strong></span>
-            <span>Confianza: <strong style={{ color: 'var(--color-texto)' }}>{Math.round(recomendacion.confianza * 100)}%</strong></span>
+            <span>{t('ui.asesorAlgoritmico.metrica')}: <strong style={{ color: 'var(--color-texto)' }}>{recomendacion.metricaNombre ?? recomendacion.metricaPrioritaria}</strong></span>
+            <span>{t('ui.asesorAlgoritmico.confianza')}: <strong style={{ color: 'var(--color-texto)' }}>{Math.round(recomendacion.confianza * 100)}%</strong></span>
           </div>
           <button className="btn-fantasma" style={{ marginTop: 10, fontSize: 12, padding: '6px 12px' }}
             onClick={() => { setRecomendacion(null); }}>
-            Consultar de nuevo
+            {t('ui.asesorAlgoritmico.pedir')}
           </button>
         </div>
       )}

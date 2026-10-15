@@ -1,3 +1,4 @@
+import { useSesion } from '../i18n.js';
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../api.js';
 import { useUI } from './ui/Notificaciones.js';
@@ -40,16 +41,6 @@ interface Props {
   soloLectura?: boolean;
 }
 
-// Lo que dice cada quien cuando no tiene nada nuevo para ti
-const REPOSO: Record<string, string> = {
-  bernardo: 'Mis sucursales capturan rápido. Si algo se atora, es allá en CrOP.',
-  oscar: 'El sistema está estable. Si quieres revisar algo en los registros, avísame.',
-  ramon: 'El consejo quiere resultados, no presentaciones. Sigue con lo tuyo.',
-  paulina: 'Cada peso que se gaste lo voy a revisar. Tráeme números, no corazonadas.',
-  silvia: 'Si hace falta capacitar a alguien, mi equipo está listo. Solo dime a quién.',
-  diego: 'Tengo los datos de CrOP a la mano por si los necesitas.',
-};
-
 const DURACION_CIERRE = 1100;
 // Breve momento con la laptop abierta antes de cerrarla sola al entrar
 const PAUSA_INTRO = 450;
@@ -77,6 +68,8 @@ function infoDe(id: string) {
 
 export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop, soloLectura }: Props) {
   const { avisar } = useUI();
+  const { t } = useSesion();
+  const reposo = (id: string) => t(`sala.reposo.${id}`);
   const [dialogos, setDialogos] = useState<Nodo[]>([]);
   const [cargando, setCargando] = useState(true);
   const [fase, setFase] = useState<Fase>('intro');
@@ -99,7 +92,8 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop, soloLectura }
     try {
       setDialogos(await (soloLectura ? api.sala.testimonios() : api.partida.dialogos()));
     } catch (err: any) {
-      avisar('error', 'No se pudieron cargar los diálogos', err.message);
+      avisar('error', t('sala.errorCarga'));
+      void err;
     }
     setCargando(false);
   }
@@ -280,7 +274,7 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop, soloLectura }
     const base = { personaje: id, nodo: 0, linea: 0, modo: 'hablando' as Modo, textoJugador: '', enviando: false, abrirAlTerminar: false };
     if (pendientes.length > 0) setCharla({ ...base, nodos: pendientes, repaso: false });
     else if (nodos.length > 0) setCharla({ ...base, nodos, repaso: true });
-    else setCharla({ ...base, repaso: true, nodos: [{ personaje: id, nodoId: `reposo_${id}`, lineas: [REPOSO[id] ?? '...'], respuestas: [] }] });
+    else setCharla({ ...base, repaso: true, nodos: [{ personaje: id, nodoId: `reposo_${id}`, lineas: [reposo(id)], respuestas: [] }] });
   }
 
   function siguienteNodo(ch: Charla) {
@@ -307,7 +301,7 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop, soloLectura }
       personaje: infoDe(nodoActual.personaje)?.nombre ?? nodoActual.personaje,
       texto: nodoActual.pendiente,
       afirmacion: nodoActual.afirmacion?.id ?? null,
-    })) avisar('info', 'Nota agregada a Pendientes', nodoActual.pendiente);
+    })) avisar('info', t('sala.notaAgregada'), nodoActual.pendiente);
     const debeResponder = !charla.repaso && nodoActual.respuestas.length > 0 && !memoria.respondidos.has(nodoActual.nodoId);
     if (debeResponder) setCharla({ ...charla, modo: 'opciones' });
     else siguienteNodo(charla);
@@ -335,7 +329,8 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop, soloLectura }
     } catch (err: any) {
       marcar('respondidos', nodoId, false);
       setCharla(ch => ch && { ...ch, modo: 'opciones', enviando: false, abrirAlTerminar: false });
-      avisar('error', 'No se pudo enviar tu respuesta', err.message);
+      avisar('error', t('sala.errorRespuesta'));
+      void err;
     }
   }
 
@@ -399,7 +394,7 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop, soloLectura }
   function vistaPrevia(id: string): string {
     const nodo = dialogos.find(d => d.personaje === id && (!memoria.vistos.has(d.nodoId) || (d.respuestas.length > 0 && !memoria.respondidos.has(d.nodoId))))
       ?? dialogos.find(d => d.personaje === id);
-    const linea = nodo?.lineas[0] ?? REPOSO[id] ?? '';
+    const linea = nodo?.lineas[0] ?? reposo(id);
     return linea.length > 72 ? `${linea.slice(0, 70).trimEnd()}…` : linea;
   }
 
@@ -419,13 +414,13 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop, soloLectura }
             onPointerLeave={() => setHover(null)}
             onPointerDown={alClic}
             role="img"
-            aria-label="Sala de juntas de ETF Bank con tu equipo sentado alrededor de la mesa"
+            aria-label={t('sala.escenaAria')}
           />
 
           {fase === 'sala' && !charla && (
             <div className="sala-rotulo">
-              <strong>Sala de Juntas</strong>
-              <span>{cargando ? 'Tu equipo está llegando…' : 'Haz clic en alguien para escucharlo'}</span>
+              <strong>{t('sala.titulo')}</strong>
+              <span>{cargando ? t('sala.llegando') : t('sala.hazClic')}</span>
             </div>
           )}
 
@@ -435,29 +430,29 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop, soloLectura }
               style={{ left: `${(perHover.cx / P.ANCHO) * 100}%`, top: `${(cajaHover.y0 / P.ALTO) * 100}%` }}
             >
               <strong>{perHover.nombre}</strong>
-              <small>{perHover.rol}</small>
+              <small>{t(`sala.roles.${perHover.id}`)}</small>
               {previa && <span>“{previa}”</span>}
             </div>
           )}
 
           {fase === 'sala' && !charla && hover === 'laptop' && (
             <div className="sala-globo sala-globo-laptop" style={{ left: '50%', top: `${(P.LAPTOP_CERRADA.y0 / P.ALTO) * 100}%` }}>
-              <strong>Abrir la laptop</strong>
-              <span>Vuelve a los datos para verificar lo que te dicen.</span>
+              <strong>{t('sala.abrirLaptop')}</strong>
+              <span>{t('sala.abrirLaptopAyuda')}</span>
             </div>
           )}
 
           {charla && perCharla && nodoActual && (
-            <div className="sala-dialogo" onClick={avanzar} role="dialog" aria-label={`Conversación con ${perCharla.nombre}`}>
+            <div className="sala-dialogo" onClick={avanzar} role="dialog" aria-label={perCharla.nombre}>
               <canvas ref={retratoRef} width={34} height={34} className="sala-retrato" />
               <div className="sala-dialogo-cuerpo">
                 <div className="sala-dialogo-nombre">
-                  {charla.modo === 'jugador' ? 'Tú' : perCharla.nombre}
-                  {charla.modo !== 'jugador' && <small>{perCharla.rol}</small>}
+                  {charla.modo === 'jugador' ? t('sala.tu') : perCharla.nombre}
+                  {charla.modo !== 'jugador' && <small>{t(`sala.roles.${perCharla.id}`)}</small>}
                   <button
                     className="sala-cerrar"
                     onClick={(e) => { e.stopPropagation(); setCharla(null); }}
-                    aria-label="Terminar conversación"
+                    aria-label={t('sala.terminar')}
                   >
                     ×
                   </button>
@@ -469,7 +464,7 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop, soloLectura }
                 </p>
 
                 {nodoActual.afirmacion?.verificable && charla.modo !== 'jugador' && !escribiendo && (
-                  <div className="sala-pista">Afirmación verificable en la laptop</div>
+                  <div className="sala-pista">{t('sala.verificable')}</div>
                 )}
 
                 {charla.modo === 'opciones' && !escribiendo && (
@@ -497,7 +492,7 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop, soloLectura }
         </div>
       </div>
 
-      <div className="sala-equipo" aria-label="Tu equipo">
+      <div className="sala-equipo" aria-label={t('sala.tuEquipo')}>
         {P.PERSONAJES.map(per => {
           const estado = cargando ? null : pendienteDe(per.id);
           return (
@@ -510,9 +505,9 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop, soloLectura }
               disabled={fase !== 'sala'}
             >
               <span className="sala-miembro-nombre">{per.nombre}</span>
-              <span className="sala-miembro-rol">{per.rol}</span>
-              {estado === 'pendiente' && <span className="sala-marca pendiente">Te necesita</span>}
-              {estado === 'nuevo' && <span className="sala-marca nuevo">Tiene algo que decir</span>}
+              <span className="sala-miembro-rol">{t(`sala.roles.${per.id}`)}</span>
+              {estado === 'pendiente' && <span className="sala-marca pendiente">{t('sala.teNecesita')}</span>}
+              {estado === 'nuevo' && <span className="sala-marca nuevo">{t('sala.tieneAlgo')}</span>}
             </button>
           );
         })}

@@ -5,7 +5,8 @@ import { useUI } from '../componentes/ui/Notificaciones.js';
 import { Icono } from '../componentes/ui/Iconos.js';
 import { PiePagina } from '../componentes/ui/PiePagina.js';
 import { useEspina, cargarEspina } from '../espina.js';
-import { ESTADOS, causasDeTarjeta, ultimaVotacion } from '../../compartido/espina.js';
+import { causasDeTarjeta, ultimaVotacion } from '../../compartido/espina.js';
+import { useSesion } from '../i18n.js';
 
 const COLORES_DESENLACE: Record<string, { color: string; bg: string }> = {
   reconversion: { color: '#1a7a4c', bg: '#e6f5ed' },
@@ -16,15 +17,16 @@ const COLORES_DESENLACE: Record<string, { color: string; bg: string }> = {
 };
 
 const NOMBRES_DIMENSION: Record<string, { nombre: string; color: string }> = {
-  diagnostico: { nombre: 'Diagnóstico (causa raíz)', color: '#2563a8' },
-  criterio: { nombre: 'Criterio (evidencia)', color: '#7c3aed' },
-  impacto: { nombre: 'Impacto (mejora KPIs)', color: '#059669' },
-  metodo: { nombre: 'Método (hitos de Bohn)', color: '#0891b2' },
-  compromisos: { nombre: 'Compromisos', color: '#c8922a' },
-  penalizaciones: { nombre: 'Penalizaciones', color: '#c0392b' },
+  diagnostico: { nombre: 'diagnostico', color: '#2563a8' },
+  criterio: { nombre: 'criterio', color: '#7c3aed' },
+  impacto: { nombre: 'impacto', color: '#059669' },
+  metodo: { nombre: 'metodo', color: '#0891b2' },
+  compromisos: { nombre: 'compromisos', color: '#c8922a' },
+  penalizaciones: { nombre: 'penalizaciones', color: '#c0392b' },
 };
 
 export function Resultados() {
+  const { t: tr } = useSesion();
   const nav = useNavigate();
   const { avisar, confirmar } = useUI();
   const [fase, setFase] = useState<'cierre' | 'resultado'>('cierre');
@@ -43,9 +45,9 @@ export function Resultados() {
 
   async function enviarCierre() {
     const ok = await confirmar({
-      titulo: 'Enviar cierre de partida',
-      mensaje: 'Tu diagnóstico se calcula con las causas que votaste en el último ciclo y verificaste con datos. Una vez enviado el cierre se calculará tu puntuación final y no podrás modificarlo.',
-      textoConfirmar: 'Enviar y ver resultado',
+      titulo: tr('resultados.enviarTitulo'),
+      mensaje: tr('resultados.enviarMensaje'),
+      textoConfirmar: tr('resultados.enviarConfirmar'),
       tono: 'advertencia',
       icono: 'enviar',
     });
@@ -56,18 +58,19 @@ export function Resultados() {
       const res = await api.partida.cierre();
       setResultado(res);
       setFase('resultado');
-      avisar('exito', 'Cierre enviado', 'Tu resultado final está listo.');
+      avisar('exito', tr('resultados.enviado'), tr('resultados.listo'));
     } catch (err: any) {
-      setErrorCierre(err.message || 'Error al enviar el cierre');
+      setErrorCierre(tr('resultados.errorCierre'));
+      void err;
     }
     setCargando(false);
   }
 
   async function salir() {
     const ok = await confirmar({
-      titulo: 'Salir del simulador',
-      mensaje: 'Se cerrará tu sesión en este dispositivo. Tu resultado ya quedó registrado.',
-      textoConfirmar: 'Salir',
+      titulo: tr('juego.salirTitulo'),
+      mensaje: tr('resultados.salirMensaje'),
+      textoConfirmar: tr('juego.salir'),
       icono: 'salir',
     });
     if (!ok) return;
@@ -91,22 +94,22 @@ export function Resultados() {
               <Icono nombre="diagnostico" tamano={26} grosor={1.8} />
             </div>
             <h2 style={{ color: 'var(--color-primario)', fontSize: 22, fontWeight: 700 }}>
-              Cierre de partida
+              {tr('resultados.cierreTitulo')}
             </h2>
             <p style={{ color: 'var(--color-texto-secundario)', fontSize: 14, marginTop: 6 }}>
-              Antes de ver tu resultado, declara cuáles crees que son las causas raíz del problema.
+              {tr('resultados.cierreAyuda')}
             </p>
           </div>
 
           <div className="tarjeta" style={{ marginBottom: 16 }}>
             <h4 style={{ marginBottom: 6, fontSize: 15, fontWeight: 600 }}>
-              Tu diagnóstico: causas votadas en el ciclo {votacion?.ciclo ?? '-'}
+              {tr('resultados.diagnostico', { n: votacion?.ciclo ?? '' })}
             </h4>
             <p className="datos-nota" style={{ marginTop: 0 }}>
-              Vienen de tu espina de pescado. Solo suman las verificadas con datos; las votadas sin verificar restan.
+              {tr('resultados.diagnosticoAyuda')}
             </p>
             {votadas.length === 0 ? (
-              <p style={{ fontSize: 14, color: 'var(--color-texto-secundario)' }}>No votaste causas en tu espina de pescado.</p>
+              <p style={{ fontSize: 14, color: 'var(--color-texto-secundario)' }}>{tr('resultados.sinVotos')}</p>
             ) : (
               <ul className="votacion-causas">
                 {votadas.map(t => {
@@ -116,7 +119,7 @@ export function Resultados() {
                       <label style={{ cursor: 'default' }}>
                         <span>{t.texto}</span>
                         <span className={`badge ${t.estado === 'verificada' ? 'badge-exito' : 'badge-advertencia'}`}>
-                          {t.estado === 'verificada' && !respaldo ? 'Verificada, sin respaldo de causa raíz' : ESTADOS[t.estado]}
+                          {t.estado === 'verificada' && !respaldo ? tr('resultados.sinRespaldo') : tr(`espinaUi.estados.${t.estado}`)}
                         </span>
                       </label>
                     </li>
@@ -132,7 +135,7 @@ export function Resultados() {
           </div>
 
           <p className="datos-nota" style={{ marginBottom: 20 }}>
-            Tu método se evalúa con lo que hiciste durante el juego: qué revisaste primero, qué analizaste, cómo estratificaste y si tus acciones se apoyaron en causas verificadas.
+            {tr('resultados.metodo')}
           </p>
 
           {errorCierre && (
@@ -143,7 +146,7 @@ export function Resultados() {
 
           <button className="btn-advertencia" style={{ width: '100%', padding: 16, fontSize: 16, borderRadius: 12 }}
             onClick={enviarCierre} disabled={cargando}>
-            {cargando ? 'Evaluando...' : 'Ver mi resultado'}
+            {cargando ? tr('resultados.evaluando') : tr('resultados.verResultado')}
           </button>
         </div>
       </main>
@@ -178,15 +181,15 @@ export function Resultados() {
             color: theme.color,
             marginBottom: 8,
           }}>
-            Resultado Final
+            {tr('resultados.final')}
           </p>
           <h1 style={{ color: theme.color, fontSize: 26, fontWeight: 700, marginBottom: 8 }}>
-            {desenlace.nombre}
+            {tr(`resultados.desenlaces.${desenlace.id}`)}
           </h1>
           <p style={{ fontSize: 52, fontWeight: 800, color: theme.color, margin: '8px 0 4px' }}>
             {desglose.total}
           </p>
-          <p style={{ fontSize: 14, color: `${theme.color}99` }}>de 1000 puntos</p>
+          <p style={{ fontSize: 14, color: `${theme.color}99` }}>{tr('resultados.dePuntos')}</p>
         </div>
 
         {ramonCierre && (
@@ -197,7 +200,7 @@ export function Resultados() {
                 width: 28, height: 28, borderRadius: 8,
                 background: '#0f2b4a', color: '#fff', fontSize: 14, fontWeight: 700,
               }}>R</span>
-              <strong style={{ color: 'var(--color-primario)', fontSize: 14 }}>Ramón Betancourt (Consejo)</strong>
+              <strong style={{ color: 'var(--color-primario)', fontSize: 14 }}>{tr('resultados.ramon')}</strong>
             </div>
             <div className="dialogo-burbuja" style={{ maxWidth: '100%' }}>
               {ramonCierre.lineas.map((l: string, i: number) => (
@@ -209,7 +212,7 @@ export function Resultados() {
 
         <div className="tarjeta" style={{ marginBottom: 16 }}>
           <h3 style={{ marginBottom: 20, color: 'var(--color-primario)', fontSize: 16, fontWeight: 600 }}>
-            Desglose de puntuación
+            {tr('resultados.desglose')}
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {(['diagnostico', 'criterio', 'impacto', 'metodo', 'compromisos', 'penalizaciones'] as const).map(dim => {
@@ -227,7 +230,7 @@ export function Resultados() {
                         display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
                         background: info.color, flexShrink: 0,
                       }} />
-                      {info.nombre}
+                      {tr(`resultados.dimensiones.${info.nombre}`)}
                     </span>
                     <strong style={{
                       color: esPenalizacion && valor < 0 ? 'var(--color-peligro)' : 'var(--color-texto)',
@@ -257,33 +260,10 @@ export function Resultados() {
           </div>
         </div>
 
-        <details className="tarjeta" style={{ marginBottom: 20 }}>
-          <summary style={{
-            cursor: 'pointer',
-            fontWeight: 600,
-            color: 'var(--color-primario)',
-            fontSize: 14,
-            padding: '2px 0',
-          }}>
-            Ver detalles completos
-          </summary>
-          <pre style={{
-            marginTop: 14,
-            fontSize: 12,
-            whiteSpace: 'pre-wrap',
-            color: 'var(--color-texto-secundario)',
-            background: 'var(--color-superficie-alt)',
-            padding: 16,
-            borderRadius: 'var(--radio)',
-            lineHeight: 1.7,
-          }}>
-            {desglose.detalles.join('\n')}
-          </pre>
-        </details>
 
         <button className="btn-primario" style={{ width: '100%', padding: 16, fontSize: 16, borderRadius: 12 }}
           onClick={salir}>
-          Salir del simulador
+          {tr('resultados.salir')}
         </button>
       </div>
     </main>

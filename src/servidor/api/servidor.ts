@@ -700,8 +700,9 @@ app.post('/api/partida/acciones', autenticarJugador, soloModoCompleto, sesionAct
       return { accionId: a.accionId, tarjetaId: t?.id ?? null, verificada: !!t && t.estado === 'verificada' && t.evidencias.length > 0 };
     });
     const previos = await eventosDe(partida.id);
-    const nombres = Object.fromEntries((config.acciones as { id: number; nombre: string }[]).map(a => [a.id, a.nombre]));
-    const avisos = avisosPorAcciones(vinculos, nombres, previos);
+    const idioma = jugador.config.idioma;
+    const nombres = Object.fromEntries(config.acciones.map(a => [a.id, idioma === 'en' ? a.nombre_en ?? a.nombre : a.nombre]));
+    const avisos = avisosPorAcciones(vinculos, nombres, previos, idioma);
 
     await actualizarPartida(jugador.id, estado, serializarDialogo(estadoDialogo));
     await registrarMetodo(partida.id, jugador, 'acciones', { ciclo: cicloActual, acciones: vinculos });
@@ -1185,13 +1186,14 @@ app.post('/api/partida/cierre', autenticarJugador, soloModoCompleto, async (req,
 // ║     RUTAS DE CONFIG                 ║
 // ╚══════════════════════════════════════╝
 
-app.get('/api/config/acciones', autenticarJugador, (_req, res) => {
+app.get('/api/config/acciones', autenticarJugador, (req, res) => {
+  const en = (req as RequestJugador).jugador.config.idioma === 'en';
   res.json(config.acciones.map(a => ({
     id: a.id,
-    nombre: a.nombre,
+    nombre: en ? a.nombre_en ?? a.nombre : a.nombre,
     costo: a.costo,
     demora: a.demora,
-    descripcion: a.descripcion,
+    descripcion: en ? a.descripcion_en ?? a.descripcion : a.descripcion,
   })));
 });
 

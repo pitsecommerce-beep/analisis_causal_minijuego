@@ -25,6 +25,7 @@ import { TabEspina } from '../componentes/TabEspina.js';
 import { cargarEspina, fijarCicloEspina } from '../espina.js';
 import { registrarEvento } from '../eventos.js';
 import type { PasoRecorrido } from '../componentes/Onboarding.js';
+import { DICCIONARIOS, LOCALES } from '../../compartido/i18n/index.js';
 
 type Vista = 'caso' | 'datos' | 'analisis' | 'tablero' | 'asesores' | 'espina' | 'decisiones';
 
@@ -41,21 +42,21 @@ function onboardingVisto(): boolean {
 }
 
 // En modo informativo no hay juego: solo consulta, análisis y tablero
-const TABS_INFORMATIVO: { id: Vista; label: string; icono: NombreIcono }[] = [
-  { id: 'caso', label: 'El caso', icono: 'caso' },
-  { id: 'datos', label: 'Datos', icono: 'tabla' },
-  { id: 'analisis', label: 'Análisis', icono: 'grafica' },
-  { id: 'tablero', label: 'Tablero', icono: 'tablero' },
-  { id: 'asesores', label: 'Sala de Juntas', icono: 'mensajes' },
+const TABS_INFORMATIVO: { id: Vista; icono: NombreIcono }[] = [
+  { id: 'caso', icono: 'caso' },
+  { id: 'datos', icono: 'tabla' },
+  { id: 'analisis', icono: 'grafica' },
+  { id: 'tablero', icono: 'tablero' },
+  { id: 'asesores', icono: 'mensajes' },
 ];
 
-const TABS: { id: Vista; label: string; icono: NombreIcono }[] = [
-  { id: 'datos', label: 'Datos', icono: 'tabla' },
-  { id: 'analisis', label: 'Análisis', icono: 'grafica' },
-  { id: 'tablero', label: 'Tablero', icono: 'tablero' },
-  { id: 'asesores', label: 'Sala de Juntas', icono: 'mensajes' },
-  { id: 'espina', label: 'Espina de pescado', icono: 'diagnostico' },
-  { id: 'decisiones', label: 'Decisiones', icono: 'decisiones' },
+const TABS: { id: Vista; icono: NombreIcono }[] = [
+  { id: 'datos', icono: 'tabla' },
+  { id: 'analisis', icono: 'grafica' },
+  { id: 'tablero', icono: 'tablero' },
+  { id: 'asesores', icono: 'mensajes' },
+  { id: 'espina', icono: 'diagnostico' },
+  { id: 'decisiones', icono: 'decisiones' },
 ];
 
 export function Juego() {
@@ -74,13 +75,13 @@ export function Juego() {
   const [mostrarPendientes, setMostrarPendientes] = useState(false);
   const [verificadas, setVerificadas] = useState<string[]>([]);
   const pendientes = usePendientes();
-  const { fijarConfig, config } = useSesion();
+  const { fijarConfig, config, t: tr } = useSesion();
   const informativo = config.modo === 'informativo';
   const { datos, error: errorDatos, reintentar: reintentarDatos } = useDatos();
   const [mostrarOnboarding, setMostrarOnboarding] = useState(false);
   const inicioRef = useRef(Date.now());
 
-  const nombreJugador = localStorage.getItem('nombreJugador') ?? 'Jugador';
+  const nombreJugador = localStorage.getItem('nombreJugador') ?? '';
   const sesionNombre = localStorage.getItem('sesionNombre') ?? '';
 
   useEffect(() => {
@@ -128,7 +129,7 @@ export function Juego() {
           setEstado(await api.partida.iniciar());
           setSesionFinalizada(true);
         } catch {
-          setError('Esta sesión ya terminó. Pide a tu profesor el código de una sesión activa.');
+          setError(tr('juego.sesionTerminada'));
         }
         setCargando(false);
         return;
@@ -144,10 +145,10 @@ export function Juego() {
       if (sesionEstado !== 'abierta') {
         setEsperando(false);
         if (sesionEstado === 'en_curso') {
-          avisar('exito', 'La sesión comenzó', 'Mucho éxito, Director(a).');
+          avisar('exito', tr('juego.sesionComenzo'), tr('juego.exito'));
           await iniciar();
         } else {
-          setError('Esta sesión ya terminó. Pide a tu profesor el código de una sesión activa.');
+          setError(tr('juego.sesionTerminada'));
         }
       }
     } catch { /* reintenta en el siguiente intervalo */ }
@@ -184,99 +185,24 @@ export function Juego() {
   }, []);
 
   // Inducción: Ramón Betancourt recibe al nuevo director a prueba y señala la interfaz
+  const ob = DICCIONARIOS[config.idioma].onboarding;
   const pasosRecorrido: PasoRecorrido[] = [
-    {
-      titulo: 'Tu periodo de prueba',
-      texto: 'Bienvenido(a), Director(a). Soy Ramón Betancourt y hablo a nombre del consejo de ETF Bank. Llegas como nuevo(a) Director(a) de Operaciones en medio de una crisis: entregamos las tarjetas de crédito demasiado tarde y las quejas no paran de crecer. Estás a prueba, y el consejo quiere ver qué propones.',
-      puntos: [
-        'Encuentra las causas raíz con datos, siguiendo el método de Bohn.',
-        'Propón y ejecuta acciones sustentadas, en 4 ciclos.',
-        'Rinde cuentas al consejo en cada ciclo: de tus resultados depende que te quedes en el puesto.',
-      ],
-      alEntrar: () => setVista('asesores'),
-    },
-    {
-      objetivo: 'ciclo',
-      titulo: 'Tienes 4 ciclos',
-      texto: 'En cada ciclo analizas, decides y cierras votando tus causas principales. Al terminar el cuarto, el consejo evalúa tu diagnóstico.',
-    },
-    {
-      objetivo: 'vidas',
-      animo: 'enojado',
-      titulo: 'Tus vidas',
-      texto: 'Empiezas con 3. Si las pierdes todas, el consejo te destituye. Pierdes una cuando:',
-      puntos: [
-        'No tomas ninguna acción en un ciclo.',
-        'Tu resultado queda por debajo de la mitad de lo que prometiste.',
-        'Tu credibilidad llega a cero.',
-        'Gastas mucho presupuesto sin mover ningún KPI.',
-      ],
-    },
-    {
-      objetivo: 'credibilidad',
-      titulo: 'Tu credibilidad',
-      texto: 'Es la confianza que el consejo y tu equipo tienen en ti. Sube cuando respondes con evidencia y cumples lo que prometes. Baja cuando respondes sin datos o pospones decisiones.',
-    },
-    {
-      objetivo: 'presupuesto',
-      titulo: 'El presupuesto',
-      texto: 'Es para toda la partida, no por ciclo. Cada acción cuesta, y lo que no gastes también cuenta a tu favor.',
-    },
-    {
-      objetivo: 'tab-datos',
-      titulo: 'Los datos del proceso',
-      texto: 'Aquí están las 1,500 solicitudes de tarjeta. Es tu fuente de evidencia: no aceptes una afirmación que no puedas comprobar aquí.',
-      alEntrar: () => setVista('datos'),
-    },
-    {
-      objetivo: 'tab-proceso',
-      titulo: 'La vista del proceso',
-      texto: 'Antes de buscar causas, entiende el proceso. Este es el flujo completo, de la sucursal hasta que el cliente recibe su tarjeta. Haz clic en cada etapa para ver cuánto tarda: mediana, media, desviación y percentil 90.',
-      alEntrar: () => setVista('datos'),
-    },
-    {
-      objetivo: 'tab-comentarios',
-      titulo: 'La voz del cliente',
-      texto: 'Estos son los comentarios de clientes, cada uno ligado a su solicitud. Empieza por aquí: un Pareto por categoría te dice de qué se quejan más, y puedes cruzarlos con sus solicitudes.',
-      alEntrar: () => setVista('datos'),
-    },
-    {
-      objetivo: 'herramientas',
-      titulo: 'Las herramientas de Bohn',
-      texto: 'Histograma, Pareto, corrida, gráfica de control, dispersión y pivote. Usa "Estratificar por" para repetir cualquier análisis por sucursal, estado o mes. Elige una columna, una herramienta y guarda lo que encuentres con "Adjuntar a la espina".',
-      alEntrar: () => setVista('datos'),
-    },
-    {
-      objetivo: 'tab-asesores',
-      titulo: 'Tu equipo',
-      texto: 'En la Sala de Juntas tu equipo te dará su opinión. Algunas afirmaciones son ciertas y otras engañosas. Responde con evidencia para convencerlos.',
-    },
-    {
-      objetivo: 'pendientes',
-      titulo: 'Lista de pendientes',
-      texto: 'Cada afirmación o recomendación de tu equipo queda anotada aquí. Desde esta lista puedes enviarla a tu espina de pescado como causa posible.',
-    },
-    {
-      objetivo: 'tab-espina',
-      titulo: 'La espina de pescado',
-      texto: 'Aquí ordenas tus hipótesis en las 6M: Personal, Método, Máquina, Material, Medición y Entorno. Una causa solo queda verificada cuando le adjuntas una gráfica o cálculo. Al cerrar cada ciclo votarás tus 3 causas principales y escribirás tus 5 porqués.',
-    },
-    {
-      objetivo: 'tab-decisiones',
-      titulo: 'Las decisiones',
-      texto: 'Elige acciones, liga cada una a la causa que ataca y declara al consejo cuánto vas a mejorar un indicador. Si decides sin una causa verificada, te lo voy a señalar.',
-      animo: 'enojado',
-    },
-    {
-      objetivo: 'ayuda',
-      titulo: '¿Necesitas repasar?',
-      texto: 'Con este botón vuelvo a explicarte el simulador cuando quieras.',
-    },
-    {
-      titulo: 'Cómo te evaluaremos',
-      animo: 'feliz',
-      texto: 'El consejo no mide intenciones. Al final de tu periodo de prueba evaluaremos tu diagnóstico con las causas que verificaste y votaste, el impacto en los KPIs y tu método: si escuchaste al cliente primero, definiste el problema con un Pareto, planteaste hipótesis antes de actuar, estratificaste y decidiste con causas probadas. Éxito, Director(a).',
-    },
+    { ...ob.prueba, puntos: [...ob.prueba.puntos], alEntrar: () => setVista('asesores') },
+    { objetivo: 'ciclo', ...ob.ciclos },
+    { objetivo: 'vidas', animo: 'enojado', ...ob.vidas, puntos: [...ob.vidas.puntos] },
+    { objetivo: 'credibilidad', ...ob.credibilidad },
+    { objetivo: 'presupuesto', ...ob.presupuesto },
+    { objetivo: 'tab-datos', titulo: ob.datos.titulo, texto: tr('onboarding.datos.texto', { n: (datos?.solicitudes.length ?? 0).toLocaleString(LOCALES[config.idioma]) }), alEntrar: () => setVista('datos') },
+    { objetivo: 'tab-proceso', ...ob.proceso, alEntrar: () => setVista('datos') },
+    { objetivo: 'tab-comentarios', ...ob.comentarios, alEntrar: () => setVista('datos') },
+    { objetivo: 'tab-analisis', ...ob.analisis, alEntrar: () => setVista('analisis') },
+    { objetivo: 'tab-tablero', ...ob.tablero },
+    { objetivo: 'tab-asesores', ...ob.equipo },
+    { objetivo: 'pendientes', ...ob.pendientes },
+    { objetivo: 'tab-espina', ...ob.espina },
+    { objetivo: 'tab-decisiones', ...ob.decisiones, animo: 'enojado' },
+    { objetivo: 'ayuda', ...ob.ayuda },
+    { ...ob.evaluacion, animo: 'feliz' },
   ];
 
   function terminarOnboarding() {
@@ -294,11 +220,7 @@ export function Juego() {
       if (!onboardingVisto() && leerModo() !== 'informativo') setMostrarOnboarding(true);
       telemetria('partida_iniciada', { ciclo: res.cicloActual });
     } catch (err: any) {
-      if (err.message.includes('aún no ha iniciado')) {
-        setError('La sesión aún no ha sido iniciada por el profesor. Espera un momento y recarga.');
-      } else {
-        setError(err.message);
-      }
+      setError(String(err?.message ?? '').includes('aún no ha iniciado') ? tr('juego.sesionNoIniciada') : tr('juego.errorInicio'));
     }
     setCargando(false);
   }
@@ -359,9 +281,9 @@ export function Juego() {
 
   async function salir() {
     const ok = await confirmar({
-      titulo: 'Salir del simulador',
-      mensaje: 'Tu avance queda guardado. Para continuar, vuelve a unirte con el mismo código y el mismo nombre.',
-      textoConfirmar: 'Salir',
+      titulo: tr('juego.salirTitulo'),
+      mensaje: tr('juego.salirMensaje'),
+      textoConfirmar: tr('juego.salir'),
       tono: 'advertencia',
       icono: 'salir',
     });
@@ -386,7 +308,7 @@ export function Juego() {
         <div style={{ textAlign: 'center' }}>
           <img src="/favicon.png" alt="" width={48} height={48} style={{ marginBottom: 24 }} />
           <div className="spinner" style={{ width: 28, height: 28, borderWidth: 2, marginBottom: 14 }} />
-          <p style={{ fontSize: 14, color: 'var(--color-texto-secundario)' }}>Cargando partida...</p>
+          <p style={{ fontSize: 14, color: 'var(--color-texto-secundario)' }}>{tr('juego.cargando')}</p>
         </div>
       </div>
     );
@@ -399,14 +321,14 @@ export function Juego() {
           <div className="icono-insignia icono-insignia-advertencia icono-insignia-lg" style={{ marginBottom: 16 }}>
             <Icono nombre="reloj" tamano={26} grosor={1.8} />
           </div>
-          <h3 style={{ color: 'var(--color-texto)', marginBottom: 8 }}>Sesión no disponible</h3>
+          <h3 style={{ color: 'var(--color-texto)', marginBottom: 8 }}>{tr('juego.noDisponible')}</h3>
           <p style={{ color: 'var(--color-texto-secundario)', marginBottom: 20, fontSize: 14, lineHeight: 1.6 }}>{error}</p>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
             <button className="btn-primario" onClick={() => { setError(''); setCargando(true); comprobarSesion(); }}>
-              Reintentar
+              {tr('juego.reintentar')}
             </button>
             <button className="btn-fantasma" onClick={() => nav('/unirse')}>
-              Volver
+              {tr('juego.volver')}
             </button>
           </div>
         </div>
@@ -438,37 +360,37 @@ export function Juego() {
       <header className="barra-estado">
         <div className="contenedor" style={{ display: 'flex', alignItems: 'stretch', gap: 0, maxWidth: vista === 'datos' || vista === 'analisis' || vista === 'tablero' ? 1680 : undefined }}>
           <div className="barra-estado-item">
-            <span className="barra-estado-label">Director(a)</span>
+            <span className="barra-estado-label">{tr(informativo ? 'juego.equipo' : 'juego.director')}</span>
             <span className="barra-estado-valor">{nombreJugador}</span>
           </div>
           <div className="barra-estado-item">
-            <span className="barra-estado-label">Sesión</span>
+            <span className="barra-estado-label">{tr('juego.sesion')}</span>
             <span className="barra-estado-valor">{sesionNombre}</span>
           </div>
           {informativo ? <div style={{ marginLeft: 'auto' }} /> : <>
           <div className="barra-estado-item" data-tour="ciclo">
-            <span className="barra-estado-label">Ciclo</span>
+            <span className="barra-estado-label">{tr('juego.ciclo')}</span>
             <span className="barra-estado-valor">{ciclo} / 4</span>
           </div>
           <div className="barra-estado-item" data-tour="vidas">
-            <span className="barra-estado-label">Vidas</span>
+            <span className="barra-estado-label">{tr('juego.vidas')}</span>
             <span className="barra-estado-valor" style={{ display: 'inline-flex', gap: 4 }}>
               {Array.from({ length: 3 }, (_, i) => (
                 <span key={i} style={{ display: 'inline-flex', color: i < vidas ? '#f87171' : 'rgba(255,255,255,0.25)' }}>
                   <Icono nombre="corazon" tamano={15} relleno={i < vidas} grosor={i < vidas ? 0 : 2} />
                 </span>
               ))}
-              <span className="sr-only">{vidas} de 3</span>
+              <span className="sr-only">{tr('juego.vidasDe', { n: vidas })}</span>
             </span>
           </div>
           <div className="barra-estado-item" data-tour="credibilidad">
-            <span className="barra-estado-label">Credibilidad</span>
+            <span className="barra-estado-label">{tr('juego.credibilidad')}</span>
             <span className="barra-estado-valor" style={{ color: credColor }}>
               {credibilidad}%
             </span>
           </div>
           <div className="barra-estado-item" data-tour="presupuesto" style={{ marginLeft: 'auto' }}>
-            <span className="barra-estado-label">Presupuesto</span>
+            <span className="barra-estado-label">{tr('juego.presupuesto')}</span>
             <span className="barra-estado-valor">${presupuesto}</span>
           </div>
           </>}
@@ -476,8 +398,8 @@ export function Juego() {
             {!informativo && <button
               onClick={() => setMostrarPendientes(true)}
               data-tour="pendientes"
-              aria-label={`Lista de pendientes, ${porResolver} sin resolver`}
-              title="Lista de pendientes"
+              aria-label={tr('juego.pendientesAria', { n: porResolver })}
+              title={tr('juego.listaPendientes')}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -490,14 +412,14 @@ export function Juego() {
               }}
             >
               <Icono nombre="diagnostico" tamano={16} />
-              <span className="ocultar-movil">Pendientes</span>
+              <span className="ocultar-movil">{tr('juego.pendientes')}</span>
               {porResolver > 0 && <span className="pendientes-contador">{porResolver}</span>}
             </button>}
             {!informativo && <button
               onClick={() => setMostrarOnboarding(true)}
               data-tour="ayuda"
-              aria-label="Ver cómo se juega"
-              title="Cómo se juega"
+              aria-label={tr('juego.comoSeJuega')}
+              title={tr('juego.comoSeJuega')}
               style={{
                 display: 'inline-flex',
                 background: 'rgba(255,255,255,0.1)',
@@ -518,7 +440,7 @@ export function Juego() {
                 fontSize: 13,
               }}
             >
-              Salir
+              {tr('juego.salir')}
             </button>
           </div>
         </div>
@@ -557,7 +479,7 @@ export function Juego() {
               }}
             >
               <Icono nombre={t.icono} tamano={17} />
-              {t.label}
+              {tr(`juego.tabs.${t.id}`)}
             </button>
           ))}
         </div>
@@ -606,14 +528,15 @@ function CargaDatos({ error, onReintentar }: { error: boolean; onReintentar: () 
 
 // Pantalla que reemplaza al juego cuando el profesor finaliza la sesión
 function CierreSesion({ estado, onResultados, onSalir, informativo }: { estado: any; onResultados: () => void; onSalir: () => void; informativo: boolean }) {
+  const { t } = useSesion();
   // En modo informativo no hay evaluación ni ciclos que mostrar
   const yaEvaluada = !informativo && estado.fase === 'finalizada';
   const completoCiclos = !informativo && !!estado.terminada;
   const datos = [
-    { etiqueta: 'Ciclo alcanzado', valor: `${estado.cicloActual ?? 1} / 4` },
-    { etiqueta: 'Vidas', valor: String(estado.vidas ?? 0) },
-    { etiqueta: 'Credibilidad', valor: `${estado.credibilidad ?? 0}%` },
-    { etiqueta: 'Presupuesto restante', valor: `$${estado.presupuestoDisponible ?? 0}` },
+    { etiqueta: t('juego.cicloAlcanzado'), valor: `${estado.cicloActual ?? 1} / 4` },
+    { etiqueta: t('juego.vidas'), valor: String(estado.vidas ?? 0) },
+    { etiqueta: t('juego.credibilidad'), valor: `${estado.credibilidad ?? 0}%` },
+    { etiqueta: t('juego.presupuestoRestante'), valor: `$${estado.presupuestoDisponible ?? 0}` },
   ];
 
   return (
@@ -622,13 +545,13 @@ function CierreSesion({ estado, onResultados, onSalir, informativo }: { estado: 
         <div className="icono-insignia icono-insignia-advertencia icono-insignia-lg" style={{ marginBottom: 16 }}>
           <Icono nombre="finalizar" tamano={26} grosor={1.8} />
         </div>
-        <h3 style={{ color: 'var(--color-texto)', marginBottom: 8 }}>Tu profesor finalizó la sesión</h3>
+        <h3 style={{ color: 'var(--color-texto)', marginBottom: 8 }}>{t('juego.cierreTitulo')}</h3>
         <p style={{ color: 'var(--color-texto-secundario)', marginBottom: 20, fontSize: 14, lineHeight: 1.6 }}>
           {yaEvaluada
-            ? 'Tu partida ya fue evaluada. Puedes consultar tus resultados.'
+            ? t('juego.cierreEvaluada')
             : completoCiclos
-              ? 'Completaste los cuatro ciclos. Declara tus causas raíz para recibir tu evaluación.'
-              : informativo ? 'La sesión terminó. Gracias por participar.' : 'Ya no es posible seguir jugando. Así quedó tu partida:'}
+              ? t('juego.cierreCompleto')
+              : informativo ? t('juego.cierreInformativo') : t('juego.cierreJuego')}
         </p>
         {!informativo && !yaEvaluada && !completoCiclos && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20, textAlign: 'left' }}>
@@ -643,10 +566,10 @@ function CierreSesion({ estado, onResultados, onSalir, informativo }: { estado: 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
           {(yaEvaluada || completoCiclos) && (
             <button className="btn-primario" onClick={onResultados}>
-              {yaEvaluada ? 'Ver resultados' : 'Declarar causas'}
+              {yaEvaluada ? t('juego.verResultados') : t('juego.declararCausas')}
             </button>
           )}
-          <button className="btn-fantasma" onClick={onSalir}>Salir</button>
+          <button className="btn-fantasma" onClick={onSalir}>{t('juego.salir')}</button>
         </div>
       </div>
     </div>

@@ -165,3 +165,23 @@ describe('Diálogos parametrizados por base', () => {
     expect(linea('B_es')).toContain('la 336 y la 637');
   });
 });
+
+describe('Diálogos en inglés', () => {
+  it('tienen los mismos nodos, condiciones y efectos que en español', () => {
+    const es = leerDialogosCrudos('es');
+    const en = leerDialogosCrudos('en');
+    for (const p of Object.keys(es)) {
+      const forma = (nodos: any[]) => nodos.map((n) => [n.id, n.ciclo, n.fase, JSON.stringify(n.condicion ?? null), n.lineas.length, n.respuestas.map((r: any) => r.efecto)]);
+      expect(forma(en[p]!)).toEqual(forma(es[p]!));
+    }
+  });
+
+  it('las bases originales en inglés no muestran texto en español ni marcadores', () => {
+    for (const clave of ['A_en', 'B_en'] as const) {
+      const t = testimonios(resolverDialogos(leerDialogosCrudos('en'), variablesDialogo(clave, cargarCombinacion(clave), 'en')));
+      const texto = t.flatMap((x) => x.lineas).join(' ');
+      expect(texto).not.toMatch(/\{\{|\}\}/);
+      expect(texto).not.toMatch(/[áéíóúñ¿¡]|\b(de|los|las|el|sucursal|que)\b/i);
+    }
+  });
+});

@@ -1,0 +1,142 @@
+[
+  {
+    "id": "ramon_retro_cumplido",
+    "personaje": "ramon",
+    "ciclo": 0,
+    "fase": "retro",
+    "expresion": "satisfecho",
+    "condicion": {
+      "tipo": "compromiso_cumplido"
+    },
+    "lineas": [
+      "Good. You delivered what you promised.",
+      "Keep it up."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "ramon_retro_no_cumplido",
+    "personaje": "ramon",
+    "ciclo": 0,
+    "fase": "retro",
+    "expresion": "severo",
+    "condicion": {
+      "tipo": "compromiso_no_cumplido"
+    },
+    "lineas": [
+      "You did not deliver what you promised. We cannot work like this."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "ramon_vida_perdida_1",
+    "personaje": "ramon",
+    "ciclo": 0,
+    "fase": "vida_perdida",
+    "expresion": "serio",
+    "condicion": {
+      "tipo": "vidas_restantes",
+      "valor": 2
+    },
+    "lineas": [
+      "Director, you are running out of room.",
+      "The board expects results, not explanations."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "ramon_vida_perdida_2",
+    "personaje": "ramon",
+    "ciclo": 0,
+    "fase": "vida_perdida",
+    "expresion": "amenazante",
+    "condicion": {
+      "tipo": "vidas_restantes",
+      "valor": 1
+    },
+    "lineas": [
+      "This is the second meeting we end without results.",
+      "Do not make me look for someone else."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "ramon_destitucion",
+    "personaje": "ramon",
+    "ciclo": 0,
+    "fase": "destitucion",
+    "expresion": "frio",
+    "condicion": {
+      "tipo": "destituido"
+    },
+    "lineas": [
+      "Director, we cannot go on like this.",
+      "The board has decided to look for someone else for the position. Thank you for your time."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "ramon_cierre_reconversion",
+    "personaje": "ramon",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "impresionado",
+    "condicion": {
+      "tipo": "desenlace",
+      "valor": "reconversion"
+    },
+    "lineas": [
+      "Director, the board recognizes your work.",
+      "The numbers prove it. This is what we expected when we hired you."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "ramon_cierre_buen_trabajo",
+    "personaje": "ramon",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "neutral",
+    "condicion": {
+      "tipo": "desenlace",
+      "valor": "buen_trabajo"
+    },
+    "lineas": [
+      "We made progress. Not as much as possible, but we made progress.",
+      "I am giving you six more months to show that we are heading in the right direction."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "ramon_cierre_sobreviviste",
+    "personaje": "ramon",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "tibio",
+    "condicion": {
+      "tipo": "desenlace",
+      "valor": "sobreviviste"
+    },
+    "lineas": [
+      "You keep the job, but the board is not at ease.",
+      "You have three months to show results. Then we will talk."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "ramon_cierre_en_la_mira",
+    "personaje": "ramon",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "decepcionado",
+    "condicion": {
+      "tipo": "desenlace",
+      "valor": "en_la_mira"
+    },
+    "lineas": [
+      "I will be frank, Director: I expected more.",
+      "The board will keep a close eye on your work."
+    ],
+    "respuestas": []
+  }
+]

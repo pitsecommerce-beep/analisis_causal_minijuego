@@ -1661,7 +1661,7 @@ input[type='checkbox'].casilla {
 
 /* ── Constructor de gráficos ── */
 
-.constructor { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
+.constructor { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; align-items: start; }
 .constructor-panel { display: flex; flex-direction: column; gap: 14px; padding: 16px; position: sticky; top: 12px; }
 .constructor-campo { display: flex; flex-direction: column; gap: 4px; }
 .constructor-campo select, .constructor-campo input { width: 100%; }

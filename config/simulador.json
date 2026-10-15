@@ -48,11 +48,11 @@
     }
   },
   "desenlaces": [
-    { "id": "reconversion", "nombre": "Reconversión", "minPuntos": 850, "maxPuntos": 1000 },
-    { "id": "buen_trabajo", "nombre": "Buen trabajo incompleto", "minPuntos": 650, "maxPuntos": 849 },
-    { "id": "sobreviviste", "nombre": "Sobreviviste", "minPuntos": 450, "maxPuntos": 649 },
-    { "id": "en_la_mira", "nombre": "En la mira", "minPuntos": 250, "maxPuntos": 449 },
-    { "id": "destituido", "nombre": "Destituido", "minPuntos": 0, "maxPuntos": 249 }
+    { "id": "reconversion", "nombre": "Reconversión", "nombre_en": "Turnaround", "minPuntos": 850, "maxPuntos": 1000 },
+    { "id": "buen_trabajo", "nombre": "Buen trabajo incompleto", "nombre_en": "Good but unfinished work", "minPuntos": 650, "maxPuntos": 849 },
+    { "id": "sobreviviste", "nombre": "Sobreviviste", "nombre_en": "You survived", "minPuntos": 450, "maxPuntos": 649 },
+    { "id": "en_la_mira", "nombre": "En la mira", "nombre_en": "Under watch", "minPuntos": 250, "maxPuntos": 449 },
+    { "id": "destituido", "nombre": "Destituido", "nombre_en": "Removed", "minPuntos": 0, "maxPuntos": 249 }
   ],
   "acciones": [
     {
@@ -64,7 +64,9 @@
         "incompletos": -0.70,
         "ilegibles": -0.50
       },
-      "descripcion": "Formulario guiado que valida documentos antes de enviar"
+      "descripcion": "Formulario guiado que valida documentos antes de enviar",
+      "nombre_en": "Mandatory document checklist in C.R.A.S.S.",
+      "descripcion_en": "Guided form that validates documents before sending"
     },
     {
       "id": 2,
@@ -75,7 +77,9 @@
         "errorCaptura": -0.60
       },
       "requiereSucursales": true,
-      "descripcion": "Entrenamiento intensivo para las sucursales seleccionadas"
+      "descripcion": "Entrenamiento intensivo para las sucursales seleccionadas",
+      "nombre_en": "Targeted training in the branches you name",
+      "descripcion_en": "Intensive training for the selected branches"
     },
     {
       "id": 3,
@@ -85,7 +89,9 @@
       "efectos": {
         "errorCaptura": -0.60
       },
-      "descripcion": "Programa de capacitación general para todas las sucursales"
+      "descripcion": "Programa de capacitación general para todas las sucursales",
+      "nombre_en": "Training for all 18 branches",
+      "descripcion_en": "General training program for all branches"
     },
     {
       "id": 4,
@@ -96,7 +102,9 @@
         "trabajoPerdido": -0.27,
         "costoOperativo": -0.22
       },
-      "descripcion": "Consultar buró de crédito al inicio del proceso"
+      "descripcion": "Consultar buró de crédito al inicio del proceso",
+      "nombre_en": "Run the credit bureau check before full data entry",
+      "descripcion_en": "Check the credit bureau at the start of the process"
     },
     {
       "id": 5,
@@ -107,7 +115,9 @@
         "atorados": -0.875,
         "quejas": -0.25
       },
-      "descripcion": "Sistema automático de despacho de tarjetas aprobadas"
+      "descripcion": "Sistema automático de despacho de tarjetas aprobadas",
+      "nombre_en": "Automate card shipping",
+      "descripcion_en": "Automatic dispatch system for approved cards"
     },
     {
       "id": 6,
@@ -117,7 +127,9 @@
       "efectos": {
         "backOffice": -0.35
       },
-      "descripcion": "Refuerzo de personal en el centro de procesamiento"
+      "descripcion": "Refuerzo de personal en el centro de procesamiento",
+      "nombre_en": "Two more reviewers at CrOP",
+      "descripcion_en": "Extra staff at the processing center"
     },
     {
       "id": 7,
@@ -125,7 +137,9 @@
       "costo": 20,
       "demora": 1,
       "efectos": {},
-      "descripcion": "Crear carriles diferenciados según tipo de cliente"
+      "descripcion": "Crear carriles diferenciados según tipo de cliente",
+      "nombre_en": "Segment the process by customer profile",
+      "descripcion_en": "Create separate lanes by type of customer"
     },
     {
       "id": 8,
@@ -136,7 +150,9 @@
         "cicloAparente": -5,
         "conversion": -0.35
       },
-      "descripcion": "Subir el corte del score ETFBank para filtrar antes"
+      "descripcion": "Subir el corte del score ETFBank para filtrar antes",
+      "nombre_en": "Raise the internal score threshold",
+      "descripcion_en": "Raise the ETFBank score cutoff to filter earlier"
     },
     {
       "id": 9,
@@ -147,7 +163,9 @@
         "captura": -0.12,
         "errores": 0.25
       },
-      "descripcion": "Incentivo económico por rapidez en captura"
+      "descripcion": "Incentivo económico por rapidez en captura",
+      "nombre_en": "Speed bonus for branch officers",
+      "descripcion_en": "Financial incentive for faster data entry"
     },
     {
       "id": 10,
@@ -155,7 +173,9 @@
       "costo": 100,
       "demora": 4,
       "efectos": {},
-      "descripcion": "Sustitución completa del sistema legacy"
+      "descripcion": "Sustitución completa del sistema legacy",
+      "nombre_en": "Replace C.R.A.S.S.",
+      "descripcion_en": "Full replacement of the legacy system"
     }
   ],
   "eventos": [

@@ -9,6 +9,8 @@ export interface AccionConfig {
   efectos: Record<string, number>;
   requiereSucursales?: boolean;
   descripcion: string;
+  nombre_en?: string;
+  descripcion_en?: string;
 }
 
 export interface AccionElegida {

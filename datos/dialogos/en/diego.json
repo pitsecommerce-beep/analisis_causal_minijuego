@@ -1,0 +1,356 @@
+[
+  {
+    "id": "diego_c1_apertura",
+    "personaje": "diego",
+    "ciclo": 1,
+    "fase": "apertura",
+    "expresion": "timido",
+    "lineas": [
+      "Sorry, I just want to mention something.",
+      {
+        "si": "atorados",
+        "texto": "There are {{atorados}} approved files whose card was never sent.",
+        "sino": "There are approved files whose card was never sent."
+      },
+      "Nobody is following up on them."
+    ],
+    "pendiente": "Validate: Diego says there are 142 approved files that never received their card.",
+    "afirmacion": {
+      "id": "atorados_sin_plastico",
+      "verificable": true,
+      "veredicto": "cierta"
+    },
+    "respuestas": [
+      {
+        "texto": "142? Let me check that.",
+        "efecto": "abrir_laptop",
+        "credibilidad": 0
+      },
+      {
+        "texto": "Let’s automate the shipping.",
+        "efecto": "aceptar:5",
+        "credibilidad": 2
+      },
+      {
+        "texto": "I already checked and you are right, there are 142.",
+        "requiere": "verifico:atorados_sin_plastico",
+        "efecto": "refutar",
+        "credibilidad": 2
+      },
+      {
+        "texto": "There are more urgent matters right now.",
+        "efecto": "postergar",
+        "credibilidad": -1
+      }
+    ]
+  },
+  {
+    "id": "diego_c1_segundo",
+    "personaje": "diego",
+    "ciclo": 1,
+    "fase": "segundo",
+    "expresion": "atreviendose",
+    "lineas": [
+      "Another thing: I review files every day.",
+      {
+        "si": "top3",
+        "texto": "Three branches, {{top3_a}}, {{top3_b}} and {{top3_c}}, generate {{pct_top3}}% of the errors.",
+        "sino": "Two branches, {{top2_a}} and {{top2_b}}, are the ones that generate the most errors."
+      },
+      "If we ask them for a checklist, half of the rework goes away."
+    ],
+    "pendiente": "Validate: Diego says branches 110, 676 and 728 generate 40% of the errors. He recommends a checklist for them.",
+    "afirmacion": {
+      "id": "concentracion_sucursales",
+      "verificable": true,
+      "veredicto": "cierta"
+    },
+    "respuestas": [
+      {
+        "texto": "Which branches? Let me write that down.",
+        "efecto": "abrir_laptop",
+        "credibilidad": 1
+      },
+      {
+        "texto": "Let’s put the checklist in place.",
+        "efecto": "aceptar:1",
+        "credibilidad": 2
+      },
+      {
+        "texto": "I already verified it in the data.",
+        "requiere": "verifico:concentracion_sucursales",
+        "efecto": "confirmar",
+        "credibilidad": 2
+      },
+      {
+        "texto": "Silvia wants to train all 18 branches.",
+        "efecto": "postergar",
+        "credibilidad": 0
+      }
+    ]
+  },
+  {
+    "id": "diego_c1_tercero",
+    "personaje": "diego",
+    "ciclo": 1,
+    "fase": "tercero",
+    "expresion": "decidido",
+    "lineas": [
+      "And about the credit bureau: today it is checked at the end, once data entry is complete.",
+      "If it were checked at the start, we would not work on files that will be rejected in the end."
+    ],
+    "pendiente": "Review: Diego recommends checking the credit bureau at the start of the process, before data entry.",
+    "afirmacion": {
+      "id": "secuencia_buro",
+      "verificable": true,
+      "veredicto": "cierta"
+    },
+    "respuestas": [
+      {
+        "texto": "Paulina said something similar.",
+        "efecto": "postergar",
+        "credibilidad": 0
+      },
+      {
+        "texto": "That makes sense. Let’s change the order.",
+        "efecto": "aceptar:4",
+        "credibilidad": 2
+      },
+      {
+        "texto": "Let me see how much work is lost.",
+        "efecto": "abrir_laptop",
+        "credibilidad": 1
+      }
+    ]
+  },
+  {
+    "id": "diego_c2_apertura",
+    "personaje": "diego",
+    "ciclo": 2,
+    "fase": "apertura",
+    "expresion": "callado",
+    "lineas": [
+      "Director, may I mention something?"
+    ],
+    "respuestas": [
+      {
+        "texto": "Go ahead, Diego.",
+        "efecto": "escuchar",
+        "credibilidad": 1
+      },
+      {
+        "texto": "Quickly, we are short on time.",
+        "efecto": "escuchar",
+        "credibilidad": 0
+      }
+    ]
+  },
+  {
+    "id": "diego_c2_seguimiento",
+    "personaje": "diego",
+    "ciclo": 2,
+    "fase": "segundo",
+    "expresion": "informando",
+    "condicion": {
+      "tipo": "escuchado"
+    },
+    "lineas": [
+      "The approved files without a card are still there.",
+      "Every day is an approved customer who still has not received their card."
+    ],
+    "respuestas": [
+      {
+        "texto": "We are going to automate the shipping.",
+        "efecto": "aceptar:5",
+        "credibilidad": 1
+      },
+      {
+        "texto": "I already have it in mind.",
+        "efecto": "postergar",
+        "credibilidad": 0
+      }
+    ]
+  },
+  {
+    "id": "diego_c2_atorados_resueltos",
+    "personaje": "diego",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "aliviado",
+    "condicion": {
+      "tipo": "accion_elegida",
+      "accionId": 5
+    },
+    "lineas": [
+      "Cards are now sent automatically. Very good.",
+      "At CrOP we notice it every day."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_c3_apertura",
+    "personaje": "diego",
+    "ciclo": 3,
+    "fase": "apertura",
+    "expresion": "tranquilo",
+    "lineas": [
+      "Just to let you know: the files we have to redo every day went down."
+    ],
+    "respuestas": [
+      {
+        "texto": "By how much?",
+        "efecto": "abrir_laptop",
+        "credibilidad": 0
+      },
+      {
+        "texto": "Good, Diego. Thank you.",
+        "efecto": "postergar",
+        "credibilidad": 1
+      }
+    ]
+  },
+  {
+    "id": "diego_c3_checklist_efecto",
+    "personaje": "diego",
+    "ciclo": 3,
+    "fase": "reaccion",
+    "expresion": "satisfecho",
+    "condicion": {
+      "tipo": "accion_elegida",
+      "accionId": 1
+    },
+    "lineas": [
+      "The checklist is working. Incomplete files went down a lot.",
+      "Files hardly ever come back for missing documents anymore."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_c3_nada_hecho",
+    "personaje": "diego",
+    "ciclo": 3,
+    "fase": "reaccion",
+    "expresion": "preocupado",
+    "condicion": {
+      "tipo": "ninguna_accion_de",
+      "acciones": [
+        1,
+        4,
+        5
+      ]
+    },
+    "lineas": [
+      "Director, the files without a card are still there, and so are the errors.",
+      "I just wanted to mention it."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_c4_apertura",
+    "personaje": "diego",
+    "ciclo": 4,
+    "fase": "apertura",
+    "expresion": "serio",
+    "lineas": [
+      "Last meeting. I see the files every day."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_c4_resultado_bueno",
+    "personaje": "diego",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "contento",
+    "condicion": {
+      "tipo": "multiples_acciones",
+      "acciones": [
+        1,
+        4,
+        5
+      ],
+      "minimo": 2
+    },
+    "lineas": [
+      "You can tell the difference. At CrOP we are working in a different way.",
+      "Thank you for listening to us, Director."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_c4_resultado_malo",
+    "personaje": "diego",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "resignado",
+    "condicion": {
+      "tipo": "multiples_acciones",
+      "acciones": [
+        1,
+        4,
+        5
+      ],
+      "minimo": 0,
+      "maximo": 1
+    },
+    "lineas": [
+      "We still have the same problems."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_consejo",
+    "personaje": "diego",
+    "ciclo": 0,
+    "fase": "consejo",
+    "expresion": "timido",
+    "condicion": {
+      "tipo": "pide_consejo"
+    },
+    "lineas": [
+      "I would do three things: the checklist, checking the bureau at the start and sending cards automatically.",
+      "All three together cost 35 units. Sorry if I am overstepping."
+    ],
+    "pendiente": "Diego’s recommendation: checklist in the branches, bureau check at the start and automatic card shipping, 35 units in total.",
+    "respuestas": [
+      {
+        "texto": "No, that is fine. I will consider it.",
+        "efecto": "postergar",
+        "credibilidad": 1
+      },
+      {
+        "texto": "Let’s do all three.",
+        "efecto": "aceptar_multiple:1,4,5",
+        "credibilidad": 2
+      }
+    ]
+  },
+  {
+    "id": "diego_vida_perdida",
+    "personaje": "diego",
+    "ciclo": 0,
+    "fase": "vida_perdida",
+    "expresion": "callado",
+    "condicion": {
+      "tipo": "vida_perdida"
+    },
+    "lineas": [
+      "..."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "diego_ignorado",
+    "personaje": "diego",
+    "ciclo": 0,
+    "fase": "ignorado",
+    "expresion": "resignado",
+    "condicion": {
+      "tipo": "postergado"
+    },
+    "lineas": [
+      "All right. If you need anything from CrOP, I am here."
+    ],
+    "respuestas": []
+  }
+]

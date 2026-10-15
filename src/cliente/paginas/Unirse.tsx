@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { olvidarPartidaAnterior } from '../pendientes.js';
@@ -9,11 +9,22 @@ import { useSesion } from '../i18n.js';
 export function Unirse() {
   const nav = useNavigate();
   const { avisar } = useUI();
-  const { fijarConfig } = useSesion();
+  const { fijarConfig, t } = useSesion();
+
   const [codigo, setCodigo] = useState('');
   const [nombre, setNombre] = useState('');
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
+
+  // En cuanto el código corresponde a una sesión, la página cambia al idioma de esa sesión
+  useEffect(() => {
+    const limpio = codigo.trim().toUpperCase();
+    if (limpio.length < 6) return;
+    const id = window.setTimeout(() => {
+      api.sesion.buscar(limpio).then(s => { if (s?.idioma) fijarConfig({ idioma: s.idioma }); }).catch(() => {});
+    }, 300);
+    return () => window.clearTimeout(id);
+  }, [codigo]);
 
   async function unirse(e: React.FormEvent) {
     e.preventDefault();
@@ -26,7 +37,7 @@ export function Unirse() {
       localStorage.setItem('nombreJugador', nombre.trim());
       localStorage.setItem('sesionNombre', res.sesion.nombre);
       if (res.config) fijarConfig(res.config);
-      if (res.reconectado) avisar('info', 'Retomaste tu partida', 'Continuarás donde te quedaste.');
+      if (res.reconectado) avisar('info', t('acceso.retomaste'), t('acceso.continuaras'));
       // Cada participación nueva vuelve a mostrar la inducción al entrar al simulador
       else {
         localStorage.removeItem('onboardingVisto');
@@ -34,7 +45,12 @@ export function Unirse() {
       }
       nav('/juego');
     } catch (err: any) {
-      setError(err.message);
+      const m = String(err?.message ?? '');
+      setError(m.includes('no encontrada') ? t('acceso.noEncontrada')
+        : m.includes('ya no acepta') ? t('acceso.noAcepta')
+          : m.includes('llena') ? t('acceso.llena')
+            : m.includes('activo en otro navegador') ? t('acceso.nombreActivo')
+              : t('acceso.errorUnirse'));
     } finally {
       setCargando(false);
     }
@@ -42,13 +58,13 @@ export function Unirse() {
 
   return (
     <VistaAcceso
-      titulo="Únete a una sesión"
-      subtitulo="Ingresa el código que te compartió tu profesor."
+      titulo={t('acceso.unirseTitulo')}
+      subtitulo={t('acceso.unirseSubtitulo')}
       navegacion={false}
     >
       <form className="acceso-formulario" onSubmit={unirse}>
         <div>
-          <label className="campo-label" htmlFor="codigo">Código de sesión</label>
+          <label className="campo-label" htmlFor="codigo">{t('acceso.codigo')}</label>
           <input
             id="codigo"
             className="campo-codigo"
@@ -62,14 +78,14 @@ export function Unirse() {
           />
         </div>
         <div>
-          <label className="campo-label" htmlFor="nombre">Tu nombre</label>
+          <label className="campo-label" htmlFor="nombre">{t('acceso.nombre')}</label>
           <input
             id="nombre"
             autoComplete="name"
             maxLength={60}
             value={nombre}
             onChange={e => setNombre(e.target.value)}
-            placeholder="Nombre y apellido"
+            placeholder={t('acceso.nombrePlaceholder')}
             required
           />
         </div>
@@ -77,7 +93,7 @@ export function Unirse() {
         {error && <div className="alerta-error" role="alert">{error}</div>}
 
         <button className="btn-primario" type="submit" disabled={cargando}>
-          {cargando ? 'Entrando...' : 'Entrar al simulador'}
+          {cargando ? t('acceso.entrando') : t('acceso.entrar')}
         </button>
       </form>
     </VistaAcceso>

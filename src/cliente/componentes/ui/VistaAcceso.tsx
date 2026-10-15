@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { PiePagina } from './PiePagina.js';
+import { useSesion } from '../../i18n.js';
 
 interface Props {
   titulo: string;
@@ -11,10 +12,11 @@ interface Props {
 }
 
 export function VistaAcceso({ titulo, subtitulo, children, pie, navegacion = true }: Props) {
+  const { t } = useSesion();
   const marca = (
     <>
       <img src="/favicon.png" alt="" width={28} height={28} />
-      <span>Director de Operaciones</span>
+      <span>{t('acceso.marca')}</span>
     </>
   );
 
@@ -24,7 +26,7 @@ export function VistaAcceso({ titulo, subtitulo, children, pie, navegacion = tru
         {navegacion
           ? <Link to="/" className="acceso-marca">{marca}</Link>
           : <div className="acceso-marca">{marca}</div>}
-        {navegacion && <Link to="/" className="enlace enlace-sutil">Volver al inicio</Link>}
+        {navegacion && <Link to="/" className="enlace enlace-sutil">{t('acceso.volverInicio')}</Link>}
       </header>
 
       <main className="pagina-contenido acceso-contenido">

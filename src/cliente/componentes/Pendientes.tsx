@@ -1,3 +1,4 @@
+import { useSesion } from '../i18n.js';
 import { useEffect } from 'react';
 import { alternarPendiente } from '../pendientes.js';
 import type { Pendiente } from '../pendientes.js';
@@ -14,7 +15,7 @@ interface Props {
 
 // La nota pasa a la espina como causa posible, sin la instrucción inicial
 function textoCausa(nota: string): string {
-  return nota.replace(/^(Validar|Revisar|Recomendación de [^:]+):\s*/i, '');
+  return nota.replace(/^(Validar|Revisar|Recomendación de [^:]+|Validate|Review|[^:]+[’']s recommendation):\s*/i, '');
 }
 
 export function estaResuelto(p: Pendiente, verificadas: string[]): boolean {
@@ -23,6 +24,7 @@ export function estaResuelto(p: Pendiente, verificadas: string[]): boolean {
 
 // Panel lateral con lo que el equipo pidió validar o recomendó revisar
 export function Pendientes({ pendientes, verificadas, onCerrar }: Props) {
+  const { t } = useSesion();
   useEffect(() => {
     const alTeclear = (e: KeyboardEvent) => { if (e.key === 'Escape') onCerrar(); };
     window.addEventListener('keydown', alTeclear);
@@ -36,17 +38,17 @@ export function Pendientes({ pendientes, verificadas, onCerrar }: Props) {
 
   return (
     <div className="pendientes-fondo" onClick={onCerrar}>
-      <aside className="pendientes-panel" role="dialog" aria-label="Lista de pendientes" onClick={e => e.stopPropagation()}>
+      <aside className="pendientes-panel" role="dialog" aria-label={t('pendientesUi.titulo')} onClick={e => e.stopPropagation()}>
         <header className="pendientes-encabezado">
           <div>
-            <h3>Lista de pendientes</h3>
-            <p>Lo que tu equipo te pidió validar o te recomendó revisar.</p>
+            <h3>{t('pendientesUi.titulo')}</h3>
+            <p>{t('pendientesUi.ayuda')}</p>
           </div>
-          <button className="aviso-cerrar" onClick={onCerrar} aria-label="Cerrar pendientes"><Icono nombre="cerrar" tamano={18} /></button>
+          <button className="aviso-cerrar" onClick={onCerrar} aria-label={t('pendientesUi.cerrar')}><Icono nombre="cerrar" tamano={18} /></button>
         </header>
 
         {pendientes.length === 0 && (
-          <p className="pendientes-vacio">Aún no hay pendientes. Habla con tu equipo en la Sala de Juntas y aquí aparecerán sus notas.</p>
+          <p className="pendientes-vacio">{t('pendientesUi.vacio')}</p>
         )}
 
         <ul className="pendientes-lista">
@@ -61,16 +63,16 @@ export function Pendientes({ pendientes, verificadas, onCerrar }: Props) {
                     <span className="pendientes-texto">{p.texto}</span>
                     <span className="pendientes-meta">
                       {p.personaje}
-                      {validada && <span className="badge badge-exito">Validado con datos</span>}
-                      {enEspina.has(p.id) && <span className="badge badge-info">En la espina</span>}
+                      {validada && <span className="badge badge-exito">{t('pendientesUi.validado')}</span>}
+                      {enEspina.has(p.id) && <span className="badge badge-info">{t('pendientesUi.enEspina')}</span>}
                     </span>
                   </span>
                 </label>
                 {!enEspina.has(p.id) && (
-                  <select className="pendientes-enviar" value="" aria-label="Enviar a la espina de pescado"
+                  <select className="pendientes-enviar" value="" aria-label={t('pendientesUi.enviar')}
                     onChange={e => e.target.value && agregarTarjeta({ rama: e.target.value as Rama, texto: textoCausa(p.texto), origen: 'equipo', pendienteId: p.id })}>
-                    <option value="">Enviar a la espina…</option>
-                    {RAMAS_6M.map(r => <option key={r.id} value={r.id}>Rama {r.nombre}</option>)}
+                    <option value="">{t('pendientesUi.enviar')}</option>
+                    {RAMAS_6M.map(r => <option key={r.id} value={r.id}>{t('pendientesUi.rama', { nombre: t(`espinaUi.ramas.${r.id}`) })}</option>)}
                   </select>
                 )}
               </li>

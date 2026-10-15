@@ -1,0 +1,303 @@
+[
+  {
+    "id": "silvia_c1_apertura",
+    "personaje": "silvia",
+    "ciclo": 1,
+    "fase": "apertura",
+    "expresion": "entusiasta",
+    "lineas": [
+      {
+        "si": "captura_por_mucho",
+        "texto": "What worries me is the people. Input errors are by far the most frequent.",
+        "sino": "What worries me is the people. Input errors are the most frequent."
+      },
+      {
+        "si": "num_sucursales",
+        "texto": "Let me organize training for all {{num_sucursales}} branches. I will coordinate it.",
+        "sino": "Let me organize training for all the branches. I will coordinate it."
+      }
+    ],
+    "pendiente": "Validate: Silvia says input errors are the most frequent and proposes training all 18 branches. Check which branches they are concentrated in.",
+    "afirmacion": {
+      "id": "error_captura_frecuente",
+      "verificable": true,
+      "veredicto": "cierta"
+    },
+    "respuestas": [
+      {
+        "texto": "Let me check where the errors are concentrated.",
+        "efecto": "abrir_laptop",
+        "credibilidad": 0
+      },
+      {
+        "texto": "Yes, train all of them.",
+        "efecto": "aceptar:3",
+        "credibilidad": 1
+      },
+      {
+        "texto": "Silvia, three branches account for 40% of the errors. There is no need to train all 18.",
+        "requiere": "verifico:error_captura_frecuente",
+        "efecto": "refutar",
+        "credibilidad": 2
+      },
+      {
+        "texto": "Let me think about it.",
+        "efecto": "postergar",
+        "credibilidad": -1
+      }
+    ]
+  },
+  {
+    "id": "silvia_c1_refutada",
+    "personaje": "silvia",
+    "ciclo": 1,
+    "fase": "refutado",
+    "expresion": "dudosa",
+    "condicion": {
+      "tipo": "refutado",
+      "afirmacion": "error_captura_frecuente"
+    },
+    "lineas": [
+      "But if you only train three, the other 15 stay the same.",
+      "Wouldn’t it be better to train all of them?"
+    ],
+    "respuestas": [
+      {
+        "texto": "The budget is not enough for all of them, and the impact is in those three.",
+        "efecto": "contraargumentar",
+        "credibilidad": 1
+      },
+      {
+        "texto": "You have a point. I will think about it.",
+        "efecto": "postergar",
+        "credibilidad": 0
+      }
+    ]
+  },
+  {
+    "id": "silvia_c1_aceptado",
+    "personaje": "silvia",
+    "ciclo": 1,
+    "fase": "aceptado",
+    "expresion": "emocionada",
+    "condicion": {
+      "tipo": "aceptaron_su_accion"
+    },
+    "lineas": [
+      "Perfect, I will take care of the organization. In one cycle everyone will be trained.",
+      "Well, maybe two. There are 18 branches."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_c1_focalizada",
+    "personaje": "silvia",
+    "ciclo": 1,
+    "fase": "reaccion",
+    "expresion": "confundida",
+    "condicion": {
+      "tipo": "accion_elegida",
+      "accionId": 2
+    },
+    "lineas": [
+      "So you are only going to train some branches. Well, it is something.",
+      "I hope you chose the right ones."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_c2_apertura",
+    "personaje": "silvia",
+    "ciclo": 2,
+    "fase": "apertura",
+    "expresion": "animada",
+    "lineas": [
+      "How are the errors going? Have they come down with the training?"
+    ],
+    "respuestas": [
+      {
+        "texto": "Yes, the change is already visible.",
+        "efecto": "mostrar_resultados",
+        "credibilidad": 1
+      },
+      {
+        "texto": "It has not started yet.",
+        "efecto": "postergar",
+        "credibilidad": 0
+      }
+    ]
+  },
+  {
+    "id": "silvia_c2_sin_capacitacion",
+    "personaje": "silvia",
+    "ciclo": 2,
+    "fase": "reaccion",
+    "expresion": "decepcionada",
+    "condicion": {
+      "tipo": "ninguna_accion_de",
+      "acciones": [
+        2,
+        3
+      ]
+    },
+    "lineas": [
+      "We have not trained anyone and the errors are the same, Director.",
+      "Will you let me prepare something for the next cycle?"
+    ],
+    "respuestas": [
+      {
+        "texto": "The checklist is already covering that.",
+        "efecto": "rechazar",
+        "credibilidad": 0
+      },
+      {
+        "texto": "All right, prepare the targeted training.",
+        "efecto": "aceptar:2",
+        "credibilidad": 1
+      }
+    ]
+  },
+  {
+    "id": "silvia_c3_apertura",
+    "personaje": "silvia",
+    "ciclo": 3,
+    "fase": "apertura",
+    "expresion": "reflexiva",
+    "lineas": [
+      "Three cycles already. How much did the errors come down?"
+    ],
+    "respuestas": [
+      {
+        "texto": "They have come down quite a bit.",
+        "efecto": "mostrar_resultados",
+        "credibilidad": 1
+      },
+      {
+        "texto": "Not as much as we would like.",
+        "efecto": "postergar",
+        "credibilidad": 0
+      }
+    ]
+  },
+  {
+    "id": "silvia_c3_errores_altos",
+    "personaje": "silvia",
+    "ciclo": 3,
+    "fase": "reaccion",
+    "expresion": "preocupada",
+    "condicion": {
+      "tipo": "kpi",
+      "metrica": "erroresPor100",
+      "operador": ">",
+      "valor": 60
+    },
+    "lineas": [
+      "There are still more than 60 errors per 100 applications. That is a lot.",
+      "Without training this will not come down, Director."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_c4_apertura",
+    "personaje": "silvia",
+    "ciclo": 4,
+    "fase": "apertura",
+    "expresion": "esperanzada",
+    "lineas": [
+      "Last chance. How do we close?"
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_c4_resultado_bueno",
+    "personaje": "silvia",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "orgullosa",
+    "condicion": {
+      "tipo": "kpi",
+      "metrica": "erroresPor100",
+      "operador": "<",
+      "valor": 50
+    },
+    "lineas": [
+      "We got below 50 errors per 100 applications. That is a real achievement.",
+      "People learn when you give them the tools."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_c4_resultado_malo",
+    "personaje": "silvia",
+    "ciclo": 4,
+    "fase": "cierre",
+    "expresion": "frustrada",
+    "condicion": {
+      "tipo": "kpi",
+      "metrica": "erroresPor100",
+      "operador": ">=",
+      "valor": 50
+    },
+    "lineas": [
+      "Errors are still high. We needed to train all the branches."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_consejo",
+    "personaje": "silvia",
+    "ciclo": 0,
+    "fase": "consejo",
+    "expresion": "entusiasta",
+    "condicion": {
+      "tipo": "pide_consejo"
+    },
+    "lineas": [
+      "Training for all the branches. It costs 100 units, but it reaches everyone.",
+      "Input errors are the most frequent and the easiest to fix with training."
+    ],
+    "pendiente": "Silvia’s recommendation: train all 18 branches, 100 units. First, check whether errors are concentrated in a few branches.",
+    "respuestas": [
+      {
+        "texto": "It is too expensive.",
+        "efecto": "rechazar",
+        "credibilidad": 0
+      },
+      {
+        "texto": "Go ahead.",
+        "efecto": "aceptar:3",
+        "credibilidad": 1
+      }
+    ]
+  },
+  {
+    "id": "silvia_vida_perdida",
+    "personaje": "silvia",
+    "ciclo": 0,
+    "fase": "vida_perdida",
+    "expresion": "triste",
+    "condicion": {
+      "tipo": "vida_perdida"
+    },
+    "lineas": [
+      "Director, this is not going well.",
+      "We need to do something soon."
+    ],
+    "respuestas": []
+  },
+  {
+    "id": "silvia_credibilidad_baja",
+    "personaje": "silvia",
+    "ciclo": 0,
+    "fase": "credibilidad_baja",
+    "expresion": "preocupada",
+    "condicion": {
+      "tipo": "credibilidad_baja"
+    },
+    "lineas": [
+      "Director, people are losing confidence.",
+      "We need a result soon, any result."
+    ],
+    "respuestas": []
+  }
+]

@@ -5,7 +5,7 @@ import { useUI } from './ui/Notificaciones.js';
 import { VotacionCiclo } from './VotacionCiclo.js';
 import { AvisoBetancourt } from './Betancourt.js';
 import { useEspina } from '../espina.js';
-import { ESTADOS } from '../../compartido/espina.js';
+import { useSesion } from '../i18n.js';
 
 interface Props {
   estado: any;
@@ -14,6 +14,9 @@ interface Props {
 }
 
 export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
+  const { t } = useSesion();
+  const nombreMetrica = (id: string) => t(`metricas.${id}`);
+  const unidad = (u?: string) => (u === 'dias' ? t('proceso.dias') : u ?? '');
   const { avisar, confirmar } = useUI();
   const [acciones, setAcciones] = useState<any[]>([]);
   const [metricas, setMetricas] = useState<any[]>([]);
@@ -53,18 +56,18 @@ export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
 
   async function confirmarAcciones() {
     if (seleccionadas.length === 0) return;
-    const nombres = seleccionadas.map(id => acciones.find(x => x.id === id)?.nombre ?? `Acción ${id}`);
+    const nombres = seleccionadas.map(id => acciones.find(x => x.id === id)?.nombre ?? t('decisiones.accion', { n: id }));
     const ok = await confirmar({
-      titulo: `Confirmar ${seleccionadas.length} acción(es)`,
+      titulo: seleccionadas.length === 1 ? t('decisiones.confirmarTitulo1') : t('decisiones.confirmarTitulo', { n: seleccionadas.length }),
       mensaje: (
         <>
           <ul style={{ margin: '0 0 10px 18px' }}>
             {nombres.map(n => <li key={n}>{n}</li>)}
           </ul>
-          Se descontarán <strong>${costoSeleccion}</strong> de tu presupuesto. Una vez confirmadas no se pueden revertir.
+          {t('decisiones.confirmarMensaje', { costo: costoSeleccion })}
         </>
       ),
-      textoConfirmar: 'Confirmar acciones',
+      textoConfirmar: t('decisiones.confirmarAcciones'),
       tono: 'advertencia',
       icono: 'acciones',
     });
@@ -77,9 +80,9 @@ export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
       setSeleccionadas([]);
       setCausaPorAccion({});
       if (res?.avisos?.length) setAvisos(res.avisos);
-      avisar('exito', 'Acciones confirmadas', `Presupuesto restante: $${res?.presupuestoDisponible ?? presupuesto - costoSeleccion}`);
+      avisar('exito', t('decisiones.confirmadas'), t('decisiones.presupuestoRestante', { n: res?.presupuestoDisponible ?? presupuesto - costoSeleccion }));
     } catch (err: any) {
-      setError(err.message);
+      setError(String(err?.message ?? '').startsWith('Presupuesto insuficiente') ? t('decisiones.sinPresupuesto') : t('decisiones.error'));
     }
     setCargando(false);
   }
@@ -90,9 +93,9 @@ export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
     try {
       await api.partida.compromiso(metricaComp, parseFloat(valorComp));
       setCompromisoDeclarado(true);
-      avisar('exito', 'Compromiso declarado', `${metricaActual?.nombre ?? metricaComp}: ${valorComp} ${metricaActual?.unidad ?? ''}`.trim());
+      avisar('exito', t('decisiones.compromisoDeclarado'), `${nombreMetrica(metricaComp)}: ${valorComp} ${unidad(metricaActual?.unidad)}`.trim());
     } catch (err: any) {
-      setError(err.message);
+      setError(String(err?.message ?? '').startsWith('Presupuesto insuficiente') ? t('decisiones.sinPresupuesto') : t('decisiones.error'));
     }
   }
 
@@ -104,11 +107,11 @@ export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
   async function confirmarAvance() {
     setVotando(false);
     const ok = await confirmar({
-      titulo: 'Avanzar al siguiente ciclo',
+      titulo: t('decisiones.avanzarTitulo'),
       mensaje: seleccionadas.length > 0
-        ? 'Tienes acciones seleccionadas sin confirmar y se descartarán. El ciclo actual se cerrará y no podrás volver a él.'
-        : 'El ciclo actual se cerrará y no podrás volver a él. Asegúrate de haber tomado todas tus decisiones.',
-      textoConfirmar: 'Avanzar ciclo',
+        ? t('decisiones.avanzarDescartar')
+        : t('decisiones.avanzarMensaje'),
+      textoConfirmar: t('decisiones.avanzarCiclo'),
       tono: 'advertencia',
       icono: 'avanzar',
     });
@@ -121,10 +124,10 @@ export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
       setCompromisoDeclarado(false);
       setSeleccionadas([]);
       if (!res.estado?.terminada && res.estado?.fase !== 'finalizada') {
-        avisar('info', `Ciclo ${res.estado?.cicloActual ?? ''} iniciado`.trim(), 'Tu equipo te espera en la Sala de Juntas.');
+        avisar('info', t('decisiones.cicloIniciado', { n: res.estado?.cicloActual ?? '' }), t('decisiones.equipoEspera'));
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(String(err?.message ?? '').startsWith('Presupuesto insuficiente') ? t('decisiones.sinPresupuesto') : t('decisiones.error'));
     }
     setCargando(false);
   }
@@ -139,7 +142,7 @@ export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
         <div>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
             <h3 style={{ color: 'var(--color-primario)', fontSize: 18, fontWeight: 700 }}>
-              Acciones disponibles
+              {t('decisiones.disponibles')}
             </h3>
             <div style={{ fontSize: 13, color: 'var(--color-texto-secundario)' }}>
               <strong style={{ color: 'var(--color-primario)', fontSize: 16 }}>${presupuesto}</strong>
@@ -185,20 +188,20 @@ export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
                         color: a.demora === 0 ? 'var(--color-exito)' : 'var(--color-texto-terciario)',
                         marginTop: 2,
                       }}>
-                        {a.demora === 0 ? 'Inmediata' : `${a.demora} ciclo(s)`}
+                        {a.demora === 0 ? t('decisiones.inmediata') : a.demora === 1 ? t('decisiones.unCiclo') : t('decisiones.ciclos', { n: a.demora })}
                       </div>
                     </div>
                   </div>
                   {yaElegida && (
-                    <span className="badge badge-exito" style={{ marginTop: 8 }}>Ya elegida</span>
+                    <span className="badge badge-exito" style={{ marginTop: 8 }}>{t('decisiones.yaElegida')}</span>
                   )}
                   {sel && (
                     <div className="accion-causa" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
-                      <label className="campo-label" htmlFor={`causa-${a.id}`}>¿Qué causa de tu espina ataca?</label>
+                      <label className="campo-label" htmlFor={`causa-${a.id}`}>{t('decisiones.queCausa')}</label>
                       <select id={`causa-${a.id}`} value={causaPorAccion[a.id] ?? ''}
                         onChange={e => setCausaPorAccion(c => ({ ...c, [a.id]: e.target.value }))}>
-                        <option value="">Ninguna (decisión sin causa ligada)</option>
-                        {causasOrdenadas.map(t => <option key={t.id} value={t.id}>[{ESTADOS[t.estado]}] {t.texto}</option>)}
+                        <option value="">{t('decisiones.ninguna')}</option>
+                        {causasOrdenadas.map(c => <option key={c.id} value={c.id}>[{t(`espinaUi.estados.${c.estado}`)}] {c.texto}</option>)}
                       </select>
                     </div>
                   )}
@@ -210,17 +213,17 @@ export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
           {seleccionadas.length > 0 && (
             <button className="btn-advertencia" style={{ width: '100%', marginTop: 14, padding: 14, fontSize: 15 }}
               onClick={confirmarAcciones} disabled={cargando || costoSeleccion > presupuesto}>
-              Confirmar {seleccionadas.length} accion(es) (${costoSeleccion})
+              {seleccionadas.length === 1 ? t('decisiones.confirmar1', { costo: costoSeleccion }) : t('decisiones.confirmarN', { n: seleccionadas.length, costo: costoSeleccion })}
             </button>
           )}
         </div>
 
         <div>
           <h3 style={{ marginBottom: 14, color: 'var(--color-primario)', fontSize: 18, fontWeight: 700 }}>
-            Compromiso del ciclo
+            {t('decisiones.compromisoTitulo')}
           </h3>
           <p style={{ fontSize: 13, color: 'var(--color-texto-secundario)', marginBottom: 14, lineHeight: 1.6 }}>
-            Declara al consejo qué métrica vas a mejorar y a cuánto te comprometes.
+            {t('decisiones.compromisoAyuda')}
           </p>
 
           {compromisoDeclarado ? (
@@ -230,26 +233,26 @@ export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
               border: '1px solid rgba(26, 122, 76, 0.15)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <strong style={{ color: 'var(--color-exito)', fontSize: 14 }}>Compromiso declarado</strong>
+                <strong style={{ color: 'var(--color-exito)', fontSize: 14 }}>{t('decisiones.compromisoDeclarado')}</strong>
               </div>
               <p style={{ fontSize: 14, color: 'var(--color-texto-secundario)' }}>
-                {metricaActual?.nombre}: <strong style={{ color: 'var(--color-texto)' }}>{valorComp} {metricaActual?.unidad}</strong>
+                {nombreMetrica(metricaComp)}: <strong style={{ color: 'var(--color-texto)' }}>{valorComp} {unidad(metricaActual?.unidad)}</strong>
               </p>
             </div>
           ) : (
             <div className="tarjeta" style={{ marginBottom: 20 }}>
               <div style={{ marginBottom: 14 }}>
                 <label className="campo-label" htmlFor="metrica-comp">
-                  Métrica
+                  {t('decisiones.metrica')}
                 </label>
                 <select id="metrica-comp" value={metricaComp} onChange={e => {
                   setMetricaComp(e.target.value);
                   if (kpis && e.target.value) setValorComp(String(kpis[e.target.value] ?? ''));
                 }}>
-                  <option value="">Selecciona...</option>
+                  <option value="">{t('decisiones.selecciona')}</option>
                   {metricas.map(m => (
                     <option key={m.id} value={m.id}>
-                      {m.nombre} (actual: {kpis?.[m.id]?.toFixed?.(1) ?? '?'} {m.unidad})
+                      {nombreMetrica(m.id)} · {t('decisiones.actual', { n: `${kpis?.[m.id]?.toFixed?.(1) ?? ''} ${unidad(m.unidad)}`.trim() })}
                     </option>
                   ))}
                 </select>
@@ -257,9 +260,9 @@ export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
               {metricaComp && valorActual != null && (
                 <div style={{ marginBottom: 14 }}>
                   <label className="campo-label" htmlFor="valor-comp">
-                    Valor prometido
+                    {t('decisiones.valorPrometido')}
                     <span style={{ fontWeight: 400, textTransform: 'none', marginLeft: 6 }}>
-                      (actual: {typeof valorActual === 'number' ? valorActual.toFixed(1) : valorActual})
+                      {t('decisiones.actual', { n: typeof valorActual === 'number' ? valorActual.toFixed(1) : String(valorActual) })}
                     </span>
                   </label>
                   <input id="valor-comp" type="number" step="0.1" value={valorComp}
@@ -268,14 +271,14 @@ export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
               )}
               <button className="btn-primario" onClick={declararCompromiso}
                 disabled={!metricaComp || !valorComp} style={{ width: '100%' }}>
-                Declarar compromiso
+                {t('decisiones.declarar')}
               </button>
             </div>
           )}
 
           <button className="btn-advertencia" style={{ width: '100%', padding: 16, fontSize: 16, borderRadius: 12 }}
             onClick={avanzarCiclo} disabled={cargando || !compromisoDeclarado}>
-            Avanzar al siguiente ciclo
+            {t('decisiones.avanzar')}
           </button>
           {avisos.length > 0 && <AvisoBetancourt avisos={avisos} onCerrar={() => setAvisos([])} />}
           {votando && (
@@ -295,7 +298,7 @@ export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
                 gap: 8,
               }}>
                 <Icono nombre="grafica" tamano={18} />
-                KPIs actuales
+                {t('decisiones.kpis')}
               </h4>
               <div style={{ fontSize: 13 }}>
                 {metricas.map(m => (
@@ -305,9 +308,9 @@ export function TabDecisiones({ estado, onEstadoCambio, onIrEspina }: Props) {
                     padding: '8px 0',
                     borderBottom: '1px solid var(--color-borde-sutil)',
                   }}>
-                    <span style={{ color: 'var(--color-texto-secundario)' }}>{m.nombre}</span>
+                    <span style={{ color: 'var(--color-texto-secundario)' }}>{nombreMetrica(m.id)}</span>
                     <strong style={{ color: 'var(--color-texto)' }}>
-                      {kpis?.[m.id]?.toFixed?.(1) ?? '-'} {m.unidad}
+                      {kpis?.[m.id]?.toFixed?.(1) ?? '-'} {unidad(m.unidad)}
                     </strong>
                   </div>
                 ))}
