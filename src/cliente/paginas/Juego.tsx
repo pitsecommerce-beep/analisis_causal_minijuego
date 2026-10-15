@@ -5,6 +5,7 @@ import { useSondeo } from '../sondeo.js';
 import { TabDatos } from '../componentes/TabDatos.js';
 import { ConstructorGraficos } from '../componentes/ConstructorGraficos.js';
 import { TabTablero } from '../componentes/TabTablero.js';
+import { VistaCaso } from '../componentes/VistaCaso.js';
 import { accionesTablero } from '../tablero.js';
 import { useDatos } from '../datos.js';
 import { useSesion } from '../i18n.js';
@@ -25,15 +26,28 @@ import { cargarEspina, fijarCicloEspina } from '../espina.js';
 import { registrarEvento } from '../eventos.js';
 import type { PasoRecorrido } from '../componentes/Onboarding.js';
 
-type Vista = 'datos' | 'analisis' | 'tablero' | 'asesores' | 'espina' | 'decisiones';
+type Vista = 'caso' | 'datos' | 'analisis' | 'tablero' | 'asesores' | 'espina' | 'decisiones';
 
 const INTERVALO_ESPERA = 4000;
 const INTERVALO_LATIDO = 15000;
 const CLAVE_ONBOARDING = 'onboardingVisto';
 
+function leerModo(): string {
+  try { return JSON.parse(localStorage.getItem('configSesion') ?? '{}').modo ?? 'completo'; } catch { return 'completo'; }
+}
+
 function onboardingVisto(): boolean {
   try { return localStorage.getItem(CLAVE_ONBOARDING) === '1'; } catch { return false; }
 }
+
+// En modo informativo no hay juego: solo consulta, análisis y tablero
+const TABS_INFORMATIVO: { id: Vista; label: string; icono: NombreIcono }[] = [
+  { id: 'caso', label: 'El caso', icono: 'caso' },
+  { id: 'datos', label: 'Datos', icono: 'tabla' },
+  { id: 'analisis', label: 'Análisis', icono: 'grafica' },
+  { id: 'tablero', label: 'Tablero', icono: 'tablero' },
+  { id: 'asesores', label: 'Sala de Juntas', icono: 'mensajes' },
+];
 
 const TABS: { id: Vista; label: string; icono: NombreIcono }[] = [
   { id: 'datos', label: 'Datos', icono: 'tabla' },
@@ -49,7 +63,7 @@ export function Juego() {
   const { confirmar, avisar } = useUI();
   const [estado, setEstado] = useState<any>(null);
   // El simulador recibe al participante en la Sala de Juntas, con su equipo
-  const [vista, setVista] = useState<Vista>('asesores');
+  const [vista, setVista] = useState<Vista>(() => (leerModo() === 'informativo' ? 'caso' : 'asesores'));
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [herramientasUsadas, setHerramientasUsadas] = useState<string[]>([]);
@@ -60,7 +74,8 @@ export function Juego() {
   const [mostrarPendientes, setMostrarPendientes] = useState(false);
   const [verificadas, setVerificadas] = useState<string[]>([]);
   const pendientes = usePendientes();
-  const { fijarConfig } = useSesion();
+  const { fijarConfig, config } = useSesion();
+  const informativo = config.modo === 'informativo';
   const { datos, error: errorDatos, reintentar: reintentarDatos } = useDatos();
   const [mostrarOnboarding, setMostrarOnboarding] = useState(false);
   const inicioRef = useRef(Date.now());
@@ -81,7 +96,10 @@ export function Juego() {
     try {
       const info = await api.experimento.info();
       setInfoExp(info);
-      if (info.config) fijarConfig(info.config);
+      if (info.config) {
+        fijarConfig(info.config);
+        if (info.config.modo === 'informativo') setVista('caso');
+      }
 
       if (info.modoExperimento && !info.consentimiento) {
         setMostrarConsentimiento(true);
@@ -273,7 +291,7 @@ export function Juego() {
     try {
       const res = await api.partida.iniciar();
       setEstado(res);
-      if (!onboardingVisto()) setMostrarOnboarding(true);
+      if (!onboardingVisto() && leerModo() !== 'informativo') setMostrarOnboarding(true);
       telemetria('partida_iniciada', { ciclo: res.cicloActual });
     } catch (err: any) {
       if (err.message.includes('aún no ha iniciado')) {
@@ -399,7 +417,7 @@ export function Juego() {
   if (!estado) return null;
 
   if (sesionFinalizada) {
-    return <CierreSesion estado={estado} onResultados={() => nav('/resultados')} onSalir={async () => { await api.jugador.salir().catch(() => {}); localStorage.clear(); nav('/unirse'); }} />;
+    return <CierreSesion informativo={informativo} estado={estado} onResultados={() => nav('/resultados')} onSalir={async () => { await api.jugador.salir().catch(() => {}); localStorage.clear(); nav('/unirse'); }} />;
   }
 
   const ciclo = estado.cicloActual ?? 1;
@@ -427,6 +445,7 @@ export function Juego() {
             <span className="barra-estado-label">Sesión</span>
             <span className="barra-estado-valor">{sesionNombre}</span>
           </div>
+          {informativo ? <div style={{ marginLeft: 'auto' }} /> : <>
           <div className="barra-estado-item" data-tour="ciclo">
             <span className="barra-estado-label">Ciclo</span>
             <span className="barra-estado-valor">{ciclo} / 4</span>
@@ -452,8 +471,9 @@ export function Juego() {
             <span className="barra-estado-label">Presupuesto</span>
             <span className="barra-estado-valor">${presupuesto}</span>
           </div>
+          </>}
           <div className="barra-estado-item" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <button
+            {!informativo && <button
               onClick={() => setMostrarPendientes(true)}
               data-tour="pendientes"
               aria-label={`Lista de pendientes, ${porResolver} sin resolver`}
@@ -472,8 +492,8 @@ export function Juego() {
               <Icono nombre="diagnostico" tamano={16} />
               <span className="ocultar-movil">Pendientes</span>
               {porResolver > 0 && <span className="pendientes-contador">{porResolver}</span>}
-            </button>
-            <button
+            </button>}
+            {!informativo && <button
               onClick={() => setMostrarOnboarding(true)}
               data-tour="ayuda"
               aria-label="Ver cómo se juega"
@@ -487,7 +507,7 @@ export function Juego() {
               }}
             >
               <Icono nombre="pregunta" tamano={18} />
-            </button>
+            </button>}
             <button
               onClick={salir}
               style={{
@@ -515,7 +535,7 @@ export function Juego() {
           boxShadow: 'var(--sombra)',
           border: '1px solid var(--color-borde-sutil)',
         }}>
-          {TABS.map(t => (
+          {(informativo ? TABS_INFORMATIVO : TABS).map(t => (
             <button
               key={t.id}
               onClick={() => onCambioVista(t.id)}
@@ -542,29 +562,31 @@ export function Juego() {
           ))}
         </div>
 
-        {esTratamiento && vista === 'decisiones' && <AsesorAlgoritmico />}
+        {esTratamiento && !informativo && vista === 'decisiones' && <AsesorAlgoritmico />}
 
         <div key={vista} className="transicion-contenido">
+        {vista === 'caso' && <VistaCaso datos={datos} onVerDatos={() => onCambioVista('datos')} />}
         {(vista === 'datos' || vista === 'analisis' || vista === 'tablero') && !datos && <CargaDatos error={errorDatos} onReintentar={reintentarDatos} />}
         {vista === 'datos' && datos && <TabDatos datos={datos} />}
-        {vista === 'analisis' && datos && <ConstructorGraficos datos={datos} conEspina onAnalisis={onHerramientaUsada} onAgregarTablero={accionesTablero.agregar} />}
+        {vista === 'analisis' && datos && <ConstructorGraficos datos={datos} conEspina={!informativo} onAnalisis={onHerramientaUsada} onAgregarTablero={accionesTablero.agregar} />}
         {vista === 'tablero' && datos && <TabTablero datos={datos} nombreEquipo={nombreJugador} onIrAnalisis={() => onCambioVista('analisis')} />}
         {vista === 'asesores' && (
           <TabAsesores
             onCredibilidadCambio={onCredibilidadCambio}
             onRecargar={recargarEstado}
             onAbrirLaptop={() => onCambioVista('datos')}
+            soloLectura={informativo}
           />
         )}
-        {vista === 'espina' && <TabEspina />}
-        {vista === 'decisiones' && (
+        {vista === 'espina' && !informativo && <TabEspina />}
+        {vista === 'decisiones' && !informativo && (
           <TabDecisiones estado={estado} onEstadoCambio={onEstadoCambio} onIrEspina={() => onCambioVista('espina')} />
         )}
         </div>
       </main>
       <PiePagina />
-      {mostrarPendientes && <Pendientes pendientes={pendientes} verificadas={verificadas} onCerrar={() => setMostrarPendientes(false)} />}
-      {mostrarOnboarding && <Onboarding pasos={pasosRecorrido} onTerminar={terminarOnboarding} />}
+      {mostrarPendientes && !informativo && <Pendientes pendientes={pendientes} verificadas={verificadas} onCerrar={() => setMostrarPendientes(false)} />}
+      {mostrarOnboarding && !informativo && <Onboarding pasos={pasosRecorrido} onTerminar={terminarOnboarding} />}
     </div>
   );
 }
@@ -583,9 +605,10 @@ function CargaDatos({ error, onReintentar }: { error: boolean; onReintentar: () 
 }
 
 // Pantalla que reemplaza al juego cuando el profesor finaliza la sesión
-function CierreSesion({ estado, onResultados, onSalir }: { estado: any; onResultados: () => void; onSalir: () => void }) {
-  const yaEvaluada = estado.fase === 'finalizada';
-  const completoCiclos = !!estado.terminada;
+function CierreSesion({ estado, onResultados, onSalir, informativo }: { estado: any; onResultados: () => void; onSalir: () => void; informativo: boolean }) {
+  // En modo informativo no hay evaluación ni ciclos que mostrar
+  const yaEvaluada = !informativo && estado.fase === 'finalizada';
+  const completoCiclos = !informativo && !!estado.terminada;
   const datos = [
     { etiqueta: 'Ciclo alcanzado', valor: `${estado.cicloActual ?? 1} / 4` },
     { etiqueta: 'Vidas', valor: String(estado.vidas ?? 0) },
@@ -605,9 +628,9 @@ function CierreSesion({ estado, onResultados, onSalir }: { estado: any; onResult
             ? 'Tu partida ya fue evaluada. Puedes consultar tus resultados.'
             : completoCiclos
               ? 'Completaste los cuatro ciclos. Declara tus causas raíz para recibir tu evaluación.'
-              : 'Ya no es posible seguir jugando. Así quedó tu partida:'}
+              : informativo ? 'La sesión terminó. Gracias por participar.' : 'Ya no es posible seguir jugando. Así quedó tu partida:'}
         </p>
-        {!yaEvaluada && !completoCiclos && (
+        {!informativo && !yaEvaluada && !completoCiclos && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20, textAlign: 'left' }}>
             {datos.map(d => (
               <div key={d.etiqueta} style={{ padding: '10px 12px', borderRadius: 'var(--radio)', background: 'var(--color-fondo)' }}>

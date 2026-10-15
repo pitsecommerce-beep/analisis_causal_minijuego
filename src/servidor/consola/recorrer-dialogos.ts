@@ -1,6 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { NodoDialogo } from '../dialogos/motor-dialogos.js';
+import { cargarCombinacion } from '../datos/cargador.js';
+import { leerDialogosCrudos, resolverDialogos, variablesDialogo } from '../dialogos/textos.js';
+
+// Se recorren los diálogos tal como los ve el modo completo, con las cifras de R2
+const resueltos = resolverDialogos(leerDialogosCrudos('es'), variablesDialogo('R2', cargarCombinacion('R2'), 'es'));
 
 const DIR = path.resolve('datos/dialogos');
 const archivos = fs.readdirSync(DIR).filter((f) => f.endsWith('.json'));
@@ -11,9 +16,8 @@ let sinSalida = 0;
 let errores: string[] = [];
 
 for (const archivo of archivos) {
-  const ruta = path.join(DIR, archivo);
-  const nodos: NodoDialogo[] = JSON.parse(fs.readFileSync(ruta, 'utf-8'));
   const personaje = archivo.replace('.json', '');
+  const nodos: NodoDialogo[] = resueltos[personaje] ?? [];
 
   console.log(`\n=== ${personaje.toUpperCase()} (${nodos.length} nodos) ===`);
   totalNodos += nodos.length;

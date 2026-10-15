@@ -279,12 +279,12 @@ function paretoEventos(filas: Fila[], spec: Spec, ctx: Contexto): ResultadoParet
   return cerrarPareto(conMedida, aditiva, spec.linea80, null, 0, etiqueta, null);
 }
 
-// Etapas del proceso con las fechas que las delimitan
+// Etapas del proceso con las fechas que las delimitan, igual que en la vista del proceso.
+// La consulta al buró no tiene duración propia en la base: su espera queda dentro de la revisión de CrOP.
 export const ETAPAS: { id: string; desde: string; hasta: string }[] = [
   { id: 'captura', desde: 'dateFirstInput', hasta: 'dateLastInput' },
-  { id: 'envio', desde: 'dateLastInput', hasta: 'dateDocsSent' },
-  { id: 'revision', desde: 'dateDocsSent', hasta: 'dateDocsReceived' },
-  { id: 'buro', desde: 'dateDocsReceived', hasta: 'creditBureauRunDate' },
+  { id: 'envio', desde: 'dateLastInput', hasta: 'dateDocsReceived' },
+  { id: 'revision', desde: 'dateDocsReceived', hasta: 'creditBureauRunDate' },
   { id: 'score', desde: 'creditBureauRunDate', hasta: 'etfbScoreDate' },
   { id: 'plastico', desde: 'etfbScoreDate', hasta: 'datePlasticSent' },
 ];

@@ -102,7 +102,7 @@ export const api = {
     buscar: (codigo: string) => request<any>('GET', `/sesion/${codigo}`),
     crear: (nombre: string, config: ConfigSesion) => request<any>('POST', '/sesion', { nombre, ...config }),
     unirse: (codigo: string, nombre: string, email?: string) =>
-      request<{ jugadorId: string; token: string; sesion: any; reconectado?: boolean }>('POST', `/sesion/${codigo}/unirse`, { nombre, email }),
+      request<{ jugadorId: string; token: string; sesion: any; config?: ConfigSesion; reconectado?: boolean }>('POST', `/sesion/${codigo}/unirse`, { nombre, email }),
   },
   eventos: {
     // keepalive: el evento se envía aunque el participante cambie de página
@@ -137,6 +137,9 @@ export const api = {
       request<any>('POST', '/datos/verificacion', { verificacionId, herramienta }),
     verificaciones: () => request<string[]>('GET', '/datos/verificaciones'),
     excel: (tabla: 'solicitudes' | 'comentarios') => descargarArchivo(`/datos/excel/${tabla}`),
+  },
+  sala: {
+    testimonios: () => request<any[]>('GET', '/sala/testimonios'),
   },
   tablero: {
     obtener: () => request<Tablero>('GET', '/tablero'),

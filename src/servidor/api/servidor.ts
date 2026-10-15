@@ -37,6 +37,7 @@ import { crearPartida, elegirAcciones, declararCompromiso, procesarCiclo } from 
 import { evaluarPartida, determinarDesenlace } from '../puntuacion/evaluacion.js';
 import { crearEstadoDialogo, obtenerNodosCiclo, filtrarRespuestas, evaluarCondicion, aplicarEfecto } from '../dialogos/motor-dialogos.js';
 import type { NodoDialogo } from '../dialogos/motor-dialogos.js';
+import { leerDialogosCrudos, resolverDialogos, variablesDialogo, testimonios } from '../dialogos/textos.js';
 import { cargarTodo, rutaSolicitudes } from '../datos/cargador.js';
 import type { DatosCargados, TodosLosDatos } from '../datos/cargador.js';
 import { RAIZ } from '../raiz.js';
@@ -60,7 +61,21 @@ if (fs.existsSync(clientePath)) {
 let todosLosDatos!: TodosLosDatos;
 // Lo que ven los jugadores no cambia durante la vida del proceso: se arma una sola vez por combinación
 let datosPublicos!: Record<ClaveDatos, ReturnType<typeof datosParaJugador>>;
-const dialogos: Record<string, NodoDialogo[]> = {};
+let dialogosCrudos!: Record<Idioma, ReturnType<typeof leerDialogosCrudos>>;
+const cacheDialogos = new Map<string, Record<string, NodoDialogo[]>>();
+
+// Diálogos con las cifras de la base y en el idioma de la sesión del participante
+function dialogosDe(req: express.Request): Record<string, NodoDialogo[]> {
+  const config = (req as RequestJugador).jugador.config;
+  const clave = claveDatos(config);
+  const llave = `${clave}|${config.idioma}`;
+  let d = cacheDialogos.get(llave);
+  if (!d) {
+    d = resolverDialogos(dialogosCrudos[config.idioma], variablesDialogo(clave, todosLosDatos[clave], config.idioma));
+    cacheDialogos.set(llave, d);
+  }
+  return d;
+}
 
 function cargarDatosInicio() {
   todosLosDatos = cargarTodo();
@@ -68,11 +83,11 @@ function cargarDatosInicio() {
     CLAVES_DATOS.map((c) => [c, datosParaJugador(todosLosDatos[c])])
   ) as Record<ClaveDatos, ReturnType<typeof datosParaJugador>>;
 
-  const dirDialogos = path.join(RAIZ, 'datos', 'dialogos');
-  const personajes = ['bernardo', 'oscar', 'paulina', 'silvia', 'diego', 'ramon'];
-  for (const p of personajes) {
-    dialogos[p] = JSON.parse(fs.readFileSync(path.join(dirDialogos, `${p}.json`), 'utf-8'));
-  }
+  // Mientras no exista la versión en inglés de un archivo se usa la española
+  const es = leerDialogosCrudos('es');
+  let en = es;
+  try { en = leerDialogosCrudos('en'); } catch { /* sin traducción */ }
+  dialogosCrudos = { es, en };
 }
 
 // --- Utilidades ---
@@ -774,7 +789,7 @@ app.get('/api/partida/dialogos', autenticarJugador, async (req, res) => {
     const resultado: Record<string, unknown>[] = [];
 
     for (const p of personajes) {
-      const nodos = dialogos[p]!;
+      const nodos = dialogosDe(req)[p]!;
       const apertura = nodos.find(n => n.ciclo === ciclo && n.fase === 'apertura');
       if (!apertura) continue;
 
@@ -846,7 +861,7 @@ app.get('/api/partida/dialogos', autenticarJugador, async (req, res) => {
       }
     }
 
-    const ramonNodos = dialogos['ramon']!;
+    const ramonNodos = dialogosDe(req)['ramon']!;
     const ultimoResultado = estado.resultadosCiclo?.[estado.resultadosCiclo.length - 1];
     if (ultimoResultado) {
       if (ultimoResultado.vidaPerdida) {
@@ -899,6 +914,11 @@ app.get('/api/partida/dialogos', autenticarJugador, async (req, res) => {
   }
 });
 
+// Sala de Juntas de solo lectura (modo informativo): lo que afirma cada asesor sobre la base de la sesión
+app.get('/api/sala/testimonios', autenticarJugador, (req, res) => {
+  res.json(testimonios(dialogosDe(req)));
+});
+
 app.post('/api/partida/respuesta', autenticarJugador, sesionActiva, async (req, res) => {
   const { nodoId, efecto, personaje } = req.body;
   if (!efecto) {
@@ -918,7 +938,7 @@ app.post('/api/partida/respuesta', autenticarJugador, sesionActiva, async (req, 
     const estadoDialogo = deserializarDialogo(partida.estado_dialogo as any);
 
     if (efecto === 'refutar' && nodoId) {
-      const nodos = dialogos[personaje as string];
+      const nodos = dialogosDe(req)[personaje as string];
       if (nodos) {
         const nodo = nodos.find(n => n.id === nodoId);
         if (nodo?.afirmacion) {
@@ -936,7 +956,7 @@ app.post('/api/partida/respuesta', autenticarJugador, sesionActiva, async (req, 
 
     let siguienteNodo: Record<string, unknown> | null = null;
     if (efecto === 'refutar' && nodoId && personaje) {
-      const nodos = dialogos[personaje as string];
+      const nodos = dialogosDe(req)[personaje as string];
       if (nodos) {
         const nodoOrig = nodos.find(n => n.id === nodoId);
         if (nodoOrig?.afirmacion) {
@@ -963,7 +983,7 @@ app.post('/api/partida/respuesta', autenticarJugador, sesionActiva, async (req, 
     // "¿Qué propones?" abre la recomendación de esa persona
     if (efecto.startsWith('pedir_consejo:')) {
       const quien = efecto.slice('pedir_consejo:'.length);
-      const consejo = dialogos[quien]?.find(n => n.fase === 'consejo');
+      const consejo = dialogosDe(req)[quien]?.find(n => n.fase === 'consejo');
       if (consejo) {
         siguienteNodo = {
           nodoId: consejo.id,
@@ -1147,7 +1167,7 @@ app.post('/api/partida/cierre', autenticarJugador, soloModoCompleto, async (req,
       { fase: 'finalizada', puntuacion: desglose.total, desenlace_id: desenlace.id }
     );
 
-    const ramonCierre = dialogos['ramon']!.find(n =>
+    const ramonCierre = dialogosDe(req)['ramon']!.find(n =>
       n.ciclo === 4 && n.condicion?.valor === desenlace.id
     );
 

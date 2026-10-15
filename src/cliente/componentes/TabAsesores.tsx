@@ -36,6 +36,8 @@ interface Props {
   onCredibilidadCambio?: (cred: number) => void;
   onRecargar?: () => void;
   onAbrirLaptop?: () => void;
+  // Modo informativo: se escucha a los asesores, sin respuestas ni decisiones
+  soloLectura?: boolean;
 }
 
 // Lo que dice cada quien cuando no tiene nada nuevo para ti
@@ -73,7 +75,7 @@ function infoDe(id: string) {
   return P.PERSONAJES.find(p => p.id === id);
 }
 
-export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop }: Props) {
+export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop, soloLectura }: Props) {
   const { avisar } = useUI();
   const [dialogos, setDialogos] = useState<Nodo[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -95,7 +97,7 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop }: Props) {
   async function cargar() {
     setCargando(true);
     try {
-      setDialogos(await api.partida.dialogos());
+      setDialogos(await (soloLectura ? api.sala.testimonios() : api.partida.dialogos()));
     } catch (err: any) {
       avisar('error', 'No se pudieron cargar los diálogos', err.message);
     }
@@ -300,7 +302,7 @@ export function TabAsesores({ onCredibilidadCambio, onAbrirLaptop }: Props) {
       return;
     }
     marcar('vistos', nodoActual.nodoId);
-    if (nodoActual.pendiente && agregarPendiente({
+    if (!soloLectura && nodoActual.pendiente && agregarPendiente({
       id: nodoActual.nodoId,
       personaje: infoDe(nodoActual.personaje)?.nombre ?? nodoActual.personaje,
       texto: nodoActual.pendiente,

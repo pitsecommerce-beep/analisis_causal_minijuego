@@ -6,7 +6,7 @@
     "fase": "apertura",
     "expresion": "impaciente",
     "lineas": [
-      "El problema es el sistema. La mitad de los errores son de captura; lo puedes comprobar en dos minutos.",
+      "El problema es el sistema. {{fraccion_captura}} de los errores son de captura; lo puedes comprobar en dos minutos.",
       "El sistema C.R.A.S.S. tiene 14 años. Ya se lo había dicho a quien estaba antes que tú."
     ],
     "pendiente": "Validar: Óscar dice que la mitad de los errores son de captura y que la causa es el sistema C.R.A.S.S.",

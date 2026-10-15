@@ -4,10 +4,12 @@ import { api } from '../api.js';
 import { olvidarPartidaAnterior } from '../pendientes.js';
 import { VistaAcceso } from '../componentes/ui/VistaAcceso.js';
 import { useUI } from '../componentes/ui/Notificaciones.js';
+import { useSesion } from '../i18n.js';
 
 export function Unirse() {
   const nav = useNavigate();
   const { avisar } = useUI();
+  const { fijarConfig } = useSesion();
   const [codigo, setCodigo] = useState('');
   const [nombre, setNombre] = useState('');
   const [error, setError] = useState('');
@@ -23,6 +25,7 @@ export function Unirse() {
       localStorage.setItem('tipoAuth', 'jugador');
       localStorage.setItem('nombreJugador', nombre.trim());
       localStorage.setItem('sesionNombre', res.sesion.nombre);
+      if (res.config) fijarConfig(res.config);
       if (res.reconectado) avisar('info', 'Retomaste tu partida', 'Continuarás donde te quedaste.');
       // Cada participación nueva vuelve a mostrar la inducción al entrar al simulador
       else {

@@ -1812,3 +1812,16 @@ textarea { font-family: var(--fuente); }
 .proyeccion-grafico svg { width: 100%; height: auto; }
 .proyeccion-grafico .grafico-tip { display: none; }
 @media print { body.imprimiendo-a3 { background: #fff; } }
+
+/* Pestaña El caso */
+.caso { display: flex; flex-direction: column; gap: 16px; max-width: 1200px; margin: 0 auto; }
+.caso-cabecera { padding: 28px 32px; }
+.caso-cabecera h2 { font-size: 24px; color: var(--color-primario); margin: 0 0 16px; }
+.caso h3 { font-size: 15px; font-weight: 700; color: var(--color-primario); margin: 14px 0 6px; }
+.caso p, .caso li { font-size: 15px; line-height: 1.6; color: var(--color-texto); }
+.caso ul { margin: 0 0 8px; padding-left: 20px; }
+.caso-columnas { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 16px; }
+.caso-cierre { font-weight: 600; }
+.caso-cabecera .btn-primario { display: inline-flex; align-items: center; gap: 8px; }
+.caso-proceso { padding: 24px 32px; }
+@media (max-width: 860px) { .caso-columnas { grid-template-columns: 1fr; } }
