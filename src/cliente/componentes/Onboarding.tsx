@@ -144,7 +144,7 @@ export function Onboarding({ pasos, onTerminar }: Props) {
             </ul>
           )}
           <div className="recorrido-pie">
-            <span className="onboarding-paso">{indice + 1} de {pasos.length}</span>
+            <span className="onboarding-paso">{t('ui.onboarding.paso', { i: indice + 1, n: pasos.length })}</span>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {!esUltimo && (
                 <button className="enlace enlace-sutil onboarding-saltar" onClick={onTerminar}>{t('ui.onboarding.saltar')}</button>
