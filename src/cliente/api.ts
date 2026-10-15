@@ -1,3 +1,4 @@
+import type { Tablero } from '../compartido/tablero.js';
 import type { ConfigSesion } from '../compartido/configuracion.js';
 import type { Espina } from '../compartido/espina.js';
 import type { Evento, Hitos } from '../compartido/metodo.js';
@@ -88,6 +89,8 @@ export const api = {
       request<{ token: string; refreshToken: string; profesorId: string }>('POST', '/profesor/login', { email, password }),
     sesiones: () => request<any[]>('GET', '/profesor/sesiones'),
     sesion: (id: string) => request<any>('GET', `/profesor/sesion/${id}`),
+    tableros: (id: string) => request<{ config: ConfigSesion; tableros: { jugadorId: string; nombre: string; actualizado: string; tablero: Tablero }[] }>('GET', `/profesor/sesion/${id}/tableros`),
+    datosSesion: (id: string) => request<{ solicitudes: any[]; comentarios: any[]; columnas: any }>('GET', `/profesor/sesion/${id}/datos`),
     lineaTiempo: (id: string) => request<LineaParticipante[]>('GET', `/profesor/sesion/${id}/linea-tiempo`),
     iniciarSesion: (id: string) => request<any>('POST', `/profesor/sesion/${id}/iniciar`),
     finalizarSesion: (id: string) => request<any>('POST', `/profesor/sesion/${id}/finalizar`),
@@ -134,6 +137,10 @@ export const api = {
       request<any>('POST', '/datos/verificacion', { verificacionId, herramienta }),
     verificaciones: () => request<string[]>('GET', '/datos/verificaciones'),
     excel: (tabla: 'solicitudes' | 'comentarios') => descargarArchivo(`/datos/excel/${tabla}`),
+  },
+  tablero: {
+    obtener: () => request<Tablero>('GET', '/tablero'),
+    guardar: (tablero: Tablero) => request<{ ok: boolean }>('PUT', '/tablero', tablero),
   },
   config: {
     acciones: () => request<any[]>('GET', '/config/acciones'),

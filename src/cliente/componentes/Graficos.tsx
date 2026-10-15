@@ -118,18 +118,21 @@ export function ParetoGrafico({ r, ancho: fijo, alto = ALTO, compacto }: { r: Re
   const { ref, ancho } = useAncho(fijo);
   const [tip, setTip] = useState<Tip | null>(null);
   if (r.barras.length === 0) return <SinValores />;
-  const m = { ...M, right: r.aditiva ? 56 : M.right, bottom: compacto ? 56 : 80 };
+  // El margen inferior crece con la etiqueta más larga, que va inclinada
+  const largo = Math.max(...r.barras.map(b => b.etiqueta.length));
+  const m = { ...M, right: r.aditiva ? 56 : M.right, bottom: 0 };
   const iw = ancho - m.left - m.right;
+  const banda = iw / r.barras.length;
+  const maxCar = Math.max(6, Math.floor(Math.min(banda * 2, compacto ? 110 : 150) / 6.5));
+  m.bottom = Math.min(compacto ? 90 : 120, 30 + Math.min(largo, maxCar) * 6.5 * 0.6);
   const ih = alto - m.top - m.bottom;
   const maxV = Math.max(...r.barras.map(b => b.valor), r.referencia ?? 0);
   const ty = ticks(0, maxV);
   const tope = Math.max(maxV, ty[ty.length - 1] ?? maxV) || 1;
   const sy = (v: number) => m.top + ih - (v / tope) * ih;
   const sp = (p: number) => m.top + ih - (p / 100) * ih;
-  const banda = iw / r.barras.length;
   const cx = (i: number) => m.left + banda * i + banda / 2;
   const w = Math.max(3, Math.min(64, banda * 0.72));
-  const maxCar = Math.max(6, Math.floor(Math.min(banda * 2, compacto ? 110 : 150) / 6.5));
   const linea = r.aditiva ? r.barras.map((b, i) => `${i === 0 ? 'M' : 'L'}${cx(i)},${sp(b.acumulado ?? 0)}`).join(' ') : '';
 
   return (
@@ -189,7 +192,7 @@ export function ParetoGrafico({ r, ancho: fijo, alto = ALTO, compacto }: { r: Re
   );
 }
 
-export function ComparativoGrafico({ r, ancho: fijo }: { r: ResultadoComparativo; ancho?: number | undefined }) {
+export function ComparativoGrafico({ r, ancho: fijo, alto = ALTO }: { r: ResultadoComparativo; ancho?: number | undefined; alto?: number }) {
   const t = useT();
   const etiqueta = r.paneles[0]?.pareto;
   const anchoPanel = fijo ? Math.floor((fijo - 16 * (r.paneles.length - 1)) / r.paneles.length) : undefined;
@@ -205,7 +208,7 @@ export function ComparativoGrafico({ r, ancho: fijo }: { r: ResultadoComparativo
         {r.paneles.map(p => (
           <div key={p.titulo} className="grafico-panel">
             <div className="grafico-panel-titulo">{p.titulo} <span>{t('graficos.nSolicitudes', { n: p.n })}</span></div>
-            <ParetoGrafico r={p.pareto} compacto alto={290} ancho={anchoPanel} />
+            <ParetoGrafico r={p.pareto} compacto alto={Math.round(alto * 0.85)} ancho={anchoPanel} />
           </div>
         ))}
       </div>
@@ -583,15 +586,15 @@ export function SinValores({ texto }: { texto?: string }) {
 }
 
 // Dibuja cualquier resultado del constructor
-export function Grafico({ r, ancho, formatoCondicional = true }: { r: Resultado; ancho?: number | undefined; formatoCondicional?: boolean }) {
+export function Grafico({ r, ancho, alto = ALTO, formatoCondicional = true }: { r: Resultado; ancho?: number | undefined; alto?: number; formatoCondicional?: boolean }) {
   switch (r.clase) {
-    case 'pareto': return <ParetoGrafico r={r} ancho={ancho} />;
-    case 'comparativo': return <ComparativoGrafico r={r} ancho={ancho} />;
-    case 'histograma': return <HistogramaGrafico r={r} ancho={ancho} />;
-    case 'dispersion': return <DispersionGrafico r={r} ancho={ancho} />;
-    case 'corrida': return <CorridaGrafico r={r} ancho={ancho} />;
-    case 'control': return <ControlGrafico r={r} ancho={ancho} />;
-    case 'caja': return <CajaGrafico r={r} ancho={ancho} />;
+    case 'pareto': return <ParetoGrafico r={r} ancho={ancho} alto={alto} />;
+    case 'comparativo': return <ComparativoGrafico r={r} ancho={ancho} alto={alto} />;
+    case 'histograma': return <HistogramaGrafico r={r} ancho={ancho} alto={alto} />;
+    case 'dispersion': return <DispersionGrafico r={r} ancho={ancho} alto={alto} />;
+    case 'corrida': return <CorridaGrafico r={r} ancho={ancho} alto={alto} />;
+    case 'control': return <ControlGrafico r={r} ancho={ancho} alto={alto} />;
+    case 'caja': return <CajaGrafico r={r} ancho={ancho} alto={alto} />;
     case 'pivote': return <PivoteTabla r={r} formatoCondicional={formatoCondicional} />;
   }
 }

@@ -23,6 +23,18 @@ function descargar() {
   return cache;
 }
 
+// Agrega columnas calculadas y el cruce entre solicitudes y comentarios
+export function prepararDatos(sol: Fila[], com: Fila[], cols: { solicitudes: Columna[]; comentarios: Columna[] }, vocabulario: Vocabulario, t: (c: string) => string): DatosJuego {
+  const cruce = cruzar(agregarCalculadas(sol, vocabulario), com);
+  return {
+    solicitudes: cruce.solicitudes,
+    comentarios: cruce.comentarios,
+    colsSolicitudes: [...cols.solicitudes, ...columnasCalculadas('solicitudes', t, vocabulario)],
+    colsComentarios: [...cols.comentarios, ...columnasCalculadas('comentarios', t, vocabulario)],
+    vocabulario,
+  };
+}
+
 export function useDatos(): { datos: DatosJuego | null; error: boolean; reintentar: () => void } {
   const { config, t } = useSesion();
   const [datos, setDatos] = useState<DatosJuego | null>(null);
@@ -35,14 +47,7 @@ export function useDatos(): { datos: DatosJuego | null; error: boolean; reintent
     setError(false);
     descargar().then(({ sol, com, cols }) => {
       if (!vigente) return;
-      const cruce = cruzar(agregarCalculadas(sol, vocabulario), com);
-      setDatos({
-        solicitudes: cruce.solicitudes,
-        comentarios: cruce.comentarios,
-        colsSolicitudes: [...cols.solicitudes, ...columnasCalculadas('solicitudes', t, vocabulario)],
-        colsComentarios: [...cols.comentarios, ...columnasCalculadas('comentarios', t, vocabulario)],
-        vocabulario,
-      });
+      setDatos(prepararDatos(sol, com, cols, vocabulario, t));
     }).catch(() => { if (vigente) setError(true); });
     return () => { vigente = false; };
   }, [intento, vocabulario, t]);

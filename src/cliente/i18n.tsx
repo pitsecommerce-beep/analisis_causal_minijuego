@@ -24,8 +24,10 @@ const inicial = leerGuardada();
 fijarLocale(LOCALES[inicial.idioma]);
 const Contexto = createContext<ValorSesion>({ config: inicial, t: traductor(inicial.idioma), fijarConfig: () => {} });
 
-export function ProveedorSesion({ children }: { children: ReactNode }) {
-  const [config, setConfig] = useState<ConfigSesion>(inicial);
+// configFija: para mostrar el contenido de otra sesión (por ejemplo, el profesor viendo un tablero) sin tocar la del navegador
+export function ProveedorSesion({ children, configFija }: { children: ReactNode; configFija?: ConfigSesion }) {
+  const [guardada, setConfig] = useState<ConfigSesion>(inicial);
+  const config = configFija ?? guardada;
   const fijarConfig = useCallback((c: Partial<ConfigSesion>) => {
     setConfig(prev => {
       const nueva = configDeSesion({ ...prev, ...c });

@@ -353,3 +353,31 @@ export async function obtenerResumenExperimento(sesionId: string) {
     totalEventos: totalEventos ?? 0,
   };
 }
+
+// --- Tablero del equipo ---
+
+export async function obtenerTablero(jugadorId: string) {
+  const { data, error } = await sb()
+    .from('tableros')
+    .select('contenido, updated_at')
+    .eq('jugador_id', jugadorId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function guardarTablero(jugadorId: string, sesionId: string, contenido: unknown) {
+  const { error } = await sb()
+    .from('tableros')
+    .upsert({ jugador_id: jugadorId, sesion_id: sesionId, contenido, updated_at: new Date().toISOString() }, { onConflict: 'jugador_id' });
+  if (error) throw error;
+}
+
+export async function listarTablerosSesion(sesionId: string) {
+  const { data, error } = await sb()
+    .from('tableros')
+    .select('jugador_id, contenido, updated_at')
+    .eq('sesion_id', sesionId);
+  if (error) throw error;
+  return data ?? [];
+}

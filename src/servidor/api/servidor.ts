@@ -16,12 +16,14 @@ import {
   actualizarSesionExperimento, asignarGrupoJugador,
   registrarConsentimiento, registrarEvento,
   obtenerTelemetriaSesion, obtenerResumenExperimento, listarEventosPartida, listarEstadosPartidasSesion,
+  obtenerTablero, guardarTablero, listarTablerosSesion,
 } from '../db/consultas.js';
+import { normalizarTablero, tableroVacio } from '../../compartido/tablero.js';
 import { generarRecomendacion } from '../experimento/asesor-algoritmico.js';
 import { serializarDialogo, deserializarDialogo } from '../db/serializar.js';
 import { autenticarProfesor, autenticarJugador, soloModoCompleto } from './middleware.js';
 import { validarConfig, configDeSesion, claveDatos, CLAVES_DATOS } from '../../compartido/configuracion.js';
-import type { ClaveDatos } from '../../compartido/configuracion.js';
+import type { ClaveDatos, Idioma } from '../../compartido/configuracion.js';
 import { DICCIONARIOS } from '../../compartido/i18n/index.js';
 import { libroComentarios } from '../datos/excel.js';
 import { estaConectado } from './presencia.js';
@@ -521,15 +523,18 @@ const TIPOS_COMENTARIOS: [string, 'numero' | 'texto' | 'fecha'][] = [
 // Columnas que solo existen en el archivo de la base B
 const SOLO_BASE_B = new Set(['timePasses', 'cropDeliveryTime', 'executiveTime', 'cropTime']);
 
-app.get('/api/datos/columnas', autenticarJugador, (req, res) => {
-  const { idioma } = (req as RequestJugador).jugador.config;
+function columnasDe(idioma: Idioma, clave: ClaveDatos) {
   const nombres = DICCIONARIOS[idioma].columnas;
-  const esB = claveDe(req).startsWith('B');
-  res.json({
+  const esB = clave.startsWith('B');
+  return {
     solicitudes: TIPOS_SOLICITUDES.filter(([c]) => esB || !SOLO_BASE_B.has(c))
       .map(([campo, tipo]) => ({ campo, tipo, nombre: nombres.solicitudes[campo as keyof typeof nombres.solicitudes] })),
     comentarios: TIPOS_COMENTARIOS.map(([campo, tipo]) => ({ campo, tipo, nombre: nombres.comentarios[campo as keyof typeof nombres.comentarios] })),
-  });
+  };
+}
+
+app.get('/api/datos/columnas', autenticarJugador, (req, res) => {
+  res.json(columnasDe((req as RequestJugador).jugador.config.idioma, claveDe(req)));
 });
 
 app.post('/api/datos/verificacion', autenticarJugador, sesionActiva, async (req, res) => {
@@ -1326,6 +1331,58 @@ app.get('/api/profesor/sesion/:id/exportar', async (req, res) => {
     }
   } catch (err) {
     responderError(res, 'Error al exportar', err);
+  }
+});
+
+// ╔══════════════════════════════════════╗
+// ║     TABLERO DEL EQUIPO              ║
+// ╚══════════════════════════════════════╝
+
+app.get('/api/tablero', autenticarJugador, async (req, res) => {
+  try {
+    const fila = await obtenerTablero((req as RequestJugador).jugador.id);
+    res.json(fila ? normalizarTablero(fila.contenido) : tableroVacio());
+  } catch (err) {
+    responderError(res, 'Error al cargar el tablero', err);
+  }
+});
+
+app.put('/api/tablero', autenticarJugador, sesionActiva, async (req, res) => {
+  const jugador = (req as RequestJugador).jugador;
+  try {
+    const tablero = normalizarTablero(req.body);
+    await guardarTablero(jugador.id, jugador.sesionId, tablero);
+    res.json({ ok: true });
+  } catch (err) {
+    responderError(res, 'Error al guardar el tablero', err);
+  }
+});
+
+// El profesor ve los tableros de todos los equipos, en solo lectura, con los datos de la sesión para dibujarlos
+app.get('/api/profesor/sesion/:id/tableros', autenticarProfesor, sesionPropia, async (req, res) => {
+  try {
+    const sesionId = idParam(req);
+    const [sesion, jugadores, tableros] = await Promise.all([obtenerSesionPorId(sesionId), listarJugadoresSesion(sesionId), listarTablerosSesion(sesionId)]);
+    const nombres = new Map(jugadores.map((j: any) => [j.id, j.nombre]));
+    res.json({
+      config: configDeSesion(sesion),
+      tableros: tableros
+        .map((t: any) => ({ jugadorId: t.jugador_id, nombre: nombres.get(t.jugador_id) ?? '', actualizado: t.updated_at, tablero: normalizarTablero(t.contenido) }))
+        .filter(t => t.tablero.graficos.length > 0 || Object.values(t.tablero.textos).some(Boolean)),
+    });
+  } catch (err) {
+    responderError(res, 'Error al cargar los tableros', err);
+  }
+});
+
+app.get('/api/profesor/sesion/:id/datos', autenticarProfesor, sesionPropia, async (req, res) => {
+  try {
+    const config = configDeSesion(await obtenerSesionPorId(idParam(req)));
+    const clave = claveDatos(config);
+    const comentarios = clave === 'R2' && config.idioma === 'en' ? todosLosDatos.R2.comentariosEn ?? todosLosDatos.R2.comentarios : todosLosDatos[clave].comentarios;
+    res.json({ solicitudes: datosPublicos[clave].solicitudes, comentarios, columnas: columnasDe(config.idioma, clave) });
+  } catch (err) {
+    responderError(res, 'Error al cargar los datos de la sesión', err);
   }
 });
 

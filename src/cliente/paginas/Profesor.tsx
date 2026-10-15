@@ -9,6 +9,7 @@ import { PiePagina } from '../componentes/ui/PiePagina.js';
 import { VistaAcceso } from '../componentes/ui/VistaAcceso.js';
 import { CampoContrasena } from '../componentes/ui/CampoContrasena.js';
 import { LineaTiempo } from '../componentes/LineaTiempo.js';
+import { TablerosProfesor } from '../componentes/TablerosProfesor.js';
 
 const INTERVALO_REFRESCO = 4000;
 
@@ -165,6 +166,7 @@ function Panel() {
   const [ocupado, setOcupado] = useState(false);
   const [recientes, setRecientes] = useState<Set<string>>(new Set());
   const [mostrarOcultos, setMostrarOcultos] = useState(false);
+  const [verTableros, setVerTableros] = useState(false);
   const detalleRef = useRef<any>(null);
   detalleRef.current = detalle;
 
@@ -572,7 +574,11 @@ function Panel() {
                     Copiar código
                   </button>
                   <span style={{ fontSize: 13, color: 'var(--color-texto-secundario)' }}>{resumenConfig(detalle.sesion)}</span>
+                  <button className="btn-primario btn-sm" onClick={() => setVerTableros(true)} style={{ marginLeft: 'auto' }}>
+                    Ver tableros de los equipos
+                  </button>
                 </div>
+                {verTableros && <TablerosProfesor sesionId={detalle.sesion.id} onCerrar={() => setVerTableros(false)} />}
 
                 {(() => {
                   const partidaDe = (id: string) => detalle.partidas.find((p: any) => p.jugador_id === id);
