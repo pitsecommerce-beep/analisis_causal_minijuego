@@ -64,7 +64,7 @@ export function AsesorAlgoritmico() {
         }}>
           <p style={{ fontSize: 14, marginBottom: 10, lineHeight: 1.6 }}>{recomendacion.explicacion}</p>
           <div style={{ display: 'flex', gap: 20, fontSize: 12, color: 'var(--color-texto-secundario)' }}>
-            <span>{t('ui.asesorAlgoritmico.metrica')}: <strong style={{ color: 'var(--color-texto)' }}>{recomendacion.metricaNombre ?? recomendacion.metricaPrioritaria}</strong></span>
+            <span>{t('ui.asesorAlgoritmico.metrica')}: <strong style={{ color: 'var(--color-texto)' }}>{t(`metricas.${recomendacion.metricaPrioritaria}`)}</strong></span>
             <span>{t('ui.asesorAlgoritmico.confianza')}: <strong style={{ color: 'var(--color-texto)' }}>{Math.round(recomendacion.confianza * 100)}%</strong></span>
           </div>
           <button className="btn-fantasma" style={{ marginTop: 10, fontSize: 12, padding: '6px 12px' }}
