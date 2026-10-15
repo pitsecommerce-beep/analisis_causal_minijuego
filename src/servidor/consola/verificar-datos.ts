@@ -1,75 +1,42 @@
-import { cargarTodo } from '../datos/cargador.js';
-
-interface ValorEsperado {
-  nombre: string;
-  esperado: string;
-  obtenido: string;
-  ok: boolean;
-}
+import { cargarDesdeExcel } from '../datos/cargador.js';
+import { compararEsperados } from '../datos/esperados.js';
+import { CLAVES_DATOS } from '../../compartido/configuracion.js';
 
 function run() {
-  console.log('Cargando datos...\n');
-  const { solicitudes, comentarios, estadisticas } = cargarTodo();
+  console.log('Cargando datos desde los Excel...\n');
+  const todos = cargarDesdeExcel();
+  let fallos = 0;
 
-  const resultados: ValorEsperado[] = [];
-
-  function check(nombre: string, esperado: number | string, obtenido: number | string) {
-    const ok = String(esperado) === String(obtenido);
-    resultados.push({ nombre, esperado: String(esperado), obtenido: String(obtenido), ok });
-  }
-
-  check('Filas', 1500, estadisticas.filas);
-  check('Sucursales', 18, estadisticas.sucursales);
-  check('Estados', 8, estadisticas.estados);
-  check('Meses distintos', 18, estadisticas.mesesDistintos);
-  check('Errores totales', 1318, estadisticas.erroresTotales);
-  check('Errores de captura', 659, estadisticas.erroresCaptura);
-  check('Documentos incompletos', 472, estadisticas.erroresIncompletos);
-  check('Documentos ilegibles', 187, estadisticas.erroresIlegibles);
-  check('Casos con al menos un error', 897, estadisticas.casosConError);
-  check('Intentos, media', '1.96', String(estadisticas.intentosMedia));
-  check('Intentos, desviación', '0.89', String(estadisticas.intentosDesviacion));
-  check('Ventana de captura, media', '18.9', String(estadisticas.ventanaCapturaMedia));
-  check('Ventana de captura, mediana', '11', String(estadisticas.ventanaCapturaMediana));
-  check('Correlación intentos-captura', '0.786', String(estadisticas.correlacionIntentoCaptura));
-  check('Buró corrido', 1397, estadisticas.buroCorrido);
-  check('Buró aceptado', 1022, estadisticas.buroAceptado);
-  check('Score aceptado', 873, estadisticas.scoreAceptado);
-  check('Plástico enviado', 731, estadisticas.plasticoEnviado);
-  check('Atorados', 142, estadisticas.atorados);
-  check('Días perdidos en rechazados por buró', 6758, estadisticas.diasPerdidosRechazados);
-  check(
-    'Top 3 sucursales por errores',
-    '110,676,728',
-    estadisticas.top3SucursalesPorErrores.join(',')
-  );
-
-  const maxNombre = Math.max(...resultados.map((r) => r.nombre.length));
-  const maxEsp = Math.max(...resultados.map((r) => r.esperado.length));
-  const maxObt = Math.max(...resultados.map((r) => r.obtenido.length));
-
-  const header = `${'Medida'.padEnd(maxNombre)}  ${'Esperado'.padEnd(maxEsp)}  ${'Obtenido'.padEnd(maxObt)}  Estado`;
-  console.log(header);
-  console.log('-'.repeat(header.length));
-
-  for (const r of resultados) {
-    const estado = r.ok ? 'OK' : 'FALLO';
-    const marca = r.ok ? '\x1b[32m' : '\x1b[31m';
-    console.log(
-      `${r.nombre.padEnd(maxNombre)}  ${r.esperado.padEnd(maxEsp)}  ${r.obtenido.padEnd(maxObt)}  ${marca}${estado}\x1b[0m`
-    );
-  }
-
-  const fallos = resultados.filter((r) => !r.ok);
-  console.log(`\n${resultados.length - fallos.length}/${resultados.length} verificaciones pasaron.`);
-
-  if (fallos.length > 0) {
-    console.log('\nFallos:');
-    for (const f of fallos) {
-      console.log(`  ${f.nombre}: esperado ${f.esperado}, obtenido ${f.obtenido}`);
+  for (const clave of CLAVES_DATOS) {
+    const { solicitudes, comentarios, estadisticas } = todos[clave];
+    const resultados = compararEsperados(clave, estadisticas);
+    console.log(`== ${clave}: ${solicitudes.length} solicitudes, ${comentarios.length} comentarios`);
+    const ancho = Math.max(...resultados.map((r) => r.nombre.length));
+    for (const r of resultados) {
+      const marca = r.ok ? '\x1b[32mOK\x1b[0m' : '\x1b[31mFALLO\x1b[0m';
+      console.log(`  ${r.nombre.padEnd(ancho)}  esperado ${r.esperado.padEnd(12)} obtenido ${r.obtenido.padEnd(12)} ${marca}`);
     }
+    fallos += resultados.filter((r) => !r.ok).length;
+
+    // Las filas que no cumplen intentos = 1 + errores se reportan; los datos no se corrigen
+    const fuera = estadisticas.filasFueraInvariante;
+    if (fuera.length > 0) {
+      const porNum = new Map(solicitudes.map((s) => [s.applicationNum, s]));
+      console.log(`  Filas fuera del invariante intentos = 1 + errores: ${fuera.length}`);
+      for (const n of fuera.slice(0, clave === 'R2' ? 10 : fuera.length)) {
+        const s = porNum.get(n)!;
+        console.log(`    solicitud ${n}: intentos ${s.numTries}, errores ${s.erroresPorCaso}`);
+      }
+      if (clave === 'R2' && fuera.length > 10) console.log(`    ... y ${fuera.length - 10} más`);
+    }
+    console.log('');
+  }
+
+  if (fallos > 0) {
+    console.log(`${fallos} verificaciones fallaron.`);
     process.exit(1);
   }
+  console.log('Todas las verificaciones pasaron.');
 }
 
 run();

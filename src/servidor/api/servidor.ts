@@ -20,7 +20,9 @@ import {
 import { generarRecomendacion } from '../experimento/asesor-algoritmico.js';
 import { serializarDialogo, deserializarDialogo } from '../db/serializar.js';
 import { autenticarProfesor, autenticarJugador, soloModoCompleto } from './middleware.js';
-import { validarConfig, configDeSesion } from '../../compartido/configuracion.js';
+import { validarConfig, configDeSesion, claveDatos, CLAVES_DATOS } from '../../compartido/configuracion.js';
+import type { ClaveDatos } from '../../compartido/configuracion.js';
+import { libroComentarios } from '../datos/excel.js';
 import { estaConectado } from './presencia.js';
 import { normalizarEspina, validarVotacion, causasDesdeEspina, ESPINA_VACIA } from '../../compartido/espina.js';
 import type { Espina } from '../../compartido/espina.js';
@@ -32,8 +34,8 @@ import { crearPartida, elegirAcciones, declararCompromiso, procesarCiclo } from 
 import { evaluarPartida, determinarDesenlace } from '../puntuacion/evaluacion.js';
 import { crearEstadoDialogo, obtenerNodosCiclo, filtrarRespuestas, evaluarCondicion, aplicarEfecto } from '../dialogos/motor-dialogos.js';
 import type { NodoDialogo } from '../dialogos/motor-dialogos.js';
-import { cargarTodo } from '../datos/cargador.js';
-import type { DatosCargados } from '../datos/cargador.js';
+import { cargarTodo, rutaSolicitudes } from '../datos/cargador.js';
+import type { DatosCargados, TodosLosDatos } from '../datos/cargador.js';
 import { RAIZ } from '../raiz.js';
 import config from '../../../config/simulador.json' with { type: 'json' };
 import verificacionesConfig from '../../../config/verificaciones.json' with { type: 'json' };
@@ -52,14 +54,16 @@ if (fs.existsSync(clientePath)) {
 
 // --- Datos cargados al inicio ---
 
-let datosJuego!: DatosCargados;
-// Lo que ven los jugadores no cambia durante la vida del proceso: se arma una sola vez
-let datosPublicos!: ReturnType<typeof datosParaJugador>;
+let todosLosDatos!: TodosLosDatos;
+// Lo que ven los jugadores no cambia durante la vida del proceso: se arma una sola vez por combinación
+let datosPublicos!: Record<ClaveDatos, ReturnType<typeof datosParaJugador>>;
 const dialogos: Record<string, NodoDialogo[]> = {};
 
 function cargarDatosInicio() {
-  datosJuego = cargarTodo();
-  datosPublicos = datosParaJugador(datosJuego);
+  todosLosDatos = cargarTodo();
+  datosPublicos = Object.fromEntries(
+    CLAVES_DATOS.map((c) => [c, datosParaJugador(todosLosDatos[c])])
+  ) as Record<ClaveDatos, ReturnType<typeof datosParaJugador>>;
 
   const dirDialogos = path.join(RAIZ, 'datos', 'dialogos');
   const personajes = ['bernardo', 'oscar', 'paulina', 'silvia', 'diego', 'ramon'];
@@ -115,6 +119,7 @@ function datosParaJugador(datos: DatosCargados) {
       lastStatus: s.lastStatus,
       creditLineGranted: s.creditLineGranted,
       comments: s.comments,
+      ...(s.extras ?? {}),
     })),
     comentarios: datos.comentarios,
   };
@@ -456,15 +461,43 @@ app.delete('/api/profesor/sesion/:id', autenticarProfesor, async (req, res) => {
 // ║     RUTAS DE DATOS (HOJA)           ║
 // ╚══════════════════════════════════════╝
 
-app.get('/api/datos/solicitudes', autenticarJugador, (_req, res) => {
-  res.json(datosPublicos.solicitudes);
+// Cada participante recibe la base que corresponde a la configuración de su sesión
+const claveDe = (req: express.Request) => claveDatos((req as RequestJugador).jugador.config);
+
+app.get('/api/datos/solicitudes', autenticarJugador, (req, res) => {
+  res.json(datosPublicos[claveDe(req)].solicitudes);
 });
 
-app.get('/api/datos/comentarios', autenticarJugador, (_req, res) => {
-  res.json(datosPublicos.comentarios);
+app.get('/api/datos/comentarios', autenticarJugador, (req, res) => {
+  res.json(datosPublicos[claveDe(req)].comentarios);
 });
 
-app.get('/api/datos/columnas', autenticarJugador, (_req, res) => {
+// Descarga en Excel. Las solicitudes se entregan en su archivo original, tal cual;
+// los comentarios se arman sin la columna de evidencia, que nunca llega al participante.
+app.get('/api/datos/excel/:tabla', autenticarJugador, (req, res) => {
+  const clave = claveDe(req);
+  const idioma = (req as RequestJugador).jugador.config.idioma;
+  const tabla = req.params['tabla'];
+  try {
+    if (tabla === 'solicitudes') {
+      const nombre = idioma === 'en' ? 'ETF_Bank_applications.xlsx' : 'ETF_Bank_solicitudes.xlsx';
+      res.download(rutaSolicitudes(clave), nombre);
+      return;
+    }
+    if (tabla === 'comentarios') {
+      const nombre = idioma === 'en' ? 'ETF_Bank_customer_comments.xlsx' : 'ETF_Bank_comentarios_clientes.xlsx';
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=${nombre}`);
+      res.send(libroComentarios(todosLosDatos[clave].comentarios, idioma));
+      return;
+    }
+    res.status(404).json({ error: 'Tabla no encontrada' });
+  } catch (err) {
+    responderError(res, 'No se pudo generar el archivo', err);
+  }
+});
+
+app.get('/api/datos/columnas', autenticarJugador, (req, res) => {
   res.json({
     solicitudes: [
       { campo: 'applicationNum', nombre: 'Núm. de solicitud', tipo: 'numero' },
@@ -490,6 +523,13 @@ app.get('/api/datos/columnas', autenticarJugador, (_req, res) => {
       { campo: 'lastStatus', nombre: 'Último estatus', tipo: 'texto' },
       { campo: 'creditLineGranted', nombre: 'Línea de crédito otorgada', tipo: 'numero' },
       { campo: 'comments', nombre: 'Comentarios', tipo: 'texto' },
+      // La base B trae en su archivo cuatro columnas de tiempos que no tiene la A
+      ...(claveDe(req).startsWith('B') ? [
+        { campo: 'timePasses', nombre: 'Tiempo transcurrido', tipo: 'numero' },
+        { campo: 'cropDeliveryTime', nombre: 'Tiempo CrOP y entrega', tipo: 'numero' },
+        { campo: 'executiveTime', nombre: 'Tiempo del ejecutivo', tipo: 'numero' },
+        { campo: 'cropTime', nombre: 'Tiempo CrOP', tipo: 'numero' },
+      ] : []),
     ],
     comentarios: [
       { campo: 'solicitudNum', nombre: 'Núm. de solicitud', tipo: 'numero' },
@@ -1315,7 +1355,7 @@ if (fs.existsSync(clientePath)) {
 const PORT = parseInt(process.env['PORT'] ?? '3000', 10);
 
 cargarDatosInicio();
-console.log(`Datos cargados: ${datosJuego.solicitudes.length} solicitudes, ${datosJuego.comentarios.length} comentarios`);
+console.log(`Datos cargados: ${CLAVES_DATOS.map((c) => `${c} ${todosLosDatos[c].solicitudes.length}`).join(', ')}`);
 
 app.listen(PORT, () => {
   console.log(`Servidor en http://localhost:${PORT}`);

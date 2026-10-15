@@ -5,4 +5,5 @@ import { cargarDesdeExcel, serializarDatos, RUTA_PRECALCULADOS } from '../src/se
 const datos = cargarDesdeExcel();
 fs.mkdirSync(path.dirname(RUTA_PRECALCULADOS), { recursive: true });
 fs.writeFileSync(RUTA_PRECALCULADOS, serializarDatos(datos));
-console.log(`Datos precalculados: ${datos.solicitudes.length} solicitudes → ${RUTA_PRECALCULADOS}`);
+const resumen = Object.entries(datos).map(([c, d]) => `${c}: ${d.solicitudes.length}`).join(', ');
+console.log(`Datos precalculados (${resumen}) → ${RUTA_PRECALCULADOS}`);
