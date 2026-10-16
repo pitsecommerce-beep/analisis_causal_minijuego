@@ -113,4 +113,4 @@ Se reescribieron 75 de los 90 textos para que no contradigan su evidencia y no s
 
 ## Inducción del modo informativo
 
-Nueva. Ramón Betancourt recibe al equipo consultor con el mismo formato de pixel art y globo de diálogo, y recorre El caso, Datos, Comentarios, Proceso, Análisis, Tablero y Sala de Juntas. Sale al entrar por primera vez y se repite con el botón de ayuda, que en este modo dice «Cómo funciona». Los textos están en la sección `onboardingInformativo` de `es.ts` y `en.ts`. El contador de pasos ahora se traduce («3 de 10» / «3 of 10»).
+Nueva. Ramón Betancourt recibe al equipo como Director de Operaciones con el mismo formato de pixel art y globo de diálogo, y recorre El caso, Datos, Comentarios, Proceso, Análisis, Tablero y Sala de Juntas. Sale al entrar por primera vez y se repite con el botón de ayuda, que en este modo dice «Cómo funciona». Los textos están en la sección `onboardingInformativo` de `es.ts` y `en.ts`. El contador de pasos ahora se traduce («3 de 10» / «3 of 10»).
