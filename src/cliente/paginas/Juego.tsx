@@ -187,7 +187,7 @@ export function Juego() {
   // Inducción: Ramón Betancourt recibe al nuevo director a prueba y señala la interfaz
   const ob = DICCIONARIOS[config.idioma].onboarding;
   const nSolicitudes = (datos?.solicitudes.length ?? 0).toLocaleString(LOCALES[config.idioma]);
-  // En modo informativo Ramón recibe al equipo consultor y recorre solo las pestañas de consulta
+  // En modo informativo Ramón recibe al equipo como Director de Operaciones y recorre solo las pestañas de consulta
   const obi = DICCIONARIOS[config.idioma].onboardingInformativo;
   const pasosInformativo: PasoRecorrido[] = [
     { ...obi.bienvenida, puntos: [...obi.bienvenida.puntos], alEntrar: () => setVista('caso') },
